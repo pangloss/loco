@@ -92,21 +92,13 @@
                         (not= (first (name (first var-name))) \_))]
             [var-name (get-val v)]))))
 
-(defn- Solution->solution-map
-  [S]
-  (into {} (for [[var-name v] @(:my-vars *solver*)
-                 :when (if (keyword? var-name)
-                         (not= (first (name var-name)) \_)
-                         (not= (first (name (first var-name))) \_))]
-             [var-name (.getIntVal S v)])))
-
 (defn- constrain!
   [constraint]
   (.post (:csolver *solver*) constraint))
 
 (defn- problem->solver
   [problem]
-  (let [problem (model/translate problem) ; dig for the var declarations and put them at the front
+  (let [problem (model/translate problem)
         s (new-solver)]
     (binding [*solver* s]
       (doseq [i problem
@@ -169,6 +161,13 @@ Note: returned solution maps have the metadata {:loco/solution <n>} denoting tha
   (binding [*solver* (problem->solver problem)]
     (let [args (apply hash-map args)]
       (solution* args))))
+
+(defn- Solution->solution-map [S]
+  (into {} (for [[var-name v] @(:my-vars *solver*)
+                 :when (if (keyword? var-name)
+                         (not= (first (name var-name)) \_)
+                         (not= (first (name (first var-name))) \_))]
+             [var-name (.getIntVal S v)])))
 
 (defn solutions
   "Solves the solver using the constraints and returns a lazy seq of maps (for each solution) from variable names to their values.

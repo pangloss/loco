@@ -59,8 +59,10 @@
               problem))
 
   ([name-seq problem]
-   (concat (top-level-var-declarations name-seq problem)
-           (without-top-level-var-declarations problem))))
+   (concat
+    ;; dig for the var declarations and put them at the front
+    (top-level-var-declarations name-seq problem)
+    (without-top-level-var-declarations problem))))
 
 (defn realize
   "uses output from translate to create a Choco Model object for use
