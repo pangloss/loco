@@ -2,7 +2,9 @@
   (:use clojure.test
         loco.core
         loco.constraints)
-  (:require [loco.automata :as a]))
+  (:require
+   [loco.model :as model]
+   [loco.automata :as a]))
 
 (defmacro test-constraint-model
   ([docstring model solution-maps]
@@ -14,6 +16,35 @@
 
 (deftest basic-test
   (test-constraint-model
+   "Basic test with only 1 var"
+   [($in :y 1 3)]
+   [{:y 1} {:y 3} {:y 2}])
+
+  (test-constraint-model
+   "Basic test with only 1 var, bounded"
+   [($in :y 1 3 :bounded)]
+   [{:y 1} {:y 2} {:y 3}])
+
+
+  (test-constraint-model
+   "Basic test with only 1 var, bounded, using $="
+   [
+    ($in :y 1 3 :bounded)
+    ($= :y 2)
+    ]
+   [{:y 2}])
+
+  (test-constraint-model
+   "Basic test with only 1 var, bounded, using $="
+   [
+    ($in :y  1 3 :bounded)
+    ($in :_x 2 2 :bounded)
+    ($= :y :_x)
+    ]
+   [{:y 2}]))
+
+(deftest basic-test2
+  (test-constraint-model
    "Basic test case with $= and bounded vars "
    [($in :x 1 3)
     ($in :y 1 3 :bounded)
@@ -22,7 +53,43 @@
     ($= :y :z)]
    [{:x 1 :y 1 :z 1} {:x 2 :y 2 :z 2} {:x 3 :y 3 :z 3}]))
 
+
+
 (deftest arithmetic-test
+  (test-constraint-model
+   [($in :x 0 5)
+    ($= ($+ :x) 5)]
+   [{:x 5}])
+
+  (test-constraint-model
+   [($in :x 0 5)
+    ($= ($+ :x :x) 10)]
+   [{:x 5}])
+
+  (test-constraint-model
+   [($in :x 0 5)
+    ($= ($- :x :5) 0)]
+   [{:x 5}])
+
+  (test-constraint-model
+   [($in :x 0 5)
+    ($in :y 0 5)
+    ($= ($- :x :y) :y)]
+   #{{:x 0, :y 0} {:x 2, :y 1} {:x 4, :y 2}})
+
+  (test-constraint-model
+   [($in :x 0 5)
+    ($in :y 0 5)
+    ($= ($- :x :y) ($- :y :x))]
+   #{{:x 0, :y 0} {:x 2, :y 1} {:x 4, :y 2}})
+
+
+  (test-constraint-model
+   [($in :x 0 5)
+    ($= ($* :x :x) 0)]
+   [{:x 0}]))
+
+(deftest arithmetic-test2
   (test-constraint-model
    [($in :x -5 5)
     ($in :y -5 5)
@@ -56,6 +123,14 @@
     ($= ($max :z 3) 3)
     ($= :x :y)]
    [{:x 5 :z 3 :y 5}]))
+
+(deftest scalar-test
+  (test-constraint-model
+   [($in :x 1 5)
+    ($in :y 1 5)
+    ($in :z 1 5)
+    ($= ($scalar [:x :y :z] '(100 10 1)) 123)]
+   [{:x 1 :y 2 :z 3}]))
 
 (deftest mod-scalar-test
   (test-constraint-model
