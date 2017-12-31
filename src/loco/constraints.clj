@@ -190,12 +190,11 @@
 
 
 (defn $abs
-  "Given a variable X, returns the absolute value of X, or |X|."
-  [X]
-  {:type :abs
-   :arg X
-   :id (id)
-   :eq-shortcut true})
+  "Creates an absolute value constraint: abs-val = |var|"
+  ([var]
+   [:constraint :partial [:abs [var]]])
+  ([abs-val var]
+   [:constraint [:abs [abs-val := var]]]))
 
 
 (defn $scalar

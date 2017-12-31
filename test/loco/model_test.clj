@@ -261,3 +261,20 @@
        ($= :z ($% :x :y))]
       model/compile))
 
+(= [[:var :y :public [:int 0 10]]
+    [:var :z :public [:int -5 0]]
+    [:constraint [:abs [:y := :z]]]]
+   (->> [($in :y 0 10)
+         ($in :z -5 0)
+         ($abs :y :z)]
+        model/compile))
+
+(= [[:var :y :public [:int 0 10]]
+    [:var :z :public [:int -5 0]]
+    [:var :|z| :proto [:int 0 5]]
+    [:constraint [:abs [:|z| := :z]]]
+    [:constraint [:all-equal [:y :|z|]]]]
+   (->> [($in :y 0 10)
+         ($in :z -5 0)
+         ($= :y ($abs :z))]
+        model/compile))
