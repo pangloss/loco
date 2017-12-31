@@ -183,3 +183,14 @@
        ($in :z 0 5)
        ($arithm :y := :x :/ :z)]
       model/compile))
+
+(=
+ [[:var :x :public [:int 0 100]]
+  [:var :y :public [:int 0 10]]
+  [:var :z :public [:int 0 5]]
+  [:constraint [:times [:z := :x :* :y]]]]
+ (->> [($in :x 0 100)
+       ($in :y 0 10)
+       ($in :z 0 5)
+       ($times :x :y :z)]
+      model/compile))

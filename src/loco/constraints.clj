@@ -131,9 +131,10 @@
   [:constraint :partial [:* [x y]]])
 
 (defn $times
-  "Takes three arguments. z = x * y, returns constraint that mirrors Choco Model.times"
-  [z x y]
-  {:pre [(keyword? z)]}
+  "Creates a multiplication constraint: X * Y = Z, they can all be
+  IntVars. seems similar to arithm... you should probably use $arithm
+  instead, for readability"
+  [x y z]
   [:constraint [:times [z := x :* y]]])
 
 (def is-compare? #{:= :> :< :!= :>= :<=})
