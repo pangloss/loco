@@ -180,13 +180,13 @@
 
 
 (defn $mod
-  "Given variables X and Y, returns X mod Y."
-  [X Y]
-  {:type :mod
-   :arg1 X
-   :arg2 Y
-   :id (id)
-   :eq-shortcut true})
+  "Creates a modulo constraint. Ensures X % Y = Z"
+  ([x y z]
+   [:constraint [:mod [z := x :% y]]])
+  ([x y]
+   [:constraint :partial [:% [x y]]]))
+
+(def $% (partial $mod))
 
 
 (defn $abs

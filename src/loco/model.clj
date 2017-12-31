@@ -122,12 +122,18 @@
              (into [statement])
              (into [[:constraint [:sum (into [var-name := ] args)]]]))
 
-          ;; [[:var var-name :proto [:from [:constraint _:partial [:* x y]]]]]
+         [[:var var-name :proto] {:from [_:constraint _:partial [:% [arg1 arg2]]]}]
+         (-> []
+             (into [statement])
+             (into [[:constraint [:mod (into [var-name := arg1 :% arg2])]]]))
+
          [[:var var-name :proto] {:from [_:constraint _:partial [:/ [arg1 arg2]]]}]
          (-> []
              (into [statement])
              (into [($div arg1 arg2 var-name)]))
 
+
+         ;; [[:var var-name :proto [:from [:constraint _:partial [:* x y]]]]]
           ;; [
           ;;  statement
           ;;  [:constraint [:times ]]
@@ -169,6 +175,9 @@
     [(apply min possible-bounds)
      (apply max possible-bounds)]))
 
+(defn modulo-domains [[lb1 ub1] [lb2 ub2]]
+  [0 ub2])
+
 (defn divide-domains [[lb1 ub1] [lb2 ub2]]
   (->>
    (match [lb1 lb2 ub1 ub2]
@@ -199,6 +208,9 @@
 
          [[:var _ :proto] {:from [_:constraint _:partial [:* _]]} domains]
          (into [:int] (->> domains lb-ub-seq (reduce multiply-domains)))
+
+         [[:var _ :proto] {:from [_:constraint _:partial [:% _]]} domains]
+         (into [:int] (->> domains lb-ub-seq (reduce modulo-domains)))
 
          [[:var _ :proto] {:from [_:constraint _:partial [:/ _]]} domains]
          (into [:int] (->> domains lb-ub-seq (reduce divide-domains)))

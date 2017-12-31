@@ -222,3 +222,42 @@
        ($in :z 0 5)
        ($times :x :y :z)]
       model/compile))
+
+(=
+ [[:var :x :public [:int 0 100]]
+  [:var :y :public [:int 0 10]]
+  [:var :z :public [:int 0 5]]
+  [:constraint [:mod [:z := :x :% :y]]]]
+ (->> [($in :x 0 100)
+       ($in :y 0 10)
+       ($in :z 0 5)
+       ($mod :x :y :z)]
+      model/compile))
+
+(=
+ [[:var :x :public [:int 0 100]]
+  [:var :y :public [:int 0 10]]
+  [:var :z :public [:int 0 5]]
+  [:var :x%y :proto [:int 0 10]]
+  [:constraint [:mod [:x%y := :x :% :y]]]
+  [:constraint [:all-equal [:z :x%y]]]]
+ (->> [($in :x 0 100)
+       ($in :y 0 10)
+       ($in :z 0 5)
+       ($= :z ($mod :x :y))]
+      model/compile))
+
+;;TODO: need to test this for negative numbers as well
+(=
+ [[:var :x :public [:int 0 100]]
+  [:var :y :hidden [:const 10]]
+  [:var :z :public [:int 0 5]]
+  [:var :x%y :proto [:int 0 10]]
+  [:constraint [:mod [:x%y := :x :% :y]]]
+  [:constraint [:all-equal [:z :x%y]]]]
+ (->> [($in :x 0 100)
+       ($const :y 10)
+       ($in :z 0 5)
+       ($= :z ($% :x :y))]
+      model/compile))
+
