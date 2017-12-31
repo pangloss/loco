@@ -7,17 +7,19 @@
 (use 'clojure.pprint)
 
 (is
- (= [[:var :i :public [:int 0 5]]]
-    (->> [($in :i 0 5)]
-         model/compile)))
+ (=
+  [[:var :i :public [:int 0 5]]]
+  (->> [($in :i 0 5)]
+       model/compile)))
 
 (is
- (= [[:var :i :public [:int 0 5]]
-     [:var :1 :hidden [:const 1]]
-     [:constraint [:all-equal [:1 :i]]]]
-    (->> [($in :i 0 5)
-          ($= 1 :i)]
-         model/compile)))
+ (=
+  [[:var :i :public [:int 0 5]]
+   [:var :1 :hidden [:const 1]]
+   [:constraint [:all-equal [:1 :i]]]]
+  (->> [($in :i 0 5)
+        ($= 1 :i)]
+       model/compile)))
 
 (is
  (=
@@ -148,48 +150,52 @@
        model/compile)))
 
 (is
- (= [[:var :x :public [:int -5 5]]
-     [:var :y :public [:int 0 2]]
-     [:var :0 :hidden [:const 0]]
-     [:var :x*y :proto [:int -25 10]]
-     [:var :-x*y :proto [:int -10 25]]
-     [:constraint [:all-equal [:0 :-x*y]]]]
-    (->> [($in :x -5 5)
-          ($in :y 0 2)
-          ($= 0 ($neg ($* :x :y)))]
-         model/compile)))
+ (=
+  [[:var :x :public [:int -5 5]]
+   [:var :y :public [:int 0 2]]
+   [:var :0 :hidden [:const 0]]
+   [:var :x*y :proto [:int -25 10]]
+   [:var :-x*y :proto [:int -10 25]]
+   [:constraint [:all-equal [:0 :-x*y]]]]
+  (->> [($in :x -5 5)
+        ($in :y 0 2)
+        ($= 0 ($neg ($* :x :y)))]
+       model/compile)))
 
-(= [[:var :x :public [:int 5 5]]
-    [:var :y :public [:int 0 2]]
-    [:var :0 :hidden [:const 0]]
-    [:var :x/y :proto [:int 5 3]]
-    [:constraint [:div [:x/y := :x :/ :y]]]
-    [:constraint [:all-equal [:0 :x/y]]]]
-   (->> [($in :x 5 5)
-         ($in :y 0 2)
-         ($= 0 ($div :x :y))]
-        model/compile))
+(=
+ [[:var :x :public [:int 5 5]]
+  [:var :y :public [:int 0 2]]
+  [:var :0 :hidden [:const 0]]
+  [:var :x/y :proto [:int 5 3]]
+  [:constraint [:div [:x/y := :x :/ :y]]]
+  [:constraint [:all-equal [:0 :x/y]]]]
+ (->> [($in :x 5 5)
+       ($in :y 0 2)
+       ($= 0 ($div :x :y))]
+      model/compile))
 
-(= [[:var :x :public [:int -5 5]]
-    [:var :y :public [:int 2 2]]
-    [:var :0 :hidden [:const 0]]
-    [:var :x/y :proto [:int -3 3]]
-    [:constraint [:div [:x/y := :x :/ :y]]]
-    [:constraint [:all-equal [:0 :x/y]]]]
-   (->> [($in :x -5 5)
-         ($in :y 2 2)
-         ($= 0 ($div :x :y))]
-        model/compile))
+(=
+ [[:var :x :public [:int -5 5]]
+  [:var :y :public [:int 2 2]]
+  [:var :0 :hidden [:const 0]]
+  [:var :x/y :proto [:int -3 3]]
+  [:constraint [:div [:x/y := :x :/ :y]]]
+  [:constraint [:all-equal [:0 :x/y]]]]
+ (->> [($in :x -5 5)
+       ($in :y 2 2)
+       ($= 0 ($div :x :y))]
+      model/compile))
 
-(= [[:var :x :public [:int 0 10]]
-    [:var :y :public [:int 0 10]]
-    [:var :z :public [:int 0 10]]
-    [:constraint [:div [:z := :x :/ :y]]]]
-   (->> [($in :x 0 10)
-         ($in :y 0 10)
-         ($in :z 0 10)
-         ($div :x :y :z)]
-        model/compile))
+(=
+ [[:var :x :public [:int 0 10]]
+  [:var :y :public [:int 0 10]]
+  [:var :z :public [:int 0 10]]
+  [:constraint [:div [:z := :x :/ :y]]]]
+ (->> [($in :x 0 10)
+       ($in :y 0 10)
+       ($in :z 0 10)
+       ($div :x :y :z)]
+      model/compile))
 
 (=
  [[:var :x :public [:int 0 100]]
@@ -261,20 +267,22 @@
        ($= :z ($% :x :y))]
       model/compile))
 
-(= [[:var :y :public [:int 0 10]]
-    [:var :z :public [:int -5 0]]
-    [:constraint [:abs [:y := :z]]]]
-   (->> [($in :y 0 10)
-         ($in :z -5 0)
-         ($abs :y :z)]
-        model/compile))
+(=
+ [[:var :y :public [:int 0 10]]
+  [:var :z :public [:int -5 0]]
+  [:constraint [:abs [:y := :z]]]]
+ (->> [($in :y 0 10)
+       ($in :z -5 0)
+       ($abs :y :z)]
+      model/compile))
 
-(= [[:var :y :public [:int 0 10]]
-    [:var :z :public [:int -5 0]]
-    [:var :|z| :proto [:int 0 5]]
-    [:constraint [:abs [:|z| := :z]]]
-    [:constraint [:all-equal [:y :|z|]]]]
-   (->> [($in :y 0 10)
-         ($in :z -5 0)
-         ($= :y ($abs :z))]
-        model/compile))
+(=
+ [[:var :y :public [:int 0 10]]
+  [:var :z :public [:int -5 0]]
+  [:var :|z| :proto [:int 0 5]]
+  [:constraint [:abs [:|z| := :z]]]
+  [:constraint [:all-equal [:y :|z|]]]]
+ (->> [($in :y 0 10)
+       ($in :z -5 0)
+       ($= :y ($abs :z))]
+      model/compile))
