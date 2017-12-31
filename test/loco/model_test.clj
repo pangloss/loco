@@ -163,3 +163,23 @@
       ($in :y 0 10)
       ($arithm :y := :x :/ 10)]
      model/compile)
+(=
+ [[:var :x :public [:int 0 100]]
+  [:var :y :public [:int 0 10]]
+  [:var :10 :hidden [:const 10]]
+  [:constraint [:arithm [:y := :x :/ :10]]]]
+ (->> [($in :x 0 100)
+       ($in :y 0 10)
+       ($arithm :y := :x :/ 10)]
+      model/compile))
+
+(=
+ [[:var :x :public [:int 0 100]]
+  [:var :y :public [:int 0 10]]
+  [:var :z :public [:int 0 5]]
+  [:constraint [:arithm [:y := :x :/ :z]]]]
+ (->> [($in :x 0 100)
+       ($in :y 0 10)
+       ($in :z 0 5)
+       ($arithm :y := :x :/ :z)]
+      model/compile))

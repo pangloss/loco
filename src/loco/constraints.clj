@@ -140,17 +140,18 @@
 (def is-op? #{:+ :* :/ :-})
 
 (defn $arithm
-  "similar to choco arithm. lets you use division with a constant. other
+  "similar to choco arithm. lets you use division with an IntVar. other
   than that it is a shortcut for having a compare and operation in 1
   instruction. lets you write a = b + c. allowed operators are
-  #{:+ :* :/ :-}, allowed comparisons are #{:= :> :< :!= :>= :<=}"
+  #{:+ :* :/ :-}, allowed comparisons are #{:= :> :< :!= :>= :<=}
+  a, b and c are allowed to be partial constraints"
   ([a compare b]
    {:pre [(is-compare? compare)]}
    [:constraint [:arithm [a compare b]]])
 
-  ([a compare b op const]
-   {:pre [(is-compare? compare) (is-op? op) (number? const)]}
-   [:constraint [:arithm [a compare b op const]]]))
+  ([a compare b op c]
+   {:pre [(is-compare? compare) (is-op? op)]}
+   [:constraint [:arithm [a compare b op c]]]))
 
 (defn $min
   "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers."

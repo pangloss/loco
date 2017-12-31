@@ -1,4 +1,5 @@
 (ns loco.model
+  (:use loco.constraints)
   (:require
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk]
