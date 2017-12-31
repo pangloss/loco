@@ -130,6 +130,14 @@
   [x y]
   [:constraint :partial [:* [x y]]])
 
+(defn $div
+  "Creates an euclidean division constraint. Ensures dividend / divisor
+  = result, rounding towards 0 Also ensures divisor != 0"
+  ([dividend, divisor]
+   [:constraint :partial [:/ [dividend, divisor]]])
+  ([dividend, divisor, result]
+   [:constraint [:div [result := dividend :/ divisor]]]))
+
 (defn $times
   "Creates a multiplication constraint: X * Y = Z, they can all be
   IntVars. seems similar to arithm... you should probably use $arithm

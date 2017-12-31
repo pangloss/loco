@@ -159,10 +159,38 @@
           ($= 0 ($neg ($* :x :y)))]
          model/compile)))
 
-(->> [($in :x 0 100)
-      ($in :y 0 10)
-      ($arithm :y := :x :/ 10)]
-     model/compile)
+(= [[:var :x :public [:int 5 5]]
+    [:var :y :public [:int 0 2]]
+    [:var :0 :hidden [:const 0]]
+    [:var :x/y :proto [:int 5 3]]
+    [:constraint [:div [:x/y := :x :/ :y]]]
+    [:constraint [:all-equal [:0 :x/y]]]]
+   (->> [($in :x 5 5)
+         ($in :y 0 2)
+         ($= 0 ($div :x :y))]
+        model/compile))
+
+(= [[:var :x :public [:int -5 5]]
+    [:var :y :public [:int 2 2]]
+    [:var :0 :hidden [:const 0]]
+    [:var :x/y :proto [:int -3 3]]
+    [:constraint [:div [:x/y := :x :/ :y]]]
+    [:constraint [:all-equal [:0 :x/y]]]]
+   (->> [($in :x -5 5)
+         ($in :y 2 2)
+         ($= 0 ($div :x :y))]
+        model/compile))
+
+(= [[:var :x :public [:int 0 10]]
+    [:var :y :public [:int 0 10]]
+    [:var :z :public [:int 0 10]]
+    [:constraint [:div [:z := :x :/ :y]]]]
+   (->> [($in :x 0 10)
+         ($in :y 0 10)
+         ($in :z 0 10)
+         ($div :x :y :z)]
+        model/compile))
+
 (=
  [[:var :x :public [:int 0 100]]
   [:var :y :public [:int 0 10]]

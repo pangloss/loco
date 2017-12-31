@@ -48,12 +48,9 @@
   [statement]
   (match [statement]
          [[:constraint :partial [:neg dep-name]]] (keyword (str "-" (name dep-name)))
-         [[:constraint :partial [op deps]]] (->> (interpose (name op) (map name deps))
+         [[:constraint :partial [op [& deps]]]] (->> (interpose (name op) (map name deps))
                                                    (apply str)
-                                                   keyword)
-         ))
-
-
+                                                   keyword)))
 
 (defn- unnest-partial-vars
   "expects form of [:constraint [... ]]"
@@ -126,6 +123,11 @@
              (into [[:constraint [:sum (into [var-name := ] args)]]]))
 
           ;; [[:var var-name :proto [:from [:constraint _:partial [:* x y]]]]]
+         [[:var var-name :proto] {:from [_:constraint _:partial [:/ [arg1 arg2]]]}]
+         (-> []
+             (into [statement])
+             (into [($div arg1 arg2 var-name)]))
+
           ;; [
           ;;  statement
           ;;  [:constraint [:times ]]
@@ -167,6 +169,16 @@
     [(apply min possible-bounds)
      (apply max possible-bounds)]))
 
+(defn divide-domains [[lb1 ub1] [lb2 ub2]]
+  (->>
+   (match [lb1 lb2 ub1 ub2]
+          [_ 0 _ 0] [lb1 ub1]
+          [_ _ _ 0] [(/ lb1 lb2) ub1]
+          [_ 0 _ _] [lb1 (/ ub1 ub2)]
+          [_ _ _ _] [(/ lb1 lb2) (/ ub1 ub2)])
+   (mapv (comp int #(if (neg? %)
+                      (Math/floor %)
+                      (Math/ceil %))))))
 (defn- apply-dependant-domain [statement dep-domains]
   (match [statement (meta statement) dep-domains]
          [[:var _ _] {:neg _} [[:int lb ub]]]
@@ -187,6 +199,9 @@
 
          [[:var _ :proto] {:from [_:constraint _:partial [:* _]]} domains]
          (into [:int] (->> domains lb-ub-seq (reduce multiply-domains)))
+
+         [[:var _ :proto] {:from [_:constraint _:partial [:/ _]]} domains]
+         (into [:int] (->> domains lb-ub-seq (reduce divide-domains)))
          ))
 
 (defn domain-transform [statements]
