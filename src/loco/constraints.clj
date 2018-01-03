@@ -303,47 +303,45 @@
 (defn $true
   "Always true."
   []
-  {:type :true
-   :id (id)})
+  [:constraint :true])
 
 (defn $false
   "Always false."
   []
-  {:type :false
-   :id (id)})
+  [:constraint :false])
 
 (defn $and
-  "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if and only if every subconstraint is true."
+  "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if
+  and only if every subconstraint is true."
   [& constraints]
   (if (empty? constraints)
     ($true)
-    {:type :and, :constraints constraints}))
+    [:constraint [:and (vec constraints)]]))
 
 (defn $or
-  "An \"or\" statement (i.e. \"PvQv...\"); this statement is true if and only if at least one subconstraint is true."
+  "An \"or\" statement (i.e. \"PvQv...\"); this statement is true if and
+  only if at least one subconstraint is true."
   [& constraints]
   (if (empty? constraints)
     ($false)
-    {:type :or, :constraints constraints}))
+    [:constraint [:or (vec constraints)]]))
 
 (defn $not
   "Given a constraint C, returns \"not C\" a.k.a. \"~C\", which is true iff C is false."
-  [C]
-  {:type :not, :arg C})
+  [constraint]
+  [:constraint [:not constraint]])
+
+(defn $when
+  [if-this then-this]
+  [:constraint [:when [if-this then-this]]])
 
 (defn $if
   "An \"if\" statement (i.e. \"implies\", \"P=>Q\"); this statement is true if and only if P is false or Q is true.
-In other words, if P is true, Q must be true (otherwise the whole statement is false).
-An optional \"else\" field can be specified, which must be true if P is false."
-  ([if-this then-this]
-    {:type :if
-     :if if-this
-     :then then-this})
-  ([if-this then-this else-this]
-    {:type :if
-     :if if-this
-     :then then-this
-     :else else-this}))
+In other words, if P is true, Q must be true (otherwise the whole
+  statement is false).  An optional \"else\" field can be specified,
+  which must be true if P is false."
+  [if-this then-this else-this]
+  [:constraint [:if-else [if-this then-this else-this]]])
 
 (defn $cond
   "A convenience function for constructing a \"cond\"-like statement out of $if statements.
@@ -363,13 +361,12 @@ If no \"else\" clause is specified, it is \"True\" by default."
                                      (apply $if clauses))
     :else ($if (first clauses) (second clauses) (apply $cond (rest (rest clauses))))))
 
+;;TODO: not sure how this should be implemented
 (defn $reify
   "Given a constraint C, will generate a bool-var V such that (V = 1) iff C."
   {:choco "reification(BoolVar var, Constraint cstr)"}
-  [C]
-  {:type :reify
-   :arg C
-   :id (id)})
+  [constraint]
+  [:reify constraint])
 
 
 
