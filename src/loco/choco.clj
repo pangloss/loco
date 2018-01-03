@@ -319,7 +319,7 @@
              X
              eq
              Y)))
-
+;;LOGIC
 (defmethod ->choco* :true
   [_]
   (let [model (:csolver *solver*)]
