@@ -73,10 +73,6 @@
   [x]
   (-> x ->choco ->int-var))
 
-(defn- id
-  []
-  (gensym "id"))
-
 (defmethod ->choco* :int-domain
   [{var-name :name domain :domain}]
   (let [v (->choco var-name)
@@ -122,7 +118,6 @@
         op
         sum-value))
 
-
 ;;FIXME: need to handle BoolVar lists
 (defmethod ->choco* [:+ :=]
   [{:keys [args eq-arg] :as m}]
@@ -152,7 +147,6 @@
                               (into-array IntVar vars)))]
               (constrain! (sum model vars "=" sum-var))
               sum-var))))
-
 
 (defmethod ->choco* [:- :=]
   [{:keys [args eq-arg] :as m}]
@@ -285,7 +279,6 @@
   (let [model (:csolver *solver*)]
     (.abs model (->choco-int-var X))))
 
-
 (defmethod ->choco* [:scalar :=]
   [{:keys [variables coefficients eq-arg]}]
   (let [model (:csolver *solver*)]
@@ -327,7 +320,6 @@
              eq
              Y)))
 
-
 (defmethod ->choco* :true
   [_]
   (let [model (:csolver *solver*)]
@@ -338,13 +330,11 @@
   (let [model (:csolver *solver*)]
     (.falseConstraint model)))
 
-
 (defmethod ->choco* :and
   [{constraints :constraints}]
   (let [constraints (map ->choco constraints)
         model (:csolver *solver*)]
     (.and model (into-array Constraint constraints))))
-
 
 (defmethod ->choco* :or
   [{constraints :constraints}]
@@ -356,7 +346,6 @@
   [{C :arg}]
   (let [model (:csolver *solver*)]
     (.not model (->choco C))))
-
 
 (defmethod ->choco* :if
   [{if-this :if then-this :then else-this :else}]
@@ -370,7 +359,6 @@
                    (->choco then-this)
                    (->choco else-this)))))
 
-
 (defmethod ->choco* :reify
   [{C :arg}]
   (let [C (->choco C)
@@ -378,7 +366,6 @@
         model (:csolver *solver*)]
     (.reification model V C)
     V))
-
 
 (defmethod ->choco* :distinct
   [{vars :args}]
@@ -391,7 +378,6 @@
   (let [list-of-vars (map ->choco-int-var list-of-vars)
         model (:csolver *solver*)]
     (.circuit model (into-array IntVar list-of-vars) offset)))
-
 
 (defmethod ->choco* [:nth :=]
   [{:keys [vars index offset eq-arg]}]
@@ -411,7 +397,6 @@
         model (:csolver *solver*)]
     (constrain! (.element model new-var (into-array IntVar vars) index offset))
     new-var))
-
 
 (defmethod ->choco* :regular
   [{:keys [list-of-vars automaton]}]
