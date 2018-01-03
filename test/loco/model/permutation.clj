@@ -25,7 +25,7 @@
         [:var :b :public [:int 0 9]]
         [:var :4 :hidden [:const 4]]
         [:var :a+b :proto [:int 0 18]]
-        [:constraint [:sum [:a+b := :a :b]]]
+        [:constraint [:sum [:a+b := [:a :b]]]]
         [:constraint [:distinct [:a :b :c :4 :a+b]]]]
        (->>
         [($in :a 0 9)
@@ -65,3 +65,49 @@
       ($in :index 0 2)
       ($circuit [:a :b :c] :index)]
      model/compile))))
+
+
+(deftest cardinality-test
+  (is
+   (=
+    [[:var :a :public [:int 2 3]]
+     [:var :b :public [:int 1 3]]
+     [:var :c :public [:int 1 3]]
+     [:var :d :public [:int 2 3]]
+     [:var :e :public [:int 1 3]]
+     [:var :ones :proto [:int 0 3]]
+     [:var :twos :proto [:int 0 5]]
+     [:constraint
+      [:cardinality
+       [[:a :b :c :d :e] [[1 2] [:ones :twos]] [:closed true]]]]]
+    (->>
+     [($in :a 2 3)
+      ($in :b 1 3)
+      ($in :c 1 3)
+      ($in :d 2 3)
+      ($in :e 1 3)
+      ($cardinality [:a :b :c :d :e] {1 :ones, 2 :twos} :closed)]
+     model/compile))
+   )
+
+  (is
+   (=
+    [[:var :a :public [:int 1 3]]
+     [:var :b :public [:int 1 3]]
+     [:var :c :public [:int 2 3]]
+     [:var :d :public [:int 1 3]]
+     [:var :e :public [:int 1 3]]
+     [:var :ones :proto [:int 0 4]]
+     [:var :twos :proto [:int 0 5]]
+     [:constraint
+      [:cardinality
+       [[:a :b :c :d :e] [[1 2] [:ones :twos]] [:closed false]]]]]
+    (->>
+     [($in :a 1 3)
+      ($in :b 1 3)
+      ($in :c 2 3)
+      ($in :d 1 3)
+      ($in :e 1 3)
+      ($cardinality [:a :b :c :d :e] {1 :ones, 2 :twos})]
+     model/compile)))
+  )

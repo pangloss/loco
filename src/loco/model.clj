@@ -85,12 +85,26 @@
   "expects form of [:constraint [... ]]"
   [[_  statement-args]]
   (let [unnest-acc (atom [])
-        extract-constraints (fn [form]
-                              (if (partial-constraint? form)
-                                (let [var-name (constraint-to-keyword form)]
-                                  (swap! unnest-acc conj ^{:from form} [:var var-name :proto])
-                                  var-name)
-                                form))
+        extract-constraints
+        (fn [form]
+          (match [form]
+                 [[:cardinality [deps [_ occurences] _]]]
+                 (do
+                   (swap! unnest-acc
+                          into
+                          (map #(with-meta [:var % :proto] {:from form}) occurences))
+                   ;; we need to preserve the cardinality constraint
+                   ;; in it's originality. we are not actually
+                   ;; unnesting partials in this case
+                   form)
+
+                 [(form :guard partial-constraint?)]
+                 (let [var-name (constraint-to-keyword form)]
+                   (swap! unnest-acc
+                          conj
+                          ^{:from form} [:var var-name :proto])
+                   var-name)
+                 :else form))
         transformed-constraint (walk/postwalk extract-constraints statement-args)]
     (into [transformed-constraint] @unnest-acc)))
 
@@ -151,6 +165,7 @@
    [statement (meta statement)]
    (match
     [[:var var-name :proto] {:from [:constraint :partial constraint]}] [var-name constraint]
+    [[:var var-name :proto] {:from [constraint]}] [var-name constraint]
     :else [statement])
    (match
     [_ [:neg dep-name]]
@@ -166,20 +181,17 @@
       (-> []
           (into negative-vars)
           (into [statement])
-          ;;TODO: convert to $functions
           (into [($sum var-name := (into [arg1] negative-var-names))])))
 
     [var-name [:+ args]]
     (-> []
         (into [statement])
-        ;;TODO: convert to $functions
         (into [($sum var-name := args)]))
 
     [var-name [:% [arg1 arg2]]]
     (-> []
         (into [statement])
-        ;;TODO: convert to $functions
-        (into [[:constraint [:mod (into [var-name := arg1 :% arg2])]]]))
+        (into [($mod arg1 arg2 var-name)]))
 
     [var-name [:* [arg1 arg2]]]
     (-> []
@@ -216,6 +228,7 @@
         (into [statement])
         (into [($element var-name vars index offset)]))
 
+    ;;TODO: get rid of this and only use the one with offest
     [var-name [:element [vars :at index]]]
     (-> []
         (into [statement])
@@ -242,12 +255,15 @@
 
    (match
     [[:var _ _] {:neg dep}] [:neg dep]
-    [[:var _ :proto]  {:from [:constraint :partial more]}] more)
+    [[:var _ :proto]  {:from [:constraint :partial more]}] more
+    [[:var _ :proto]  {:from constraint}] constraint
+    )
 
    (match
     [:neg dep] [dep]
     [:scalar [deps _]] deps
     [:element [deps _ index & _]] (into [index] deps)
+    [:cardinality [deps [values occurences] _]] deps
     [_type deps] deps)))
 
 (defn- lb-ub-seq [domains]
@@ -307,12 +323,27 @@
     ((juxt (comp first first (p sort-by first))
            (comp last last (p sort-by second)))))))
 
+(defn within-domain [num [lb ub]]
+  (and
+   (<= lb num)
+   (>= ub num)))
+
+(defn cardinality-domain [var-name values occurences dep-domains]
+  (let [cardinality-val (var-name (zipmap occurences values))
+        ub (->>
+            (lb-ub-seq dep-domains)
+            (filter (p within-domain cardinality-val))
+            count)]
+    ;;vars of cardinality should always be IntVars
+    [:int 0 ub]))
+
 (defn- apply-dependant-domain [statement dep-domains]
   (->
    [statement (meta statement)]
    (match
     [[:var _ _]      {:neg _}]                               [:neg dep-domains]
-    [[:var _ :proto] {:from [:constraint :partial partial]}] [partial dep-domains])
+    [[:var _ :proto] {:from [:constraint :partial partial]}] [partial dep-domains]
+    [[:var var-name :proto] {:from constraint}]              [var-name constraint dep-domains])
    (match
     [:neg [[:int lb ub]]]
     [:int (- ub) (- lb)]
@@ -359,6 +390,11 @@
     [[:element [_vars :at _]] [[:int index-lb index-ub] & vars]]
     (into [:int] (element-domains vars index-lb index-ub))
 
+    #_[[:cardinality [[:a :b :c :d :e]
+                    [[1 2] [:ones :twos]]
+                    [:closed false]]] [{1 :ones, 2 :twos} [:a :b :c :d :e]]]
+    [(var-name :guard keyword?) [:cardinality [vars [values occurences] _]] dep-domains]
+    (cardinality-domain var-name values occurences dep-domains)
     )))
 
 (defn domain-transform [statements]

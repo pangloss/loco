@@ -455,21 +455,38 @@ If no \"else\" clause is specified, it is \"True\" by default."
    :automaton automaton})
 
 (defn $cardinality
-  "Takes a list of variables, and a frequency map (from numbers to frequencies), constrains
-that the frequency map is accurate. If the :closed flag is set to true, any keys that aren't
-in the frequency map can't appear at all in the list of variables.
+  "Takes a list of variables, and a frequency map (from numbers to
+  frequencies), constrains that the frequency map is accurate. If
+  the :closed flag is set to true, any keys that aren't in the
+  frequency map can't appear at all in the list of variables.
 
-Example: ($cardinality [:a :b :c :d :e] {1 :ones, 2 :twos} :closed true)
-=> {:a 1, :b 1, :c 2, :d 2, :e 2
-    :ones 2, :twos 3}"
+  Example: ($cardinality [:a :b :c :d :e] {1 :ones, 2 :twos} :closed true)
+  => {:a 1, :b 1, :c 2, :d 2, :e 2 :ones 2, :twos 3}"
   {:choco "globalCardinality(IntVar[] vars, int[] values, IntVar[] occurrences, boolean closed)"
    :gccat "http://sofdem.github.io/gccat/gccat/Cglobal_cardinality.html"}
-  [variables frequencies & {:as args}]
-  {:type :cardinality
-   :variables variables
-   :values (keys frequencies)
-   :occurrences (vals frequencies)
-   :closed (:closed args)})
+  ([variables frequencies]
+   ($cardinality variables frequencies false))
+
+  ([variables frequencies closed?]
+   {:pre [
+          (map? frequencies)
+          (vector? variables)
+          (or (= closed? :closed) (boolean? closed?))
+          (every? integer? (keys frequencies))
+          (every? keyword? (vals frequencies))
+          (distinct? (keys frequencies))
+          (distinct? (vals frequencies))
+          ]
+    }
+   (let [closed (case closed?
+                  :closed true
+                  closed?)]
+     [:constraint [:cardinality
+                   [variables
+                    [(preserve-consts (vec (keys frequencies)))
+                     (vec (vals frequencies))]
+                    [:closed closed]]]
+      ])))
 
 (defn $knapsack
   "Takes constant weights / values for a list of pre-defined items, and
