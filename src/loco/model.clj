@@ -43,16 +43,43 @@
          :else false))
 
 ;;TODO: attach the name making function to the constraint itself via meta from ($neg) function
-(defn- constraint-to-keyword
+(defn constraint-to-keyword
   "this will not work with nested constraints. use with postwalk"
   [statement]
-  (match [statement]
-         [[:constraint :partial [:neg dep-name]]] (keyword (str "-" (name dep-name)))
-         [[:constraint :partial [:abs [dep]]]] (keyword (str "|" (name dep) "|"))
-         [[:constraint :partial [op [dep]]]] (keyword (str (name op) "_" (name dep)))
-         [[:constraint :partial [op [& deps]]]] (->> (interpose (name op) (map name deps))
-                                                   (apply str)
-                                                   keyword)))
+  (->
+   [statement]
+   (match [[:constraint :partial more]] [more])
+   (match
+    [[:neg dep-name]] (str "-" (name dep-name))
+    [[:abs [dep]]] (str "|" (name dep) "|")
+    [[op [dep]]] (str (name op) "_" (name dep))
+
+    [[(op :guard #(->> % name count (= 1))) [& deps]]]
+    (->> (interpose (name op) (map name deps))
+         (apply str))
+
+    [[op (args :guard #(->> % flatten count (< 10)))]]
+    (->> args hash (str (name op) "_"))
+
+    [[:scalar [vars coeffs]]]
+    (->> [(map name vars) (repeat "*") coeffs]
+         (apply map vector)
+         (interpose "+")
+         flatten
+         (apply str "scalar_"))
+
+    [[:element stuff]]
+    (->> stuff
+         flatten
+         (map str)
+         (interpose "_")
+         (apply str "element_"))
+
+    [[op [& deps]]]
+    (->> (interpose "_" (map name deps))
+         (apply str (name op) "_")))
+
+   keyword))
 
 (defn- unnest-partial-vars
   "expects form of [:constraint [... ]]"
@@ -91,11 +118,28 @@
         (->>  statement
               (walk/prewalk
                (fn [form]
-                 (match [form]
-                        [(form :guard number?)]
-                        (let [var-name (keyword (str form))]
-                          (swap! acc conj [:var var-name :hidden [:const form]])
+                 ;; the main reason for this gnarly code is to mark
+                 ;; constants without creating infinite recursion
+                 (match [form (meta form)]
+                        [[(const :guard number?)] {:preserve-const true}]
+                        const
+
+                        [[(const :guard number?)] {:const true}]
+                        (let [var-name (keyword (str const))]
+                          (swap! acc conj [:var var-name :hidden [:const const]])
                           var-name)
+
+                        [(form :guard vector?) {:preserve-consts true}]
+                        (->> form (map #(if (number? %)
+                                          (with-meta [%] {:preserve-const true})
+                                          %))
+                             (into (empty form)))
+
+                        [(form :guard vector?) _]
+                        (->> form (map #(if (number? %)
+                                          (with-meta [%] {:const true})
+                                          %))
+                             (into (empty form)))
 
                         :else form
                         ))))
@@ -103,49 +147,81 @@
     (conj @acc transformed-statement)))
 
 (defn- constraint-from-proto-var [statement]
-  (match [statement (meta statement)]
-         [[:var _ :proto] {:from [:constraint :partial [:neg dep-name]]}]
-         [^{:neg dep-name} [:var (neg-var-name dep-name) :proto]]
+  (->
+   [statement (meta statement)]
+   (match
+    [[:var var-name :proto] {:from [:constraint :partial constraint]}] [var-name constraint]
+    :else [statement])
+   (match
+    [_ [:neg dep-name]]
+    [($neg (neg-var-name dep-name) dep-name)]
 
-         [[:var var-name :proto] {:from [_:constraint _:partial [:- [arg1 & more]]]}]
-         (let [
-               negative-vars (->> more
-                                  (map (fn [var-name]
-                                         ^{:neg var-name} [:var (neg-var-name var-name) :proto])))
-               negative-var-names (map second negative-vars)
-               ]
-           (-> []
-               (into negative-vars)
-               (into [statement])
-               (into [[:constraint [:sum (into [var-name := arg1] negative-var-names)]]])))
+    [var-name [:- [arg1 & more]]]
+    (let [
+          negative-vars (->> more
+                             (map (fn [var-name]
+                                    ^{:neg var-name} [:var (neg-var-name var-name) :proto])))
+          negative-var-names (map second negative-vars)
+          ]
+      (-> []
+          (into negative-vars)
+          (into [statement])
+          ;;TODO: convert to $functions
+          (into [($sum var-name := (into [arg1] negative-var-names))])))
 
-         [[:var var-name :proto] {:from [_:constraint _:partial [:+ args]]}]
-         (-> []
-             (into [statement])
-             (into [[:constraint [:sum (into [var-name := ] args)]]]))
+    [var-name [:+ args]]
+    (-> []
+        (into [statement])
+        ;;TODO: convert to $functions
+        (into [($sum var-name := args)]))
 
-         [[:var var-name :proto] {:from [_:constraint _:partial [:% [arg1 arg2]]]}]
-         (-> []
-             (into [statement])
-             (into [[:constraint [:mod (into [var-name := arg1 :% arg2])]]]))
+    [var-name [:% [arg1 arg2]]]
+    (-> []
+        (into [statement])
+        ;;TODO: convert to $functions
+        (into [[:constraint [:mod (into [var-name := arg1 :% arg2])]]]))
 
-         [[:var var-name :proto] {:from [_:constraint _:partial [:/ [arg1 arg2]]]}]
-         (-> []
-             (into [statement])
-             (into [($div arg1 arg2 var-name)]))
+    [var-name [:* [arg1 arg2]]]
+    (-> []
+        (into [statement])
+        (into [($times arg1 arg2 var-name)]))
 
-         [[:var var-name :proto] {:from [_:constraint _:partial [:abs [arg]]]}]
-         (-> []
-             (into [statement])
-             (into [($abs var-name arg)])
-             )
+    [var-name [:/ [arg1 arg2]]]
+    (-> []
+        (into [statement])
+        (into [($div arg1 arg2 var-name)]))
 
-         ;; [[:var var-name :proto [:from [:constraint _:partial [:* x y]]]]]
-          ;; [
-          ;;  statement
-          ;;  [:constraint [:times ]]
-          ;;  ]
-         :else [statement]))
+    [var-name [:abs [arg]]]
+    (-> []
+        (into [statement])
+        (into [($abs var-name arg)]))
+
+    [var-name [:min args]]
+    (-> []
+        (into [statement])
+        (into [($min var-name args)]))
+
+    [var-name [:max args]]
+    (-> []
+        (into [statement])
+        (into [($max var-name args)]))
+
+    [var-name [:scalar [vars coeffs]]]
+    (-> []
+        (into [statement])
+        (into [($scalar var-name := vars coeffs)]))
+
+    [var-name [:element [vars :at index _ offset]]]
+    (-> []
+        (into [statement])
+        (into [($element var-name vars index offset)]))
+
+    [var-name [:element [vars :at index]]]
+    (-> []
+        (into [statement])
+        (into [($element var-name vars index)]))
+
+    :else [statement])))
 
 (defn index-by [f coll]
   (->>
@@ -159,17 +235,29 @@
          [[_:var _ _ [:const val]]] [:const val]
          :else nil))
 
+;;TODO: add a deps meta tag to partial constraints!
 (defn- var-get-dependancies [statement]
-  (match [statement (meta statement)]
-         [[:var _ _] {:neg dep}] [dep]
-         [[:var _ :proto]  {:from [_:constraint _:partial [:neg dep]]}] [dep]
-         [[:var _ :proto]  {:from [_:constraint _:partial [_ deps]]}] deps))
+  (->
+   [statement (meta statement)]
+
+   (match
+    [[:var _ _] {:neg dep}] [:neg dep]
+    [[:var _ :proto]  {:from [:constraint :partial more]}] more)
+
+   (match
+    [:neg dep] [dep]
+    [:scalar [deps _]] deps
+    [:element [deps _ index & _]] (into [index] deps)
+    [_type deps] deps)))
 
 (defn- lb-ub-seq [domains]
-  (->> domains
-       (map #(match [%]
-                    [[:const b & _]] [b b]
-                    [[:int lb ub]] [lb ub]))))
+  (->>
+   domains
+   (map #(match
+          [%]
+          [(const :guard integer?)] [const const]
+          [[:const b & _]] [b b]
+          [[:int lb ub]] [lb ub]))))
 
 (defn- subtract-domains [[lb1 ub1] [lb2 ub2]]
   [(- lb1 ub2) (- ub1 lb2)])
@@ -195,40 +283,83 @@
    (mapv (comp int #(if (neg? %)
                       (Math/floor %)
                       (Math/ceil %))))))
+
 (defn abs-domain [_ [lb ub]]
   (sort [(Math/abs lb) (Math/abs ub)]))
 
+(defn min-domains [[lb1 ub1] [lb2 ub2]]
+  [(min lb1 lb2), (min ub1 ub2)])
+
+(defn max-domains [[lb1 ub1] [lb2 ub2]]
+  [(max lb1 lb2), (max ub1 ub2)])
+
+(defn element-domains
+  ([list idx-lb idx-ub]
+   (element-domains list idx-lb idx-ub 0))
+
+  ([list idx-lb idx-ub offset]
+   (->>
+    list
+    lb-ub-seq
+    (drop offset)
+    (drop idx-lb)
+    (take (inc idx-ub))
+    ((juxt (comp first first (p sort-by first))
+           (comp last last (p sort-by second)))))))
+
 (defn- apply-dependant-domain [statement dep-domains]
-  (match [statement (meta statement) dep-domains]
-         [[:var _ _] {:neg _} [[:int lb ub]]]
-         [:int (- ub) (- lb)]
+  (->
+   [statement (meta statement)]
+   (match
+    [[:var _ _]      {:neg _}]                               [:neg dep-domains]
+    [[:var _ :proto] {:from [:constraint :partial partial]}] [partial dep-domains])
+   (match
+    [:neg [[:int lb ub]]]
+    [:int (- ub) (- lb)]
 
-         [[:var _ _] {:neg _} [[:const b]]]
-         [:const (- b)]
+    [:neg [[:const b]]]
+    [:const (- b)]
 
-         ;;problem here is that i'm assuming int as domain, if we have
-         ;;domains that are only consts, then this will still work,
-         ;;but possibly better if we can tell if we only have booleans
-         ;;FIXME: need function to infer domain type
-         [[:var _ :proto] {:from [_:constraint _:partial[:- _]]} domains]
-         (into [:int] (->> domains lb-ub-seq (reduce subtract-domains)))
+    ;;problem here is that i'm assuming int as domain, if we have
+    ;;domains that are only consts, then this will still work,
+    ;;but possibly better if we can tell if we only have booleans
+    ;;FIXME: need function to infer domain type
+    [[:- _] domains]
+    (into [:int] (->> domains lb-ub-seq (reduce subtract-domains)))
 
-         [[:var _ :proto] {:from [_:constraint _:partial [:+ _]]} domains]
-         (into [:int] (->> domains lb-ub-seq (reduce add-domains)))
+    [[:+ _] domains]
+    (into [:int] (->> domains lb-ub-seq (reduce add-domains)))
 
-         [[:var _ :proto] {:from [_:constraint _:partial [:* _]]} domains]
-         (into [:int] (->> domains lb-ub-seq (reduce multiply-domains)))
+    [[:* _] domains]
+    (into [:int] (->> domains lb-ub-seq (reduce multiply-domains)))
 
-         [[:var _ :proto] {:from [_:constraint _:partial [:% _]]} domains]
-         (into [:int] (->> domains lb-ub-seq (reduce modulo-domains)))
+    [[:% _] domains]
+    (into [:int] (->> domains lb-ub-seq (reduce modulo-domains)))
 
-         [[:var _ :proto] {:from [_:constraint _:partial [:/ _]]} domains]
-         (into [:int] (->> domains lb-ub-seq (reduce divide-domains)))
+    [[:/ _] domains]
+    (into [:int] (->> domains lb-ub-seq (reduce divide-domains)))
 
-         [[:var _ :proto] {:from [_:constraint _:partial [:abs _]]} domains]
-         (into [:int] (->> domains lb-ub-seq (reduce abs-domain [0 0])))
+    [[:abs _] domains]
+    (into [:int] (->> domains lb-ub-seq (reduce abs-domain [0 0])))
 
-         ))
+    [[:min _] domains]
+    (into [:int] (->> domains lb-ub-seq (reduce min-domains)))
+
+    [[:max _] domains]
+    (into [:int] (->> domains lb-ub-seq (reduce max-domains)))
+
+    [[:scalar [_ coeffs]] domains]
+    (into [:int] (->> domains lb-ub-seq
+                      (map #(multiply-domains %2 [%1 %1]) coeffs)
+                      (reduce add-domains)))
+
+    [[:element [_vars :at _ :offset offset]] [[:int index-lb index-ub] & vars]]
+    (into [:int] (element-domains vars index-lb index-ub offset))
+
+    [[:element [_vars :at _]] [[:int index-lb index-ub] & vars]]
+    (into [:int] (element-domains vars index-lb index-ub))
+
+    )))
 
 (defn domain-transform [statements]
   (let [constraints (filter constraint? statements)
@@ -247,8 +378,10 @@
               (let [var-name (second statement)
                     dep-names (var-get-dependancies statement)
                     deps (->> dep-names
-                              (map (p get var-index))
-                              (mapv get-domain))
+                              (map #(get var-index % %))
+                              (mapv #(if-let [domain (get-domain %)]
+                                       domain
+                                       %)))
                     domain (apply-dependant-domain statement deps)
                     updated-statement (conj statement domain)
                     ]
@@ -260,7 +393,6 @@
               [(conj acc statement) var-index]))
           ;;init for reduce
           [[] var-index])
-
          ;;holy shit, have to jump through some hoops to get desired output...
          first
          (vector constraints)
