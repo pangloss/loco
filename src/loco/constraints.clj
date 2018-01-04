@@ -26,17 +26,8 @@
 ;; notMember(IntVar var, int lb, int ub)
 ;; nValues(IntVar[] vars, IntVar nValues)
 ;;
-;; and(BoolVar... bools)
-;; and(Constraint... cstrs)
-;; not(Constraint cstr)
-;; or(BoolVar... bools)
-;; or(Constraint... cstrs)
-;;
-;; allDifferent(IntVar[] vars, String CONSISTENCY)
-;; allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)
 ;; bitsIntChanneling(BoolVar[] bits, IntVar var)
 ;; boolsIntChanneling(BoolVar[] bVars, IntVar var, int offset)
-;; circuit(IntVar[] vars)
 ;; circuit(IntVar[] vars, int offset, CircuitConf conf)
 ;; clausesIntChanneling(IntVar var, BoolVar[] eVars, BoolVar[] lVars)
 ;; costRegular(IntVar[] vars, IntVar cost, ICostAutomaton costAutomaton)
@@ -65,6 +56,10 @@
 ;; table(IntVar var1, IntVar var2, Tuples tuples, String algo)
 ;; tree(IntVar[] succs, IntVar nbTrees)
 ;; tree(IntVar[] succs, IntVar nbTrees, int offset)
+;; and(BoolVar... bools)
+;; or(BoolVar... bools)
+;; allDifferent(IntVar[] vars, String CONSISTENCY)
+;; allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)
 
 
 (def comparison-operator? #{:= :> :< :!= :>= :<=})
@@ -310,17 +305,21 @@
   []
   [:constraint :false])
 
+;;TODO: there is also a boolean list form that can be useful to implement
 (defn $and
   "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if
   and only if every subconstraint is true."
+  {:choco "and(Constraint... cstrs)"}
   [& constraints]
   (if (empty? constraints)
     ($true)
     [:constraint [:and (vec constraints)]]))
 
+;;TODO: there is also a boolean list form that can be useful to implement
 (defn $or
   "An \"or\" statement (i.e. \"PvQv...\"); this statement is true if and
   only if at least one subconstraint is true."
+  {:choco "or(Constraint... cstrs)"}
   [& constraints]
   (if (empty? constraints)
     ($false)
@@ -328,6 +327,7 @@
 
 (defn $not
   "Given a constraint C, returns \"not C\" a.k.a. \"~C\", which is true iff C is false."
+  {:choco "not(Constraint cstr)"}
   [constraint]
   [:constraint [:not constraint]])
 
@@ -396,7 +396,8 @@ If no \"else\" clause is specified, it is \"True\" by default."
   0), the elements of L define a circuit, where (L[i] = j + offset)
   means that j is the successor of i.  Hint: make the offset 1 when
   using a 1-based list."
-  {:choco "circuit(IntVar[] vars, int offset)"}
+  {:choco ["circuit(IntVar[] vars)"
+           "circuit(IntVar[] vars, int offset)"]}
   ([vars]
     ($circuit vars 0))
   ([vars offset]
@@ -480,13 +481,12 @@ If no \"else\" clause is specified, it is \"True\" by default."
     }
    (let [closed (case closed?
                   :closed true
-                  closed?)]
-     [:constraint [:cardinality
-                   [variables
-                    [(preserve-consts (vec (keys frequencies)))
-                     (vec (vals frequencies))]
-                    [:closed closed]]]
-      ])))
+                  closed?)
+         values (preserve-consts (vec (keys frequencies)))
+         occurences (vec (vals frequencies))]
+     [:constraint
+      [:cardinality
+       [variables [values occurences] [:closed closed]]]])))
 
 (defn $knapsack
   "Takes constant weights / values for a list of pre-defined items, and
