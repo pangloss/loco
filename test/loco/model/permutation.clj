@@ -1,4 +1,4 @@
-(ns loco.model.permutation
+(ns ^:model loco.model.permutation
   (:require [loco.model :as model])
   (:use clojure.test
         loco.core

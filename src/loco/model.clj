@@ -1,12 +1,10 @@
 (ns loco.model
-  (:use loco.constraints)
+  (:use loco.constraints
+        loco.utils)
   (:require
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk]
    [loco.constraints :only [$const]]))
-
-(def p partial)
-(def c comp)
 
 (defn- neg-var-name [dep-name]
   (keyword (str "-" (name dep-name))))
@@ -462,6 +460,7 @@
   constraints namespace. Transform into a model that can be consumed
   by model/realize, which creates a choco/Model object"
   ([problem]
+   {:post [(every? (comp #{:constraint :var} first) %)]}
    (->> problem
         to-ast
         domain-transform)

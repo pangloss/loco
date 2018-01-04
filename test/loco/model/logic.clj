@@ -1,4 +1,4 @@
-(ns loco.model.logic
+(ns ^:model loco.model.logic
   (:require [loco.model :as model])
   (:use clojure.test
         loco.core

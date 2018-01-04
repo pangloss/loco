@@ -1,4 +1,4 @@
-(ns loco.model.aggregate
+(ns ^:model loco.model.aggregate
   (:require [loco.model :as model])
   (:use clojure.test
         loco.core

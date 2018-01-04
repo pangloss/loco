@@ -250,21 +250,6 @@
     ($= ($nth [:a :b :c :d :e] :x 1) :x)]
    [{:a 5 :b 5 :c 3 :d 5 :e 5 :x 3}]))
 
-(deftest deprecated-regex-test
-  (let [regex "(1|2)3*(4|5)"]
-    (-> (solutions
-          [($in :a [1])
-           ($in :b [2])
-           ($in :c [3])
-           ($in :d [4])
-           ($in :e [5])
-           ($regex regex [:a :d])
-           ($regex regex [:a :c :c :c :d])
-           ($not ($regex regex [:a :b :c :c :c :d]))])
-      count
-      (= 1)
-      is)))
-
 (deftest automaton-test
   (doseq [[description automaton]
           [["string->automaton"

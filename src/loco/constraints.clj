@@ -1,10 +1,8 @@
 (ns loco.constraints
+  (:use loco.utils)
   (:require [clojure.core.match :refer [match]]
             loco.automata)
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
-
-(def p partial)
-(def c comp)
 
 ;;TODO: apply these to meta data of functions as completed
 ;; binPacking(IntVar[] itemBin, int[] itemSize, IntVar[] binLoad, int offset)

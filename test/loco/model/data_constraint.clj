@@ -1,4 +1,4 @@
-(ns loco.model.data-constraint
+(ns ^:model loco.model.data-constraint
   (:require [loco.model :as model])
   (:use clojure.test
         loco.core
