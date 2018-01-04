@@ -3,11 +3,8 @@
             loco.automata)
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
 
-;;TODO: get rid of this... it's only used for the memoization part,
-;;most likely that part of the code will be changed or removed
-(defn- id
-  []
-  (gensym "id"))
+(def p partial)
+(def c comp)
 
 ;;TODO: apply these to meta data of functions as completed
 ;; binPacking(IntVar[] itemBin, int[] itemSize, IntVar[] binLoad, int offset)
@@ -495,9 +492,9 @@ If no \"else\" clause is specified, it is \"True\" by default."
 
 (defn $knapsack
   "Takes constant weights / values for a list of pre-defined items, and
-a list of variables representing the amount of each item. Constrains that
-the values of all the items add up to the total-value, while the items'
-weights add up to total-weight.
+  a list of variables representing the amount of each item. Constrains
+  that the values of all the items add up to the total-value, while
+  the items' weights add up to total-weight.
 
 Example: ($knapsack [3 1 2]    ; weights
                     [5 6 7]    ; values
@@ -506,12 +503,19 @@ Example: ($knapsack [3 1 2]    ; weights
                     :V)        ; total value"
   {:choco "knapsack(IntVar[] occurrences, IntVar weightSum, IntVar energySum, int[] weight, int[] energy)"}
   [weights values occurrences total-weight total-value]
-  (assert (and (every? integer? weights)
-               (every? integer? values))
-          "$knapsack: weights and values must be collections of constant integers")
-  {:type :knapsack
-   :weights weights
-   :values values
-   :occurrences occurrences
-   :total-weight total-weight
-   :total-value total-value})
+  {:pre [
+         (every? integer? weights)
+         (every? integer? values)
+         (every? keyword? occurrences)
+         (every? (p <= 0) weights)
+         (every? (p <= 0) values)
+         ]}
+  [:constraint
+   [:knapsack
+    [
+     [:weights (preserve-consts weights)]
+     [:values (preserve-consts values)]
+     [:occurrences occurrences]
+     [:total-weight total-weight]
+     [:total-value total-value]
+     ]]])
