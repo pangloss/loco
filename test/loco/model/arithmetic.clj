@@ -207,6 +207,45 @@
          model/compile)))
   )
 
+(deftest $*-test
+  (is
+   (=
+    [[:var :a :public [:int 0 362880]]
+     [:var :1 :hidden [:const 1]]
+     [:var :2 :hidden [:const 2]]
+     [:var :3 :hidden [:const 3]]
+     [:var :4 :hidden [:const 4]]
+     [:var :5 :hidden [:const 5]]
+     [:var :6 :hidden [:const 6]]
+     [:var :7 :hidden [:const 7]]
+     [:var :8 :hidden [:const 8]]
+     [:var :9 :hidden [:const 9]]
+     [:var :8*9 :proto [:int 64 72]]
+     [:var :7*8*9 :proto [:int 49 504]]
+     [:var :6*7*8*9 :proto [:int 36 3024]]
+     [:var :5*6*7*8*9 :proto [:int 25 15120]]
+     [:var :4*5*6*7*8*9 :proto [:int 16 60480]]
+     [:var :3*4*5*6*7*8*9 :proto [:int 9 181440]]
+     [:var :2*3*4*5*6*7*8*9 :proto [:int 4 362880]]
+     [:var :1*2*3*4*5*6*7*8*9 :proto [:int 1 362880]]
+     [:constraint [:times [:8*9 := :8 :* :9]]]
+     [:constraint [:times [:7*8*9 := :7 :* :8*9]]]
+     [:constraint [:times [:6*7*8*9 := :6 :* :7*8*9]]]
+     [:constraint [:times [:5*6*7*8*9 := :5 :* :6*7*8*9]]]
+     [:constraint [:times [:4*5*6*7*8*9 := :4 :* :5*6*7*8*9]]]
+     [:constraint [:times [:3*4*5*6*7*8*9 := :3 :* :4*5*6*7*8*9]]]
+     [:constraint [:times [:2*3*4*5*6*7*8*9 := :2 :* :3*4*5*6*7*8*9]]]
+     [:constraint
+      [:times [:1*2*3*4*5*6*7*8*9 := :1 :* :2*3*4*5*6*7*8*9]]]
+     [:constraint [:all-equal [:a :1*2*3*4*5*6*7*8*9]]]]
+    (->>
+     [($in :a 0 (* 1 2 3 4 5 6 7 8 9))
+      ($= :a ($* 1 2 3 4 5 6 7 8 9))]
+     model/compile
+     ))
+   "should be able to handle clojure-like (* ...) syntax"
+   ))
+
 (deftest $mod-test
   (is
    (=

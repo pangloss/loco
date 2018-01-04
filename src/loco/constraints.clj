@@ -202,11 +202,16 @@
   ([& args]
    ($sum (vec args))))
 
-;;FIXME: this should act similar to the * operator in clojure
 (defn $*
   "Takes two arguments. One of the arguments can be a number greater than or equal to -1."
-  [x y]
-  [:constraint :partial [:* [x y]]])
+  [& args]
+  (match [(vec args)]
+         [[x y]] [:constraint :partial [:* [x y]]]
+         [[x & more]] [:constraint :partial [:* [x (apply $* more)]]]))
+
+($* 1 2 3 4)
+[:constraint :partial [:*
+                       [1 [:constraint :partial [:* [2 3]]]]]]
 
 (defn $div
   "Creates an euclidean division constraint. Ensures dividend / divisor
