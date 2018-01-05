@@ -389,9 +389,6 @@
                       (map #(multiply-domains %2 [%1 %1]) coeffs)
                       (reduce add-domains)))
 
-    ;; [[:$nth [[:a :2 :3 :4 :5] [:at :index] [:offset 0]]]
-    ;;  [[:a :2 :3 :4 :5] [:at :index] [:offset 0]]]
-    ;; domain mapping is wrong
     [[:$nth [_ _ [:offset (offset :guard integer?)]]] [[:int index-lb index-ub] & vars]]
     (into [:int] (element-domains vars index-lb index-ub offset))
 
