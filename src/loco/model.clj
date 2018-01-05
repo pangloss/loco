@@ -40,9 +40,15 @@
          [[:constraint :partial & _]] true
          :else false))
 
-;;TODO: attach the name making function to the constraint itself via meta from ($neg) function
+;;TODO: attach the name making function to the constraint itself via
+;;meta from ($neg) function
+
+;;TODO: these would be better if they were part of the function that
+;;created the partial constraint (like on it's meta data)
 (defn constraint-to-keyword
-  "this will not work with nested constraints. use with postwalk"
+  "takes an un-nested partial-constraint and tries to make a nice name
+  from it and it's arguments. this will not work with nested
+  constraints. use with postwalk"
   [statement]
   (->
    [statement]
