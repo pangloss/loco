@@ -66,12 +66,12 @@
          flatten
          (apply str "scalar_"))
 
-    [[:element stuff]]
+    [[:$nth stuff]]
     (->> stuff
          flatten
          (map str)
          (interpose "_")
-         (apply str "element_"))
+         (apply str "$nth_"))
 
     [[op [& deps]]]
     (->> (interpose "_" (map name deps))
@@ -153,86 +153,90 @@
                                           %))
                              (into (empty form)))
 
-                        :else form
-                        ))))
+                        :else form))))
         ]
     (conj @acc transformed-statement)))
 
+(binding [loco.constraints.utils/preserve-consts identity]
+  (loco.constraints.utils/preserve-consts 0)
+  ($element :d [:d] :i 2)
+  )
+($element :d [:d] :i 2)
+
 (defn- constraint-from-proto-var [statement]
-  (->
-   [statement (meta statement)]
-   (match
-    [[:var var-name :proto] {:from [:constraint :partial constraint]}] [var-name constraint]
-    [[:var var-name :proto] {:from [constraint]}] [var-name constraint]
-    :else [statement])
-   (match
-    [_ [:neg dep-name]]
-    [($neg (neg-var-name dep-name) dep-name)]
+  ;;since preserve-const will turn a const into a wrapped const, and
+  ;;we are calling functions with preserve-const, we need to insure
+  ;;that it is a passthrough, or we will unwrap and rewrap consts
+  ;;unintentionally
+  (binding [loco.constraints.utils/preserve-consts identity]
+    (->
+     [statement (meta statement)]
+     (match
+      [[:var var-name :proto] {:from [:constraint :partial constraint]}] [var-name constraint]
+      [[:var var-name :proto] {:from [constraint]}] [var-name constraint]
+      :else [statement])
+     (match
+      [_ [:neg dep-name]]
+      [($neg (neg-var-name dep-name) dep-name)]
 
-    [var-name [:- [arg1 & more]]]
-    (let [
-          negative-vars (->> more
-                             (map (fn [var-name]
-                                    ^{:neg var-name} [:var (neg-var-name var-name) :proto])))
-          negative-var-names (map second negative-vars)
-          ]
+      [var-name [:- [arg1 & more]]]
+      (let [
+            negative-vars (->> more
+                               (map (fn [var-name]
+                                      ^{:neg var-name} [:var (neg-var-name var-name) :proto])))
+            negative-var-names (map second negative-vars)
+            ]
+        (-> []
+            (into negative-vars)
+            (into [statement])
+            (into [($sum var-name := (into [arg1] negative-var-names))])))
+
+      [var-name [:+ args]]
       (-> []
-          (into negative-vars)
           (into [statement])
-          (into [($sum var-name := (into [arg1] negative-var-names))])))
+          (into [($sum var-name := args)]))
 
-    [var-name [:+ args]]
-    (-> []
-        (into [statement])
-        (into [($sum var-name := args)]))
+      [var-name [:% [arg1 arg2]]]
+      (-> []
+          (into [statement])
+          (into [($mod arg1 arg2 var-name)]))
 
-    [var-name [:% [arg1 arg2]]]
-    (-> []
-        (into [statement])
-        (into [($mod arg1 arg2 var-name)]))
+      [var-name [:* [arg1 arg2]]]
+      (-> []
+          (into [statement])
+          (into [($times arg1 arg2 var-name)]))
 
-    [var-name [:* [arg1 arg2]]]
-    (-> []
-        (into [statement])
-        (into [($times arg1 arg2 var-name)]))
+      [var-name [:/ [arg1 arg2]]]
+      (-> []
+          (into [statement])
+          (into [($div arg1 arg2 var-name)]))
 
-    [var-name [:/ [arg1 arg2]]]
-    (-> []
-        (into [statement])
-        (into [($div arg1 arg2 var-name)]))
+      [var-name [:abs [arg]]]
+      (-> []
+          (into [statement])
+          (into [($abs var-name arg)]))
 
-    [var-name [:abs [arg]]]
-    (-> []
-        (into [statement])
-        (into [($abs var-name arg)]))
+      [var-name [:min args]]
+      (-> []
+          (into [statement])
+          (into [($min var-name args)]))
 
-    [var-name [:min args]]
-    (-> []
-        (into [statement])
-        (into [($min var-name args)]))
+      [var-name [:max args]]
+      (-> []
+          (into [statement])
+          (into [($max var-name args)]))
 
-    [var-name [:max args]]
-    (-> []
-        (into [statement])
-        (into [($max var-name args)]))
+      [var-name [:scalar [vars coeffs]]]
+      (-> []
+          (into [statement])
+          (into [($scalar var-name := vars coeffs)]))
 
-    [var-name [:scalar [vars coeffs]]]
-    (-> []
-        (into [statement])
-        (into [($scalar var-name := vars coeffs)]))
+      [var-name [:$nth [vars [:at index] [:offset offset]]]]
+      (-> []
+          (into [statement])
+          (into [($element var-name vars index offset)]))
 
-    [var-name [:element [vars :at index _ offset]]]
-    (-> []
-        (into [statement])
-        (into [($element var-name vars index offset)]))
-
-    ;;TODO: get rid of this and only use the one with offest
-    [var-name [:element [vars :at index]]]
-    (-> []
-        (into [statement])
-        (into [($element var-name vars index)]))
-
-    :else [statement])))
+      :else [statement]))))
 
 (defn index-by [f coll]
   (->>
@@ -252,15 +256,15 @@
    [statement (meta statement)]
 
    (match
-    [[:var _ _] {:neg dep}] [:neg dep]
+    [[:var _ _]       {:neg dep}]                          [:neg dep]
     [[:var _ :proto]  {:from [:constraint :partial more]}] more
-    [[:var _ :proto]  {:from constraint}] constraint
+    [[:var _ :proto]  {:from constraint}]                  constraint
     )
 
    (match
     [:neg dep] [dep]
     [:scalar [deps _]] deps
-    [:element [deps _ index & _]] (into [index] deps)
+    [:$nth [deps [:at index] & _]] (into [index] deps)
     [:cardinality [deps [values occurences] _]] deps
     [_type deps] deps)))
 
@@ -308,18 +312,15 @@
   [(max lb1 lb2), (max ub1 ub2)])
 
 (defn element-domains
-  ([list idx-lb idx-ub]
-   (element-domains list idx-lb idx-ub 0))
-
-  ([list idx-lb idx-ub offset]
-   (->>
-    list
-    lb-ub-seq
-    (drop offset)
-    (drop idx-lb)
-    (take (inc idx-ub))
-    ((juxt (comp first first (p sort-by first))
-           (comp last last (p sort-by second)))))))
+  [list idx-lb idx-ub offset]
+  (->>
+   list
+   lb-ub-seq
+   (drop offset)
+   (drop idx-lb)
+   (take (inc idx-ub))
+   ((juxt (comp first first (p sort-by first))
+          (comp last last (p sort-by second))))))
 
 (defn within-domain [num [lb ub]]
   (and
@@ -382,15 +383,12 @@
                       (map #(multiply-domains %2 [%1 %1]) coeffs)
                       (reduce add-domains)))
 
-    [[:element [_vars :at _ :offset offset]] [[:int index-lb index-ub] & vars]]
+    ;; [[:$nth [[:a :2 :3 :4 :5] [:at :index] [:offset 0]]]
+    ;;  [[:a :2 :3 :4 :5] [:at :index] [:offset 0]]]
+    ;; domain mapping is wrong
+    [[:$nth [_ _ [:offset (offset :guard integer?)]]] [[:int index-lb index-ub] & vars]]
     (into [:int] (element-domains vars index-lb index-ub offset))
 
-    [[:element [_vars :at _]] [[:int index-lb index-ub] & vars]]
-    (into [:int] (element-domains vars index-lb index-ub))
-
-    #_[[:cardinality [[:a :b :c :d :e]
-                    [[1 2] [:ones :twos]]
-                    [:closed false]]] [{1 :ones, 2 :twos} [:a :b :c :d :e]]]
     [(var-name :guard keyword?) [:cardinality [vars [values occurences] _]] dep-domains]
     (cardinality-domain var-name values occurences dep-domains)
     )))
@@ -440,8 +438,7 @@
         transformed-problem (->> problem
                                  (filter #(or (constraint? %) (partial-constraint? %)))
                                  (mapcat const-transform)
-                                 unnest-all-constraints
-                                 )
+                                 unnest-all-constraints)
         hidden-vars (filter hidden-var? transformed-problem)
         constraints (filter constraint? transformed-problem)
         proto-vars (filter proto-var? transformed-problem)

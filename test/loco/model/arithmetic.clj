@@ -16,7 +16,7 @@
      [:var :x-y-x :proto [:int -5 10]]
      [:constraint [:sum [:y-x := [:y :-x]]]]
      [:constraint [:sum [:x-y-x := [:x :-y-x]]]]
-     [:constraint [:all-equal [:5 :x-y-x]]]]
+     [:constraint [:arithm [:5 := :x-y-x]]]]
     (->> [($in :x 0 5)
           ($in :y 0 5)
           ($= 5 ($- :x ($- :y :x)))]
@@ -37,7 +37,7 @@
      [:var :x-3-y-x-7 :proto [:int -1 14]]
      [:constraint [:sum [:y-x-7 := [:y :-x :-7]]]]
      [:constraint [:sum [:x-3-y-x-7 := [:x :-3 :-y-x-7]]]]
-     [:constraint [:all-equal [:5 :x-3-y-x-7]]]]
+     [:constraint [:arithm [:5 := :x-3-y-x-7]]]]
     (->> [($in :x 0 5)
           ($in :y 0 5)
           ($= 5 ($- :x 3 ($- :y :x 7)))]
@@ -51,7 +51,7 @@
      [:var :5 :hidden [:const 5]]
      [:var :x+y+5 :proto [:int 5 15]]
      [:constraint [:sum [:x+y+5 := [:x :y :5]]]]
-     [:constraint [:all-equal [:10 :x+y+5]]]]
+     [:constraint [:arithm [:10 := :x+y+5]]]]
     (->> [($in :x 0 5)
           ($in :y 0 5)
           ($= 10 ($+ :x :y 5))]
@@ -76,7 +76,7 @@
      [:var :0 :hidden [:const 0]]
      [:var :x*y :proto [:int 0 25]]
      [:constraint [:times [:x*y := :x :* :y]]]
-     [:constraint [:all-equal [:0 :x*y]]]]
+     [:constraint [:arithm [:0 := :x*y]]]]
     (->> [($in :x 0 5)
           ($in :y 0 5)
           ($= 0 ($* :x :y))]
@@ -89,7 +89,7 @@
      [:var :0 :hidden [:const 0]]
      [:var :x*y :proto [:int -25 25]]
      [:constraint [:times [:x*y := :x :* :y]]]
-     [:constraint [:all-equal [:0 :x*y]]]]
+     [:constraint [:arithm [:0 := :x*y]]]]
     (->> [($in :x -5 5)
           ($in :y 0 5)
           ($= 0 ($* :x :y))]
@@ -103,7 +103,7 @@
      [:var :x*y :proto [:int -25 10]]
      [:var :-x*y :proto [:int -10 25]]
      [:constraint [:times [:x*y := :x :* :y]]]
-     [:constraint [:all-equal [:0 :-x*y]]]]
+     [:constraint [:arithm [:0 := :-x*y]]]]
     (->> [($in :x -5 5)
           ($in :y 0 2)
           ($= 0 ($neg ($* :x :y)))]
@@ -116,7 +116,7 @@
      [:var :0 :hidden [:const 0]]
      [:var :x/y :proto [:int 5 3]]
      [:constraint [:div [:x/y := :x :/ :y]]]
-     [:constraint [:all-equal [:0 :x/y]]]]
+     [:constraint [:arithm [:0 := :x/y]]]]
     (->> [($in :x 5 5)
           ($in :y 0 2)
           ($= 0 ($div :x :y))]
@@ -129,7 +129,7 @@
      [:var :0 :hidden [:const 0]]
      [:var :x/y :proto [:int -3 3]]
      [:constraint [:div [:x/y := :x :/ :y]]]
-     [:constraint [:all-equal [:0 :x/y]]]]
+     [:constraint [:arithm [:0 := :x/y]]]]
     (->> [($in :x -5 5)
           ($in :y 2 2)
           ($= 0 ($div :x :y))]
@@ -173,12 +173,12 @@
    (=
     [[:var :x :public [:int 0 100]]
      [:var :y :public [:int 0 10]]
-     [:var :10 :hidden [:const 10]]
-     [:constraint [:arithm [:y := :x :/ :10]]]]
+     [:constraint [:arithm [:y := :x :/ 10]]]]
     (->> [($in :x 0 100)
           ($in :y 0 10)
           ($arithm :y := :x :/ 10)]
-         model/compile)))
+         model/compile))
+   "should preserve trailing const in arithm call <10> in [:arithm [:y := :x :/ 10]]")
 
   (is
    (=
@@ -191,6 +191,7 @@
           ($in :z 0 5)
           ($arithm :y := :x :/ :z)]
          model/compile)))
+
   )
 
 (deftest $times-test
@@ -237,14 +238,16 @@
      [:constraint [:times [:2*3*4*5*6*7*8*9 := :2 :* :3*4*5*6*7*8*9]]]
      [:constraint
       [:times [:1*2*3*4*5*6*7*8*9 := :1 :* :2*3*4*5*6*7*8*9]]]
-     [:constraint [:all-equal [:a :1*2*3*4*5*6*7*8*9]]]]
+     [:constraint [:arithm [:a := :1*2*3*4*5*6*7*8*9]]]]
     (->>
      [($in :a 0 (* 1 2 3 4 5 6 7 8 9))
       ($= :a ($* 1 2 3 4 5 6 7 8 9))]
      model/compile
      ))
    "should be able to handle clojure-like (* ...) syntax"
-   ))
+   )
+
+  )
 
 (deftest $mod-test
   (is
@@ -266,7 +269,7 @@
      [:var :z :public [:int 0 5]]
      [:var :x%y :proto [:int 0 10]]
      [:constraint [:mod [:x%y := :x :% :y]]]
-     [:constraint [:all-equal [:z :x%y]]]]
+     [:constraint [:arithm [:z := :x%y]]]]
     (->> [($in :x 0 100)
           ($in :y 0 10)
           ($in :z 0 5)
@@ -281,7 +284,7 @@
      [:var :z :public [:int 0 5]]
      [:var :x%y :proto [:int 0 10]]
      [:constraint [:mod [:x%y := :x :% :y]]]
-     [:constraint [:all-equal [:z :x%y]]]]
+     [:constraint [:arithm [:z := :x%y]]]]
     (->> [($in :x 0 100)
           ($const :y 10)
           ($in :z 0 5)
@@ -307,7 +310,7 @@
      [:var :z :public [:int -5 0]]
      [:var :|z| :proto [:int 0 5]]
      [:constraint [:abs [:|z| := :z]]]
-     [:constraint [:all-equal [:y :|z|]]]]
+     [:constraint [:arithm [:y := :|z|]]]]
     (->> [($in :y 0 10)
           ($in :z -5 0)
           ($= :y ($abs :z))]

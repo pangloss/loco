@@ -42,8 +42,7 @@
     [[:var :a :public [:int 10 99]]
      [:var :b :public [:int 0 9]]
      [:var :b :public [:int 100 1000]]
-     [:var :0 :hidden [:const 0]]
-     [:constraint [:circuit [[:a :b :c] :0]]]]
+     [:constraint [:circuit [[:a :b :c] [:offset 0]]]]]
     (->>
      [($in :a 10 99)
       ($in :b 0 9)
@@ -51,20 +50,7 @@
       ($circuit [:a :b :c])]
      model/compile)))
 
-  (is
-   (=
-    [[:var :a :public [:int 10 99]]
-     [:var :b :public [:int 0 9]]
-     [:var :b :public [:int 100 1000]]
-     [:var :index :public [:int 0 2]]
-     [:constraint [:circuit [[:a :b :c] :index]]]]
-    (->>
-     [($in :a 10 99)
-      ($in :b 0 9)
-      ($in :b 100 1000)
-      ($in :index 0 2)
-      ($circuit [:a :b :c] :index)]
-     model/compile))))
+  )
 
 
 (deftest cardinality-test
