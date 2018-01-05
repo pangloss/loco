@@ -3,8 +3,7 @@
         loco.utils)
   (:require
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk]
-   [loco.constraints :only [$const]]))
+   [clojure.walk :as walk]))
 
 (defn- neg-var-name [dep-name]
   (keyword (str "-" (name dep-name))))
@@ -72,6 +71,9 @@
          flatten
          (apply str "scalar_"))
 
+    ;;TODO: take this concept of making a name, and put it into $nth meta
+    ;;or the meta of the partial-constraint
+    ;;fetch the function from $nth and run it if exists
     [[:$nth stuff]]
     (->> stuff
          flatten
@@ -453,15 +455,40 @@
         (into proto-vars)
         (into constraints)
         (->> (mapcat constraint-from-proto-var)
-             (into [])))))
+             (into []))
+        remove-dupes)))
+
+(defn- all-var-names-are-unique? [ast]
+  (if-let [duplicate-var-names (->> ast
+                                    (filter var?)
+                                    (map second)
+                                    frequencies
+                                    (remove (fn [[k v]] (= 1 v)))
+                                    (map (fn [[var-label instance-count]]
+                                           (str "Error: variable "
+                                                var-label
+                                                " has "
+                                                instance-count
+                                                " declarations.")))
+                                    seq
+                                 )]
+    (assert false duplicate-var-names)
+    true ;; if there are no dupes
+    ))
+
+(defn- only-constraints-and-vars-present [ast]
+  (->> ast
+       (every? (comp #{:constraint :var} first))))
 
 (defn compile
   "take in a representation of a model, a list of maps created using the
   constraints namespace. Transform into a model that can be consumed
   by model/realize, which creates a choco/Model object"
-  ([problem]
-   {:post [(every? (comp #{:constraint :var} first) %)]}
-   (->> problem
-        to-ast
-        domain-transform)
-))
+  [problem]
+  {:post [
+          (only-constraints-and-vars-present %)
+          (all-var-names-are-unique? %)
+          ]}
+  (->> problem
+       to-ast
+       domain-transform))
