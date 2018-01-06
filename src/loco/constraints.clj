@@ -109,8 +109,11 @@
    [:var var-name :public [:int lb ub]])
 
   ([var-name values-or-const]
-   {:pre [(or (integer? values-or-const)
-              (vector? values-or-const))]}
+   {:pre [(or
+           (integer? values-or-const)
+           (and (coll? values-or-const)
+                (every? integer? values-or-const))
+           )]}
 
    (if (integer? values-or-const)
      ($const var-name values-or-const)

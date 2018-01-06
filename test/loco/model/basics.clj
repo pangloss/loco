@@ -36,18 +36,49 @@
 
   (compiled-assert
    [[:var :7 :hidden [:const 7]]]
-
    [($const :7 7)])
 
   (compiled-assert
    [[:var :i :public [:int 0 5]]]
-
    [($in :i 0 5)])
+
+  (def fib [1 2 3 5 8 13])
+
+  (compiled-assert
+   [[:var :i :public [:int fib]]]
+   [($in :i fib)])
+
+  (compiled-assert
+   [[:var :a :public [:int fib]]
+    [:var :b :public [:int fib]]
+    [:var :c :public [:int fib]]
+    [:var :b+c :proto [:int 2 26]]
+    [:constraint [:sum [:b+c := [:b :c]]]]
+    [:constraint [:arithm [:a := :b+c]]]]
+
+   [($in :a fib)
+    ($in :b fib)
+    ($in :c fib)
+    ($= :a ($+ :b :c))])
+
+  (compiled-assert
+   [[:var :a :public [:int [1 2 3 5 8 13]]]
+    [:var :b :public [:int [1 2 3 5 8 13]]]
+    [:var :c :public [:int [1 2 3 5 8]]]
+    [:var :b+c :proto [:int 2 (+ 13 8)]]
+    [:constraint [:sum [:b+c := [:b :c]]]]
+    [:constraint [:arithm [:a := :b+c]]]]
+
+   [($in :a fib)
+    ($in :b fib)
+    ($in :c (butlast fib))
+    ($= :a ($+ :b :c))])
 
   (compiled-assert
    [[:var :i :public [:int 0 5]]
     [:var :1 :hidden [:const 1]]
     [:constraint [:arithm [:1 := :i]]]]
+
    [($in :i 0 5)
     ($= 1 :i)])
 

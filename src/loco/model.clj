@@ -165,12 +165,6 @@
         ]
     (conj @acc transformed-statement)))
 
-(binding [loco.constraints.utils/preserve-consts identity]
-  (loco.constraints.utils/preserve-consts 0)
-  ($element :d [:d] :i 2)
-  )
-($element :d [:d] :i 2)
-
 (defn- constraint-from-proto-var [statement]
   ;;since preserve-const will turn a const into a wrapped const, and
   ;;we are calling functions with preserve-const, we need to insure
@@ -181,7 +175,7 @@
      [statement (meta statement)]
      (match
       [[:var var-name :proto] {:from [:constraint :partial constraint]}] [var-name constraint]
-      [[:var var-name :proto] {:from [constraint]}] [var-name constraint]
+      [[:var var-name :proto] {:from [constraint]}]                      [var-name constraint]
       :else [statement])
      (match
       [_ [:neg dep-name]]
@@ -254,8 +248,10 @@
 
 (defn- get-domain [statement]
   (match [statement]
-         [[_:var _ _ [:int lb ub]]] [:int lb ub]
-         [[_:var _ _ [:const val]]] [:const val]
+         [[:var _ _ domain]] domain
+         ;; [[:var _ _ [:int lb ub]]] [:int lb ub]
+         ;; [[:var _ _ [:const val]]] [:const val]
+         ;; [[:var _ _ [:int (domain :guard vector?)]]]
          :else nil))
 
 ;;TODO: add a deps meta tag to partial constraints!
@@ -267,6 +263,7 @@
     [[:var _ _]       {:neg dep}]                          [:neg dep]
     [[:var _ :proto]  {:from [:constraint :partial more]}] more
     [[:var _ :proto]  {:from constraint}]                  constraint
+    [[:var _ _ deps]  nil]                                 deps
     )
 
    (match
@@ -281,9 +278,11 @@
    domains
    (map #(match
           [%]
-          [(const :guard integer?)] [const const]
-          [[:const b & _]] [b b]
-          [[:int lb ub]] [lb ub]))))
+          [(const :guard integer?)] ^:const [const const]
+          [[:const b & _]] ^:const [b b]
+          [[:int lb ub true]] ^:bounded ^:lb-ub [lb ub] ;;bounded int-var
+          [[:int lb ub]] ^:lb-ub [lb ub]
+          [[:int (domain :guard vector?)]] ^{:enumerated domain} ((juxt first last) domain)))))
 
 (defn- subtract-domains [[lb1 ub1] [lb2 ub2]]
   [(- lb1 ub2) (- ub1 lb2)])
