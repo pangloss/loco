@@ -240,12 +240,6 @@
 
       :else [statement]))))
 
-(defn index-by [f coll]
-  (->>
-   coll
-   (map (juxt f identity))
-   (into {})))
-
 (defn- get-domain [statement]
   (match [statement]
          [[:var _ _ domain]] domain
@@ -282,6 +276,7 @@
           [[:const b & _]] ^:const [b b]
           [[:int lb ub true]] ^:bounded ^:lb-ub [lb ub] ;;bounded int-var
           [[:int lb ub]] ^:lb-ub [lb ub]
+          [[:bool 0 1]] ^:bool [0 1]
           [[:int (domain :guard vector?)]] ^{:enumerated domain} ((juxt first last) domain)))))
 
 (defn- subtract-domains [[lb1 ub1] [lb2 ub2]]

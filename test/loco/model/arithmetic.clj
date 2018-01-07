@@ -156,6 +156,32 @@
 
   )
 
+(deftest $sum-test
+  (compiled-assert
+   [[:var :x :public [:bool 0 1]]
+    [:var :y :public [:bool 0 1]]
+    [:var :2 :hidden [:const 2]]
+    [:var :x+y :proto [:int 0 2]]
+    [:constraint [:sum [:x+y := [:x :y]]]]
+    [:constraint [:arithm [:2 := :x+y]]]]
+
+   [($bool :x)
+    ($bool :y)
+    ($= 2 ($+ :x :y))])
+
+  (compiled-assert
+   [[:var :x :public [:bool 0 1]]
+    [:var :y :public [:bool 0 1]]
+    [:var :z :public [:bool 0 1]]
+    [:var :1 :hidden [:const 1]]
+    [:constraint [:sum [:1 := [:x :y :z]]]]]
+
+   [($bool :x)
+    ($bool :y)
+    ($bool :z)
+    ($sum 1 := [:x :y :z])])
+  )
+
 (deftest $arithm-test
   (compiled-assert
    [[:var :x :public [:int 0 100]]

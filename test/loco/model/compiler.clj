@@ -29,6 +29,44 @@
                           (memfn getUB))
                          second)))))))
 
+  (->>
+   [($in :bool 0 1)]
+   model/compile
+  )
+
+  (testing "boolVars"
+    (is
+     (=
+      '([:bool ["bool" 0 1]])
+      (->>
+       [($in :bool 0 1)]
+       model/compile
+       compiler/compile
+       second
+       (map (juxt first (comp
+                         (juxt
+                          (memfn getName)
+                          (memfn getLB)
+                          (memfn getUB))
+                         second))))))
+
+    (is
+     (=
+      '([:bool ["bool" 0 1 true]])
+      (->>
+       [($bool :bool)]
+       model/compile
+       compiler/compile
+       second
+       (map (juxt first (comp
+                         (juxt
+                          (memfn getName)
+                          (memfn getLB)
+                          (memfn getUB)
+                          (memfn hasEnumeratedDomain))
+                         second))))))
+    )
+
   (testing "intVars"
     (is
      (=

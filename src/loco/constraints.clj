@@ -93,6 +93,9 @@
   {:pre [(integer? value)]}
   [:var var-name :hidden [:const value]])
 
+(defn $bool [var-name]
+  [:var var-name :public [:bool 0 1]])
+
 (defn $in
   "Declares that a variable must be in a certain domain.
    Possible arglist examples:
@@ -106,7 +109,9 @@
      ($in var-name lb ub)))
 
   ([var-name lb ub]
-   [:var var-name :public [:int lb ub]])
+   (match (sort [lb ub])
+          [0 1] ($bool var-name)
+          :else [:var var-name :public [:int lb ub]]))
 
   ([var-name values-or-const]
    {:pre [(or
@@ -114,10 +119,15 @@
            (and (coll? values-or-const)
                 (every? integer? values-or-const))
            )]}
-
-   (if (integer? values-or-const)
+   (if (coll? values-or-const)
+     (match
+      [(vec values-or-const)]
+      [[0 1]] ($bool var-name)
+      [[1 0]] ($bool var-name)
+      [(domain :guard vector?)] [:var var-name :public [:int (vec (sort domain))]])
      ($const var-name values-or-const)
-     [:var var-name :public [:int (vec (sort values-or-const))]])))
+     )
+   ))
 
 (def $in-
   (comp (partial replace {:public :hidden}) (partial $in)))

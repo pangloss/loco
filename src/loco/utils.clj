@@ -22,3 +22,9 @@
       )
     [#{} []])
    second))
+
+(defn index-by [f coll]
+  (->>
+   coll
+   (map (juxt f identity))
+   (into {})))
