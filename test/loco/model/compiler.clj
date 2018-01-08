@@ -21,18 +21,13 @@
         ($const :b 4)]
        model/compile
        compiler/compile
-       second
+       :vars
        (map (juxt first (comp
                          (juxt
                           (memfn getName)
                           (memfn getLB)
                           (memfn getUB))
                          second)))))))
-
-  (->>
-   [($in :bool 0 1)]
-   model/compile
-  )
 
   (testing "boolVars"
     (is
@@ -42,7 +37,7 @@
        [($in :bool 0 1)]
        model/compile
        compiler/compile
-       second
+       :vars
        (map (juxt first (comp
                          (juxt
                           (memfn getName)
@@ -57,7 +52,7 @@
        [($bool :bool)]
        model/compile
        compiler/compile
-       second
+       :vars
        (map (juxt first (comp
                          (juxt
                           (memfn getName)
@@ -75,7 +70,7 @@
        [($in :7 7 7)]
        model/compile
        compiler/compile
-       second
+       :vars
        (map (juxt first (comp
                          (juxt
                           (memfn getName)
@@ -90,7 +85,7 @@
        [($in :9 [1 2 3 5 8 13])]
        model/compile
        compiler/compile
-       second
+       :vars
        (map (juxt first (comp
                          (juxt
                           (memfn getName)
@@ -110,7 +105,7 @@
         ($in :9 1 3 :bounded)]
        model/compile
        compiler/compile
-       second
+       :vars
        (map (juxt first (comp
                          (juxt
                           (memfn getName)
@@ -119,6 +114,51 @@
                           (memfn hasEnumeratedDomain))
                          second))))))
 
-
     )
+  )
+
+(deftest compiling-constraints-test
+  (is
+   (=
+    '("SUM ([z + y + x = 1])")
+      (->>
+       [($bool :x)
+        ($bool :y)
+        ($bool :z)
+        ($sum 1 := [:x :y :z])]
+       model/compile
+       compiler/compile
+       :model
+       (.getCstrs)
+       (map (memfn toString))
+       )))
+
+  (is
+   (=
+    '("SUM ([z + y + x = 2])")
+    (->>
+     [($in :x 1 2)
+      ($in :y 1 2)
+      ($in :z 1 2)
+      ($sum 2 := [:x :y :z])]
+     model/compile
+     compiler/compile
+     :model
+     (.getCstrs)
+     (map (memfn toString))
+     )))
+
+  (is
+   (=
+    '("SUM ([z + y + x = 2])")
+    (->>
+     [($in :x 1 2)
+      ($bool :y)
+      ($in :z 1 2)
+      ($sum 2 := [:x :y :z])]
+     model/compile
+     compiler/compile
+     :model
+     (.getCstrs)
+     (map (memfn toString)))))
   )

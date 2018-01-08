@@ -8,13 +8,13 @@
 (defn- neg-var-name [dep-name]
   (keyword (str "-" (name dep-name))))
 
-(defn- var?
+(defn var?
   [form]
   (match [form]
          [[:var & _]] true
          :else false))
 
-(defn- public-var? [form]
+(defn public-var? [form]
   (match [form]
          [[:var _ :public & _]] true
          :else false))
@@ -29,7 +29,7 @@
          [[:var _ :proto & _]] true
          :else false))
 
-(defn- constraint? [form]
+(defn constraint? [form]
   (match [form]
          [[:constraint & _]] true
          :else false))
