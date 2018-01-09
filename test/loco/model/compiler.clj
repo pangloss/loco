@@ -7,158 +7,318 @@
   (:import org.chocosolver.solver.Model)
   )
 
+(defn constraints-assert [expected actual-input]
+  (is
+   (=
+    expected
+    (->> actual-input
+         model/compile
+         compiler/compile
+         :model
+         (.getCstrs)
+         (map (memfn toString))))))
+
+(defn vars-assert [expected actual-input]
+  (is
+   (=
+    expected
+    (->>
+     actual-input
+     model/compile
+     compiler/compile
+     :vars
+     (map (juxt
+           (memfn getName)
+           (memfn getLB)
+           (memfn getUB)
+           (memfn hasEnumeratedDomain)
+           (memfn toString)))))))
+
 (deftest compiling-vars-test
 
   (testing "consts vars"
-    (is
-     (=
-      '([:7 ["7" 7 7]]
-        [:a ["a" 7 7]]
-        [:b ["b" 4 4]])
-      (->>
-       [($const :7 7)
-        ($const :a 7)
-        ($const :b 4)]
-       model/compile
-       compiler/compile
-       :vars
-       (map (juxt first (comp
-                         (juxt
-                          (memfn getName)
-                          (memfn getLB)
-                          (memfn getUB))
-                         second)))))))
+    (vars-assert
+     '(["7" 7 7 true "7 = 7"]
+       ["a" 7 7 true "a = 7"]
+       ["b" 4 4 true "b = 4"])
+     [($const :7 7)
+      ($const :a 7)
+      ($const :b 4)]))
 
   (testing "boolVars"
-    (is
-     (=
-      '([:bool ["bool" 0 1]])
-      (->>
-       [($in :bool 0 1)]
-       model/compile
-       compiler/compile
-       :vars
-       (map (juxt first (comp
-                         (juxt
-                          (memfn getName)
-                          (memfn getLB)
-                          (memfn getUB))
-                         second))))))
+    (vars-assert
+     '(["bool" 0 1 true "bool = [0,1]"])
+     [($in :bool 0 1)])
 
-    (is
-     (=
-      '([:bool ["bool" 0 1 true]])
-      (->>
-       [($bool :bool)]
-       model/compile
-       compiler/compile
-       :vars
-       (map (juxt first (comp
-                         (juxt
-                          (memfn getName)
-                          (memfn getLB)
-                          (memfn getUB)
-                          (memfn hasEnumeratedDomain))
-                         second))))))
-    )
+    (vars-assert
+     '(["bool" 0 1 true "bool = [0,1]"])
+     [($bool :bool)]))
 
   (testing "intVars"
-    (is
-     (=
-      '([:7 ["7" 7 7]])
-      (->>
-       [($in :7 7 7)]
-       model/compile
-       compiler/compile
-       :vars
-       (map (juxt first (comp
-                         (juxt
-                          (memfn getName)
-                          (memfn getLB)
-                          (memfn getUB))
-                         second))))))
+    (vars-assert
+     '(["7" 7 7 true "7 = 7"])
+     [($in :7 7 7)])
 
-    (is
-     (=
-      '([:9 ["9" 1 13 true]])
-      (->>
-       [($in :9 [1 2 3 5 8 13])]
-       model/compile
-       compiler/compile
-       :vars
-       (map (juxt first (comp
-                         (juxt
-                          (memfn getName)
-                          (memfn getLB)
-                          (memfn getUB)
-                          (memfn hasEnumeratedDomain))
-                         second))))))
+    (vars-assert
+     '(["9" 1 13 true "9 = {1..3,5,8,13}"])
+     [($in :9 [1 2 3 5 8 13])])
 
-    (is
-     (=
-      '([:7 ["7" 7 7 true]]
-        [:8 ["8" -1000 1000 true]]
-        [:9 ["9" 1 3 false]])
-      (->>
-       [($in :7 7 7)
-        ($in :8 -1000 1000)
-        ($in :9 1 3 :bounded)]
-       model/compile
-       compiler/compile
-       :vars
-       (map (juxt first (comp
-                         (juxt
-                          (memfn getName)
-                          (memfn getLB)
-                          (memfn getUB)
-                          (memfn hasEnumeratedDomain))
-                         second))))))
-
-    )
-  )
+    (vars-assert
+     '(["7" 7 7 true "7 = 7"]
+       ["8" -1000 1000 true "8 = {-1000..1000}"]
+       ["9" 1 3 false "9 = [1,3]"])
+     [($in :7 7 7)
+      ($in :8 -1000 1000)
+      ($in :9 1 3 :bounded)])))
 
 (deftest compiling-constraints-test
-  (is
-   (=
-    '("SUM ([z + y + x = 1])")
-      (->>
-       [($bool :x)
-        ($bool :y)
-        ($bool :z)
-        ($sum 1 := [:x :y :z])]
-       model/compile
-       compiler/compile
-       :model
-       (.getCstrs)
-       (map (memfn toString))
-       )))
+  (testing "sum"
+    (constraints-assert
+     '("SUM ([z + y + x = 1])")
+     [($bool :x)
+      ($bool :y)
+      ($bool :z)
+      ($sum 1 := [:x :y :z])])
 
-  (is
-   (=
-    '("SUM ([z + y + x = 2])")
-    (->>
+    (constraints-assert
+     '("SUM ([z + y + x = 2])")
      [($in :x 1 2)
       ($in :y 1 2)
       ($in :z 1 2)
-      ($sum 2 := [:x :y :z])]
-     model/compile
-     compiler/compile
-     :model
-     (.getCstrs)
-     (map (memfn toString))
-     )))
+      ($sum 2 := [:x :y :z])])
 
-  (is
-   (=
-    '("SUM ([z + y + x = 2])")
-    (->>
+    (constraints-assert
+     '("SUM ([z + y + x = 2])")
      [($in :x 1 2)
       ($bool :y)
       ($in :z 1 2)
-      ($sum 2 := [:x :y :z])]
-     model/compile
-     compiler/compile
-     :model
-     (.getCstrs)
-     (map (memfn toString)))))
+      ($sum 2 := [:x :y :z])])
+    )
+
+  (testing "arithm"
+    (constraints-assert
+     '("DIVISION ([PropDivXYZ(x, cste -- 10, IV_1, ..., IV_1)])"
+       "ARITHM ([prop(y.EQ.IV_1)])")
+     [($in :x 0 100)
+      ($in :y 0 10)
+      ($arithm :y := :x :/ 10)])
+
+    (constraints-assert
+     '("ARITHM ([prop(y.EQ.x)])")
+     [($in :x 0 100)
+      ($in :y 0 10)
+      ($arithm :y := :x)])
+    )
+
+  (testing "times"
+    (constraints-assert
+     '("TABLE ([CSPLarge({x = {0..100}, , y = {0..10}, , z = {0..5}, })])")
+     [($in :x 0 100)
+      ($in :y 0 10)
+      ($in :z 0 5)
+      ($times :x :y :z)]))
+
+  (testing "mod"
+    (constraints-assert
+     '("ABSOLUTE ([|T1_1| = [0,100] = |T1_1 = [-100,100]|])"
+       "DIVISION ([PropDivXYZ(x, y, T1_1, ..., |T1_1|)])"
+       "TIMES ([PropTimesNaive(T1_1, y, T2_2)])"
+       "SUM ([PropXplusYeqZ(z, T2_2, x)])")
+     [($in :x 0 100)
+      ($in :y 0 10)
+      ($in :z 0 5)
+      ($mod :x :y :z)]))
+
+  (testing "abs"
+    (constraints-assert
+     '("ABSOLUTE ([y = {0..10} = |z = {-5..0}|])")
+     [($in :y 0 10)
+      ($in :z -5 0)
+      ($abs :y :z)]))
+
+  (testing "neg"
+    (constraints-assert
+     '("TABLE ([CSPLarge({x = {-5..5}, , y = {0..2}, , x*y = {-25..10}, })])"
+       "ARITHM ([-x*y = 0])")
+     [($in :x -5 5)
+      ($in :y 0 2)
+      ($= 0 ($neg ($* :x :y)))])
+    )
+
+  (testing "subtration"
+    (constraints-assert
+     '("SUM ([PropXplusYeqZ(y, -x, y-x)])"
+       "SUM ([PropXplusYeqZ(x, -y-x, x-y-x)])"
+       "ARITHM ([x-y-x = 5])")
+     [($in :x 0 5)
+      ($in :y 0 5)
+      ($= 5 ($- :x ($- :y :x)))]))
+
+  (testing "div"
+    (constraints-assert
+     '("DIVISION ([PropDivXYZ(x, y, 0, ..., cste -- 0)])")
+     [($in :x 5 5)
+      ($in :y 0 2)
+      ($div :x :y 0)]))
+
+  (testing "all-equal"
+    (constraints-assert
+     '("ATMOSTNVALUES ([PropAtMostNValues(x, y, 1, cste -- 1)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($= :x :y 1)]
+     )
+
+    (constraints-assert
+     '("ATMOSTNVALUES ([PropAtMostNValues(x, y, cste -- 1)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($all-equal [:x :y])]
+     )
+    )
+
+  (testing "not-all-equal"
+    (constraints-assert
+     '("ATLEASTNVALUES ([PropAtLeastNValues(x, y, cste -- 2)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($not-all-equal [:x :y])]
+     )
+
+    (constraints-assert
+     '("ATLEASTNVALUES ([PropAtLeastNValues(x, y, 1, cste -- 2)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($!= :x :y 1)]
+     )
+    )
+
+  (testing "min max"
+    (constraints-assert
+     '("MIN ([z = {0..2} = min(x = {0..5}, y = {0..2}, 1 = 1)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($in :z 0 2)
+      ($min :z [:x :y 1])]
+     )
+
+    (constraints-assert
+     ' ("MIN ([min_x_y = {0..2}.MIN(x = {0..5},y = {0..2})])"
+        "ARITHM ([prop(z.EQ.min_x_y)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($in :z 0 2)
+      ($= :z ($min :x :y))]
+     )
+
+    (constraints-assert
+     '("MAX ([z = {0..2} = max(x = {0..5}, y = {0..2}, 3 = 3)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($in :z 0 2)
+      ($max :z [:x :y 3])]
+     )
+
+    (constraints-assert
+     '("MAX ([max_x_y = {0..5}.MAX(x = {0..5},y = {0..2})])"
+       "ARITHM ([prop(z.EQ.max_x_y)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($in :z 0 2)
+      ($= :z ($max :x :y))]
+     )
+    )
+
+  (testing "scalrar"
+    (constraints-assert
+     '("TABLE ([CSPLarge({1s = {0..9}, , 10s = {0..9}, , 100s = {0..9}, , 999? = {0..999}, })])")
+     [($in :1s 0 9)
+      ($in :10s 0 9)
+      ($in :100s 0 9)
+      ($in :999? 0 999)
+      ($scalar :999? := [:1s :10s :100s] [1 10 100])]
+     )
+    )
+
+  (testing "element"
+    (constraints-assert
+     '("ELEMENT ([element(array-val = {1..5} =  <1, 2, 3, 4, 5> [index = {0..2}])])")
+     [($in :index 0 2)
+      ($in :array-val 1 5)
+      ($element :array-val [1 2 3 4 5] :index)]
+     )
+
+    (constraints-assert
+     '("ELEMENT ([PropElementV_fast(array-val, index, a, ..., c)])")
+     [($in :a 10 99)
+      ($in :b 0 9)
+      ($in :c 100 1000)
+      ($in :index 0 2)
+      ($in :array-val 100 1000)
+      ($element :array-val [:a :b :c] :index 2)]
+     )
+
+    (constraints-assert
+     '("ELEMENT ([PropElementV_fast($nth_:a_:2_:3_:4_:5_:at_:index_:offset_0, index, a, ..., 5)])"
+       "ARITHM ([$nth_:a_:2_:3_:4_:5_:at_:index_:offset_0 = 4])")
+     [($in :a 100 200)
+      ($in :index 0 5)
+      ($= 4 ($nth [:a 2 3 4 5] :index))]
+     )
+    )
+
+  (testing "all different"
+    (constraints-assert
+     '("ALLDIFFERENT ([PropAllDiffInst(a, b, c, 0), PropAllDiffBC(a, b, c, 0), PropAllDiffAdaptative(a, b, c, 0)])")
+     [($in :a 0 9)
+      ($in :b 0 9)
+      ($in :c 0 9)
+      ($distinct [:a :b :c 0])]
+     )
+    )
+
+  (testing "all different except 0"
+    (constraints-assert
+     '("ALLDIFFERENT ([PropCondAllDiffInst(a, b, c, 0), PropCondAllDiff_AC(a, b, c, 0)])")
+     [($in :a 0 9)
+      ($in :b 0 9)
+      ($in :c 0 9)
+      ($distinct-except-0 [:a :b :c 0])]
+     )
+    )
+
+  (testing "circuit"
+    (constraints-assert
+     '("CIRCUIT ([PropAllDiffInst(a, b, c), PropAllDiffAC(a, b, c), PropNoSubTour([a = {10..99}, b = {0..9}, c = {100..1000}]), PropCircuit_ArboFiltering(a, b, c), PropCircuit_AntiArboFiltering(a, b, c), PropCircuitSCC(a, b, c)])")
+     [($in :a 10 99)
+      ($in :b 0 9)
+      ($in :c 100 1000)
+      ($circuit [:a :b :c])]
+     )
+    )
+
+  (testing "cardinality"
+    (constraints-assert
+     '("GCC ([PropFastGCC_(a, b, ones, twos, cste -- 0)])")
+     [($in :a 2 3)
+      ($in :b 1 3)
+      ($cardinality [:a :b] {1 :ones, 2 :twos} :closed)]
+     )
+    )
+
+  (testing "knapsack"
+    (constraints-assert
+     '("KNAPSACK ([3.x + 1.y + 2.z - 1.W = 0, 5.x + 6.y + 7.z - 1.V = 0, PropKnapsack(x, y, z, ..., V)])")
+     [($in :x 0 50)
+      ($in :y 25 50)
+      ($in :z 100 150)
+      ($in :W 0 200)
+      ($in :V 0 200)
+      ($knapsack [3 1 2]                ; weights
+                 [5 6 7]                ; values
+                 [:x :y :z]             ; occurrences
+                 :W                     ; total weight
+                 :V)]
+     )
+    )
   )
