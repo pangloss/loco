@@ -137,24 +137,23 @@
   [:constraint :false])
 
 ;;TODO: there is also a boolean list form that can be useful to implement
+;;needs to be done at the compile phase, not here
 (defn $and
   "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if
   and only if every subconstraint is true."
   {:choco "and(Constraint... cstrs)"}
-  [& constraints]
-  (if (empty? constraints)
-    ($true)
-    [:constraint [:and (vec constraints)]]))
+  [& constraints-or-bools]
+  {:pre [(not (empty? constraints-or-bools))]}
+  [:constraint [:and (vec constraints-or-bools)]])
 
 ;;TODO: there is also a boolean list form that can be useful to implement
 (defn $or
   "An \"or\" statement (i.e. \"PvQv...\"); this statement is true if and
   only if at least one subconstraint is true."
   {:choco "or(Constraint... cstrs)"}
-  [& constraints]
-  (if (empty? constraints)
-    ($false)
-    [:constraint [:or (vec constraints)]]))
+  [& constraints-or-bools]
+  {:pre [(not (empty? constraints-or-bools))]}
+  [:constraint [:or (vec constraints-or-bools)]])
 
 (defn $not
   "Given a constraint C, returns \"not C\" a.k.a. \"~C\", which is true iff C is false."
