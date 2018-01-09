@@ -468,8 +468,19 @@
                                     seq
                                  )]
     (assert false duplicate-var-names)
-    true ;; if there are no dupes
-    ))
+    true))
+
+(defn- all-partials-transformed? [ast]
+  (if-let [remaining-partials
+           (->> ast
+                (filter partial-constraint?)
+                (map (fn [partial]
+                       (str "Error: partial constraint "
+                            (nth partial 2)
+                            " isn't able to be transformed into a full constraint, please wrap it in a partial consumer like $=")))
+                seq)]
+    (assert false remaining-partials)
+    true))
 
 (defn- only-constraints-and-vars-present [ast]
   (->> ast
@@ -480,7 +491,8 @@
   constraints namespace. Transform into a model that can be consumed
   by model/realize, which creates a choco/Model object"
   [problem]
-  {:post [
+  {:pre [(all-partials-transformed? problem)]
+   :post [
           (only-constraints-and-vars-present %)
           (all-var-names-are-unique? %)
           ]}
