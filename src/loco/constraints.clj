@@ -221,6 +221,8 @@ If no \"else\" clause is specified, it is \"True\" by default."
   {:pre [(vector? vars)]}
   [:constraint [:distinct-except-0 vars]])
 
+(def $all-different-except-0 $distinct-except-0)
+
 (defn $circuit
   "Given a list of int-vars L, and an optional offset number (default
   0), the elements of L define a circuit, where (L[i] = j + offset)
