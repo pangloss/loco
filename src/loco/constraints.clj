@@ -121,10 +121,9 @@
            )]}
    (if (coll? values-or-const)
      (match
-      [(vec values-or-const)]
+      [(vec (sort values-or-const))]
       [[0 1]] ($bool var-name)
-      [[1 0]] ($bool var-name)
-      [(domain :guard vector?)] [:var var-name :public [:int (vec (sort domain))]])
+      [domain] [:var var-name :public [:int domain]])
      ($const var-name values-or-const)
      )
    ))

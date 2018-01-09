@@ -293,16 +293,17 @@
 (defn modulo-domains [[lb1 ub1] [lb2 ub2]]
   [0 ub2])
 
-(defn divide-domains [[lb1 ub1] [lb2 ub2]]
+;;TODO: possible that there is a way to optimize this, but i was a bit lazy
+(defn divide-domains
+  "only for int domains"
+  [[lb1 ub1] [lb2 ub2]]
   (->>
-   (match [lb1 lb2 ub1 ub2]
-          [_ 0 _ 0] [lb1 ub1]
-          [_ _ _ 0] [(/ lb1 lb2) ub1]
-          [_ 0 _ _] [lb1 (/ ub1 ub2)]
-          [_ _ _ _] [(/ lb1 lb2) (/ ub1 ub2)])
-   (mapv (comp int #(if (neg? %)
-                      (Math/floor %)
-                      (Math/ceil %))))))
+   (for  [n [lb1 ub1]
+          d [lb2 ub2]]
+     ;;prevent div by zero by replacing zeros with 1s
+     (unchecked-divide-int n (if (zero? d) 1 d)))
+   sort
+   ((juxt first last))))
 
 (defn abs-domain [_ [lb ub]]
   (sort [(Math/abs lb) (Math/abs ub)]))
