@@ -6,30 +6,20 @@
             loco.constraints.arithmetic)
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
 
-;;FIXME: create macro to do this automatically...
-(def $= #'loco.constraints.arithmetic/=)
-(def $< #'loco.constraints.arithmetic/<)
-(def $arithmetic-operator? #'loco.constraints.arithmetic/arithmetic-operator?)
-(def $sum #'loco.constraints.arithmetic/sum)
-(def $neg #'loco.constraints.arithmetic/neg)
-(def $<= #'loco.constraints.arithmetic/<=)
-(def $* #'loco.constraints.arithmetic/*)
-(def $min #'loco.constraints.arithmetic/min)
-(def $not= #'loco.constraints.arithmetic/not=)
-(def $> #'loco.constraints.arithmetic/>)
-(def $% #'loco.constraints.arithmetic/%)
-(def $mod #'loco.constraints.arithmetic/mod)
-(def $- #'loco.constraints.arithmetic/-)
-(def $comparison-operator? #'loco.constraints.arithmetic/comparison-operator?)
-(def $times #'loco.constraints.arithmetic/times)
-(def $>= #'loco.constraints.arithmetic/>=)
-(def $arithm #'loco.constraints.arithmetic/arithm)
-(def $div #'loco.constraints.arithmetic/div)
-(def $+ #'loco.constraints.arithmetic/+)
-(def $abs #'loco.constraints.arithmetic/abs)
-(def $scalar #'loco.constraints.arithmetic/scalar)
-(def $max #'loco.constraints.arithmetic/max)
-(def $!= #'loco.constraints.arithmetic/!=)
+(defn- inherit-def [prefix sym var-to-inherit]
+  (let [sym (symbol (str prefix (name sym)))]
+    (println "creating def" (str *ns* "/" (name sym)))
+    (->
+     (intern *ns* sym var-to-inherit)
+     (alter-meta! ,,, merge (dissoc (meta var-to-inherit) :name)))))
+
+(def ^:private to-inherit
+  (->> ['loco.constraints.arithmetic]
+       (map ns-publics)
+       (into {})))
+
+(doseq [[sym var] to-inherit]
+  (inherit-def "$" sym var))
 
 ;;TODO: apply these to meta data of functions as completed
 ;; binPacking(IntVar[] itemBin, int[] itemSize, IntVar[] binLoad, int offset)
