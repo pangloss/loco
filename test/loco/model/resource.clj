@@ -9,11 +9,11 @@
     [:var :V :public [:int 0 200]]
     [:constraint
      [:knapsack
-      [[:weights [3 1 2]]
-       [:values [5 6 7]]
+      [[:weight [3 1 2]]
+       [:energy [5 6 7]]
        [:occurrences [:x :y :z]]
-       [:total-weight :W]
-       [:total-value :V]]]]]
+       [:weight-sum :W]
+       [:energy-sum :V]]]]]
 
    [($in :W 0 200)
     ($in :V 0 200)

@@ -320,31 +320,31 @@ If no \"else\" clause is specified, it is \"True\" by default."
        [variables [values occurences] [:closed closed]]]])))
 
 (defn $knapsack
-  "Takes constant weights / values for a list of pre-defined items, and
-  a list of variables representing the amount of each item. Constrains
-  that the values of all the items add up to the total-value, while
-  the items' weights add up to total-weight.
+  "Creates a knapsack constraint. Ensures that :
+  - occurrences[i] * weight[i] = weightSum
+  - occurrences[i] * energy[i] = energySum
+  and maximizing the value of energySum.
 
-Example: ($knapsack [3 1 2]    ; weights
-                    [5 6 7]    ; values
-                    [:x :y :z] ; occurrences
-                    :W         ; total weight
-                    :V)        ; total value"
+  Example: ($knapsack [3 1 2]    ; weight of item
+                      [5 6 7]    ; energy of item
+                      [:x :y :z] ; occurrences
+                      :W         ; total weight
+                      :V)        ; total energy"
   {:choco "knapsack(IntVar[] occurrences, IntVar weightSum, IntVar energySum, int[] weight, int[] energy)"}
-  [weights values occurrences total-weight total-value]
+  [weight energy occurrences weight-sum energy-sum]
   {:pre [
-         (every? integer? weights)
-         (every? integer? values)
+         (every? integer? weight)
+         (every? integer? energy)
          (every? keyword? occurrences)
-         (every? (p <= 0) weights)
-         (every? (p <= 0) values)
+         (every? (p <= 0) weight) ;;all items in weight or energy must be above 1
+         (every? (p <= 0) energy)
          ]}
   [:constraint
    [:knapsack
     [
-     [:weights (preserve-consts weights)]
-     [:values (preserve-consts values)]
+     [:weight (preserve-consts weight)]
+     [:energy (preserve-consts energy)]
      [:occurrences occurrences]
-     [:total-weight total-weight]
-     [:total-value total-value]
+     [:weight-sum weight-sum]
+     [:energy-sum energy-sum]
      ]]])
