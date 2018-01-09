@@ -6,9 +6,6 @@
 ;;TODO: implement below functions
 ;; square(IntVar var1, IntVar var2)
 
-(def comparison-operator? #{:= :> :< :!= :>= :<=})
-(def arithmetic-operator? #{:+ :* :/ :-})
-
 (defn neg
   "takes a partial constraint and creates a negative constraint from
   it (neg (- :x :b)) also can be used to create a neg var

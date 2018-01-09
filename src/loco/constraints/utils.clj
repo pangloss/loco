@@ -9,3 +9,6 @@
          [(val :guard vector?) _] (with-meta val {:preserve-consts true})
          :else val
          ))
+
+(def comparison-operator? #{:= :> :< :!= :>= :<=})
+(def arithmetic-operator? #{:+ :* :/ :-})
