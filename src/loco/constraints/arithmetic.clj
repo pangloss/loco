@@ -56,26 +56,33 @@
   [x y]
   (arithm x :>= y))
 
+(defn all-equal [vars]
+  {:pre [(vector? vars)]}
+  [:constraint [:all-equal vars]])
+
 (defn =
   "Constrains that X = Y."
   {:choco "allEqual(IntVar... vars)"}
   [& more]
-  (match [(vec more)]
-         [[x y]] (arithm x := y)
-         :else   [:constraint [:all-equal (vec more)]]))
+  (let [morev (vec more)]
+    (match [morev]
+           [[x y]] (arithm x := y)
+           :else   (all-equal morev))))
+
+(defn not-all-equal [vars]
+  {:pre [(vector? vars)]}
+  [:constraint [:not-all-equal vars]])
 
 (defn not=
   "Constrains that X != Y, i.e. (not X = Y = ...)"
   {:choco "notAllEqual(IntVar... vars)"}
   [& more]
-  (match [(vec more)]
-         [[x y]] (arithm x :!= y)
-         :else   [:constraint [:not-all-equal (vec more)]]))
+  (let [morev (vec more)]
+    (match [morev]
+           [[x y]] (arithm x :!= y)
+           :else   (not-all-equal morev))))
 
-(defn !=
-  "Constrains that X != Y, i.e. (not X = Y = ...)"
-  ([& more]
-   (apply not= more)))
+(def != not=)
 
 ;;;;;; ARITHMETIC
 (defn -
@@ -131,24 +138,24 @@
 (defn min
   "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers."
   {:choco "min(IntVar min, IntVar[] vars)"}
-  ([vars]
-   {:pre [(coll? vars)]}
-   [:constraint :partial [:min vars]])
-
-  ([min-var vars]
-   {:pre [(coll? vars)]}
-   [:constraint [:min [min-var :of (vec vars)]]]))
+  [& more]
+  (let [morev (vec more)]
+    (match
+     morev
+     [(result :guard keyword?) (vars :guard vector?)] [:constraint [:min [result :of vars]]]
+     [(vars :guard vector?)]                          [:constraint :partial [:min vars]]
+     [& vars]                                         [:constraint :partial [:min (vec vars)]])))
 
 (defn max
   "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers."
   {:choco "max(IntVar max, IntVar[] vars)"}
-  ([vars]
-   {:pre [(coll? vars)]}
-   [:constraint :partial [:max vars]])
-
-  ([max-var vars]
-   {:pre [(coll? vars)]}
-   [:constraint [:max [max-var :of (vec vars)]]]))
+  [& more]
+  (let [morev (vec more)]
+    (match
+     morev
+     [(result :guard keyword?) (vars :guard vector?)] [:constraint [:max [result :of vars]]]
+     [(vars :guard vector?)]                          [:constraint :partial [:max vars]]
+     [& vars]                                         [:constraint :partial [:max (vec vars)]])))
 
 (defn mod
   "Creates a modulo constraint. Ensures X % Y = Z"
