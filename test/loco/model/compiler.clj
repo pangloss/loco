@@ -380,7 +380,67 @@
       ($in :a 0 5)
       ($in :b 0 5)
       ($in :c 0 5)
-      ($sort [:a :b :c] [:x :y :z])]
+      ($sort [:a :b :c] [:x :y :z])]))
+
+
+  (testing "count"
+    (constraints-assert
+     '("COUNT ([PropFastCount_(a, b, c, limit=limit, value=3)])"
+       "COUNT ([PropCountVar_(b, c, limit, a, value=a, cardinality=limit])")
+     [($in :a 0 5)
+      ($in :b 0 5)
+      ($in :c 0 5)
+      ($in :limit 0 3)
+      ($count 3 [:a :b :c] :limit)
+      ($count :a [:b :c] :limit)]))
+
+  (testing "among"
+    (constraints-assert
+     '("AMONG ([AMONG([a = {0..5},b = {0..5},c = {0..5}],{[2, 3]},3 = 3)])")
+     [($in :a 0 5)
+      ($in :b 0 5)
+      ($in :c 0 5)
+      ($in :limit 0 3)
+      ($among 3 [:a :b :c] [2 3])]))
+
+  (testing "at-least-n-values"
+    (constraints-assert
+     '("ATLEASTNVALUES ([PropAtLeastNValues(a, b, n-values)])")
+     [($in :a 0 5)
+      ($in :b 0 5)
+      ($in :n-values 0 5)
+      ($at-least-n-values [:a :b] :n-values)]
+     ))
+
+  (testing "at-most-n-values"
+    (constraints-assert
+     '("ATMOSTNVALUES ([PropAtMostNValues(a, b, n-values)])")
+     [($in :a 0 5)
+      ($in :b 0 5)
+      ($in :n-values 0 5)
+      ($at-most-n-values [:a :b] :n-values)]
+     ))
+
+  (testing "bin-packing"
+    (constraints-assert
+     '("BINPACKING ([PropItemToLoad(i1-bin, i2-bin, i3-bin, ..., bin-load-2), PropLoadToItem(bin-load-1, bin-load-2, i1-bin, ..., i3-bin), bin-load-1 = {0..2} + bin-load-2 = {0..5} = 6])")
+     [($in :i1-bin 0 2)
+      ($in :i2-bin 0 2)
+      ($in :i3-bin 0 2)
+      ($in :bin-load-1 0 2)
+      ($in :bin-load-2 0 5)
+      ($bin-packing
+       {:i1-bin 1
+        :i2-bin 2
+        :i3-bin 3}
+       [:bin-load-1 :bin-load-2]
+       )]))
+
+  (testing "bits-channeling"
+    (constraints-assert
+     '("BITSINTCHANNELING ([PropBitChanneling(int-var, b1, b2, ..., b4)])")
+     [($in :int-var 0 16)
+      ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]
      ))
 
   )

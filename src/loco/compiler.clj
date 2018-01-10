@@ -15,7 +15,7 @@
     var
     (if (number? name)
       name
-      (throw (Exception. "Could not find variable: " name)))))
+      (throw (Exception. (str "Could not find variable: " name))))))
 
 (defn compile-var-statement [[vars-index vars model] statement]
   (let [var (match
@@ -176,6 +176,45 @@
              (->> vars (map lookup-var) (into-array IntVar))
              (->> sorted-vars (map lookup-var) (into-array IntVar)))
 
+      [:count [vars [:value value] [:limit limit]]]
+      (.count model
+              (lookup-var value)
+              (->> vars (map lookup-var) (into-array IntVar))
+              (lookup-var limit))
+
+      [:among [vars [:nb-var nb-var] [:values values]]]
+      (.among model
+              (lookup-var nb-var)
+              (->> vars (map lookup-var) (into-array IntVar))
+              (int-array values))
+
+      [:at-least-n-values [vars [:n-values n-values] [:ac ac]]]
+      (.atLeastNValues model
+                       (->> vars (map lookup-var) (into-array IntVar))
+                       (lookup-var n-values)
+                       ac)
+
+      [:at-most-n-values [vars [:n-values n-values] [:strong strong]]]
+      (.atMostNValues model
+                      (->> vars (map lookup-var) (into-array IntVar))
+                      (lookup-var n-values)
+                      strong)
+
+      [:bin-packing
+       [[:item-bin item-bin]
+        [:item-size item-size]
+        [:bin-load bin-load]
+        [:offset offset]]]
+      (.binPacking model
+                   (->> item-bin (map lookup-var) (into-array IntVar))
+                   (->> item-size int-array)
+                   (->> bin-load (map lookup-var) (into-array IntVar))
+                   offset)
+
+      [:bit-channeling [bits int-var]]
+      (.bitsIntChanneling model
+                          (->> bits (map lookup-var) (into-array BoolVar))
+                          (lookup-var int-var))
       ))))
 
 (defn compile-vars [model ast]

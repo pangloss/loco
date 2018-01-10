@@ -23,6 +23,21 @@
     [#{} []])
    second))
 
+(defn remove-dupes-by [ast key-fn]
+  ;; we use a vec to maintain order, and a set for fast lookup of dupes
+  (->>
+   ast
+   (reduce
+    (fn [[acc-set acc-vec] statement]
+      (if (acc-set (key-fn statement))
+        [acc-set acc-vec]
+        [(conj acc-set (key-fn statement))
+         (conj acc-vec statement)]
+        )
+      )
+    [#{} []])
+   second))
+
 (defn index-by [f coll]
   (->>
    coll

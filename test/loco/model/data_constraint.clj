@@ -119,3 +119,31 @@
     ($in :array-val 1 5)
     ($= :array-val ($nth [1 2 3 4 5] :index))])
   )
+
+(deftest bit-channeling-test
+  (compiled-assert
+   [[:var :int-var :public [:int 0 16]]
+    [:var :b1 :public [:bool 0 1]]
+    [:var :b2 :public [:bool 0 1]]
+    [:var :b3 :public [:bool 0 1]]
+    [:var :b4 :public [:bool 0 1]]
+    [:constraint [:bit-channeling [[:b1 :b2 :b3 :b4] :int-var]]]]
+
+   [($in :int-var 0 16)
+    ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]
+   "should generate bool vars")
+
+  (compiled-assert
+   [[:var :int-var :public [:int 0 16]]
+    [:var :b1 :hidden [:bool 0 1]]
+    [:var :b2 :public [:bool 0 1]]
+    [:var :b3 :public [:bool 0 1]]
+    [:var :b4 :public [:bool 0 1]]
+    [:constraint [:bit-channeling [[:b1 :b2 :b3 :b4] :int-var]]]]
+
+   [($in :int-var 0 16)
+    ($bool- :b1)
+    ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]
+   "should remove overlapping generated vars")
+
+  )

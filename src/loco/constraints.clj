@@ -1,35 +1,4 @@
-(ns loco.constraints
-  (:use loco.utils
-        loco.constraints.utils)
-  (:require [clojure.core.match :refer [match]]
-            loco.automata
-            loco.constraints.arithmetic)
-  (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
-
-(defn- inherit-def [prefix sym var-to-inherit]
-  (let [sym (symbol (str prefix (name sym)))]
-    (println "creating def" (str *ns* "/" (name sym)))
-    (->
-     (intern *ns* sym var-to-inherit)
-     (alter-meta! ,,, merge (dissoc (meta var-to-inherit) :name)))))
-
-(def ^:private to-inherit
-  (->> ['loco.constraints.arithmetic]
-       (map ns-publics)
-       (into {})))
-
-(doseq [[sym var] to-inherit]
-  (inherit-def "$" sym var))
-
 ;;TODO: apply these to meta data of functions as completed
-;; binPacking(IntVar[] itemBin, int[] itemSize, IntVar[] binLoad, int offset)
-;; among(IntVar nbVar, IntVar[] vars, int[] values)
-;; atLeastNValues(IntVar[] vars, IntVar nValues, boolean AC)
-;; atMostNValues(IntVar[] vars, IntVar nValues, boolean STRONG)
-;; count(int value, IntVar[] vars, IntVar limit)
-;; count(IntVar value, IntVar[] vars, IntVar limit)
-;;
-;; bitsIntChanneling(BoolVar[] bits, IntVar var)
 ;; boolsIntChanneling(BoolVar[] bVars, IntVar var, int offset)
 ;; circuit(IntVar[] vars, int offset, CircuitConf conf)
 ;; clausesIntChanneling(IntVar var, BoolVar[] eVars, BoolVar[] lVars)
@@ -37,7 +6,6 @@
 ;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity)
 ;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental)
 ;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)
-;; diffN(IntVar[] X, IntVar[] Y, IntVar[] width, IntVar[] height, boolean addCumulativeReasoning)
 ;; intValuePrecedeChain(IntVar[] X, int[] V)
 ;; intValuePrecedeChain(IntVar[] X, int S, int T)
 ;; inverseChanneling(IntVar[] vars1, IntVar[] vars2)
@@ -64,6 +32,30 @@
 ;; allDifferent(IntVar[] vars, String CONSISTENCY)
 ;; allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)
 
+(ns loco.constraints
+  (:use loco.utils
+        loco.constraints.utils)
+  (:require [clojure.core.match :refer [match]]
+            loco.automata
+            loco.constraints.arithmetic)
+  (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
+
+(defn- inherit-def [prefix sym var-to-inherit]
+  (let [sym (symbol (str prefix (name sym)))]
+    (println "creating def" (str *ns* "/" (name sym)))
+    (->
+     (intern *ns* sym var-to-inherit)
+     (alter-meta! ,,, merge (dissoc (meta var-to-inherit) :name)))))
+
+(def ^:private to-inherit
+  (->> ['loco.constraints.arithmetic]
+       (map ns-publics)
+       (into {})))
+
+(doseq [[sym var] to-inherit]
+  (inherit-def "$" sym var))
+
+
 ;;;;; VAR GENERATION
 ;;FIXME: we don't have any tests in core-test that need this.
 ;; tests in sudoku do use this feature
@@ -79,6 +71,9 @@
 
 (defn $bool [var-name]
   [:var var-name :public [:bool 0 1]])
+
+(defn $bool- [var-name]
+  [:var var-name :hidden [:bool 0 1]])
 
 (defn $in
   "Declares that a variable must be in a certain domain.
@@ -108,9 +103,7 @@
       [(vec (sort values-or-const))]
       [[0 1]] ($bool var-name)
       [domain] [:var var-name :public [:int domain]])
-     ($const var-name values-or-const)
-     )
-   ))
+     ($const var-name values-or-const))))
 
 (def $in-
   (comp (partial replace {:public :hidden}) (partial $in)))
@@ -399,3 +392,110 @@ If no \"else\" clause is specified, it is \"True\" by default."
   [vars sorted-vars]
   {:pre [(coll? vars) (coll? sorted-vars)]}
   [:constraint [:sort [(vec vars) (vec sorted-vars)]]])
+
+
+(defn $count
+  "Creates a count constraint. Let N be the number of variables of the
+  vars collection assigned to value value; Enforce condition N = limit
+  to hold. "
+  {:choco ["count(int value, IntVar[] vars, IntVar limit) "
+           "count(IntVar value, IntVar[] vars, IntVar limit)"]}
+  [value vars limit]
+  {:pre [(coll? vars)]}
+  [:constraint [:count [(vec vars) [:value (preserve-consts value)] [:limit limit]]]])
+
+(defn $among
+  "Creates an among constraint. nbVar is the number of variables of the
+  collection vars that take their value in values."
+  {:choco "among(IntVar nbVar, IntVar[] vars, int[] values)"
+   :gccat "http://www.emn.fr/x-info/sdemasse/gccat/Camong.html"}
+  [nb-var vars values]
+  {:pre [(coll? vars) (coll? values) (every? integer? values)]}
+  [:constraint [:among [(vec vars) [:nb-var nb-var] [:values (preserve-consts (vec values))]]]])
+
+(defn $at-least-n-values
+  "Creates an atLeastNValue constraint. Let N be the number of distinct
+  values assigned to the variables of the vars collection. Enforce
+  condition N >= nValues to hold."
+  {:choco "atLeastNValues(IntVar[] vars, IntVar nValues, boolean AC)"}
+  ([vars n-values] ($at-least-n-values vars n-values false))
+  ([vars n-values ac]
+   {:pre [(coll? vars) (boolean? ac)]}
+   [:constraint [:at-least-n-values [(vec vars) [:n-values n-values] [:ac ac]]]]))
+
+(defn $at-most-n-values
+  "Creates an atMostNValue constraint. Let N be the number of distinct
+  values assigned to the variables of the vars collection. Enforce
+  condition N <= nValues to hold."
+  {:choco "atMostNValues(IntVar[] vars, IntVar nValues, boolean STRONG)"}
+  ([vars n-values] ($at-most-n-values vars n-values false))
+  ([vars n-values strong]
+   {:pre [(coll? vars) (boolean? strong)]}
+   [:constraint [:at-most-n-values [(vec vars) [:n-values n-values] [:strong strong]]]]))
+
+(defn $bin-packing
+  "Creates a BinPacking constraint. Bin Packing formulation:
+  forall b in [0, binLoad.length - 1],
+  binLoad[b] = sum(itemSize[i] |
+  i in [0, itemSize.length - 1],
+  itemBin[i] = b + offset forall i in [0, itemSize.length - 1],
+  itemBin is in [offset, binLoad.length-1 + offset]
+
+  Parameters:
+  itemBin  - IntVar representing the bin of each item
+  itemSize - int representing the size of each item
+  binLoad  - IntVar representing the load of each bin (i.e. the sum of the size of the items in it)
+  offset   - 0 by default but typically 1 if used within MiniZinc (which counts from 1 to n instead of from 0 to n-1)
+
+  GCCAT:
+  Given several items of the collection ITEMS (each of them
+  having a specific weight), and different bins described the the
+  items of collection BINS (each of them having a specific capacity
+  capa), assign each item to a bin so that the total weight of the
+  items in each bin does not exceed the capacity of the bin."
+  {:choco "binPacking(IntVar[] itemBin, int[] itemSize, IntVar[] binLoad, int offset)"
+   :gccat "http://sofdem.github.io/gccat/gccat/Cbin_packing_capa.html"
+   :constraint-type [:resource-constraint]}
+  ([item-map bin-load] {:pre [(map? item-map)]}
+   ($bin-packing (keys item-map) (vals item-map) bin-load))
+  ([item-bin, item-size, bin-load] ($bin-packing item-bin item-size bin-load 0))
+  ([item-bin, item-size, bin-load, offset]
+   {:pre [(coll? item-bin)
+          (< 0 (count item-bin))
+          (distinct? item-bin)
+          (coll? item-size)
+          (every? integer? item-size)
+          (every? pos? item-size)
+          (= (count item-size) (count item-bin))
+          (coll? bin-load)
+          (integer? offset)
+          (<= 0 offset)]}
+   [:constraint [:bin-packing
+                 [[:item-bin (vec item-bin)]
+                  [:item-size (preserve-consts (vec item-size))]
+                  [:bin-load (vec bin-load)]
+                  [:offset (preserve-consts offset)]]]]))
+
+
+#_(defn diff-n
+  "Creates a diffN constraint. Constrains each rectangle[i], given by
+  their origins X[i],Y[i] and sizes width[i], height[i], to be non-overlapping."
+  {:choco "diffN(IntVar[] X, IntVar[] Y, IntVar[] width, IntVar[] height, boolean addCumulativeReasoning)"
+   :gccat "http://sofdem.github.io/gccat/gccat/Cdiffn.html"}
+  [x y width height add-cumulative-reasoning?]
+  )
+
+
+;;TODO: it could be interesting to generate the bit-vars
+(defn $bits-channeling
+  "Creates an channeling constraint between an integer variable and a set of bit variables. Ensures that var = 20*BIT_1 + 21*BIT_2 + ... 2n-1*BIT_n.
+  BIT_1 is related to the first bit of OCTET (2^0), BIT_2 is related
+  to the first bit of OCTET (2^1), etc.  The upper bound of var is
+  given by 2n, where n is the size of the array bits."
+  {:choco "bitsIntChanneling(BoolVar[] bits, IntVar var)"}
+  [bits int-var]
+  {:pre [(coll? bits)]}
+  (-> []
+      (into (mapv $bool bits))
+      (into [[:constraint [:bit-channeling [(vec bits) int-var]]]])
+      (with-meta {:generated-vars true})))

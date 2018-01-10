@@ -426,6 +426,7 @@
           ;;init for reduce
           [[] var-index])
          ;;holy shit, have to jump through some hoops to get desired output...
+         ;;can probably use (into) here
          first
          (vector constraints)
          reverse
@@ -448,10 +449,11 @@
         (into vars)
         (into hidden-vars)
         (into proto-vars)
+        (remove-dupes-by second)
         (into constraints)
         (->> (mapcat constraint-from-proto-var)
              (into []))
-        remove-dupes)))
+        )))
 
 (defn- all-var-names-are-unique? [ast]
   (if-let [duplicate-var-names (->> ast
@@ -496,6 +498,10 @@
           (only-constraints-and-vars-present %)
           (all-var-names-are-unique? %)
           ]}
-  (->> problem
-       to-ast
-       domain-transform))
+  (let [unnest-generated-vars #(if (:generated-vars (meta %))
+                                 %
+                                 [%])]
+    (->> problem
+         (mapcat unnest-generated-vars)
+         to-ast
+         domain-transform)))
