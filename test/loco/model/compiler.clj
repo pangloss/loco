@@ -7,16 +7,19 @@
   (:import org.chocosolver.solver.Model)
   )
 
-(defn constraints-assert [expected actual-input]
-  (is
-   (=
-    expected
-    (->> actual-input
-         model/compile
-         compiler/compile
-         :model
-         (.getCstrs)
-         (map (memfn toString))))))
+(defn constraints-assert
+  ([expected actual-input] (constraints-assert expected actual-input nil))
+  ([expected actual-input msg]
+   (is
+    (=
+     expected
+     (->> actual-input
+          model/compile
+          compiler/compile
+          :model
+          (.getCstrs)
+          (map (memfn toString))))
+    msg)))
 
 (defn vars-assert [expected actual-input]
   (is
@@ -440,7 +443,24 @@
     (constraints-assert
      '("BITSINTCHANNELING ([PropBitChanneling(int-var, b1, b2, ..., b4)])")
      [($in :int-var 0 16)
-      ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]
-     ))
+      ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]))
+
+  (testing "and"
+    (constraints-assert
+     '("SUM ([b3 + b2 + b1 = IV_1 + 0])" "ARITHM ([IV_1 = 3])")
+     [($bool :b1)
+      ($bool :b2)
+      ($bool :b3)
+      ($and :b1 :b2 :b3)]
+     "should handle list of booleans"))
+
+  (testing "or"
+    (constraints-assert
+     '("SUM ([b3 + b2 + b1 = IV_1 + 0])" "ARITHM ([IV_1 >= 1])")
+     [($bool :b1)
+      ($bool :b2)
+      ($bool :b3)
+      ($or :b1 :b2 :b3)]
+     "should handle list of booleans"))
 
   )

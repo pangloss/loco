@@ -215,6 +215,14 @@
       (.bitsIntChanneling model
                           (->> bits (map lookup-var) (into-array BoolVar))
                           (lookup-var int-var))
+
+      ;; handle boolean lists
+      [:and (bools :guard #(->> % (map lookup-var) (every? (p instance? BoolVar))))]
+      (.and model (->> bools (map lookup-var) (into-array BoolVar)))
+
+      ;; handle boolean lists
+      [:or (bools :guard #(->> % (map lookup-var) (every? (p instance? BoolVar))))]
+      (.or model (->> bools (map lookup-var) (into-array BoolVar)))
       ))))
 
 (defn compile-vars [model ast]

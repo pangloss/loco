@@ -27,8 +27,6 @@
 ;; table(IntVar var1, IntVar var2, Tuples tuples, String algo)
 ;; tree(IntVar[] succs, IntVar nbTrees)
 ;; tree(IntVar[] succs, IntVar nbTrees, int offset)
-;; and(BoolVar... bools)
-;; or(BoolVar... bools)
 ;; allDifferent(IntVar[] vars, String CONSISTENCY)
 ;; allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)
 
@@ -128,18 +126,20 @@
 (defn $and
   "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if
   and only if every subconstraint is true."
-  {:choco "and(Constraint... cstrs)"}
+  {:choco ["and(BoolVar... bools)"
+           "and(Constraint... cstrs)"]}
   [& constraints-or-bools]
-  {:pre [(not (empty? constraints-or-bools))]}
+  {:pre [(coll? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:and (vec constraints-or-bools)]])
 
 ;;TODO: there is also a boolean list form that can be useful to implement
 (defn $or
   "An \"or\" statement (i.e. \"PvQv...\"); this statement is true if and
   only if at least one subconstraint is true."
-  {:choco "or(Constraint... cstrs)"}
+  {:choco ["or(BoolVar... bools)"
+           "or(Constraint... cstrs)"]}
   [& constraints-or-bools]
-  {:pre [(not (empty? constraints-or-bools))]}
+  {:pre [(coll? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:or (vec constraints-or-bools)]])
 
 (defn $not
