@@ -341,4 +341,18 @@
                  :V)]
      )
     )
+
+  (testing "member"
+    (constraints-assert
+     '("MEMBER ([x in [25,75]])")
+     [($in :x 0 50)
+      ($member :x 25 75)]
+     )
+
+    (constraints-assert
+     '("MEMBER ([x in [29, 28, 27, 26, 25]])")
+     [($in :x 0 50)
+      ($member :x (range 25 30))]
+     )
+    )
   )

@@ -155,6 +155,12 @@
 
       [:square [result dep]]
       (.square model (lookup-var result) (lookup-var dep))
+
+      [:member [var [:lower-bound lb] [:upper-bound ub]]]
+      (.member model (lookup-var var) lb ub)
+
+      [:member [var [:table table]]]
+      (.member model (lookup-var var) (int-array table))
       ))))
 
 (defn compile-vars [model ast]

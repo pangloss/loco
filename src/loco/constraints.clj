@@ -29,8 +29,6 @@
 ;; count(int value, IntVar[] vars, IntVar limit)
 ;; count(IntVar value, IntVar[] vars, IntVar limit)
 ;; sort(IntVar[] vars, IntVar[] sortedVars)
-;; member(IntVar var, int[] table)
-;; member(IntVar var, int lb, int ub)
 ;; notMember(IntVar var, int[] table)
 ;; notMember(IntVar var, int lb, int ub)
 ;; nValues(IntVar[] vars, IntVar nValues)
@@ -350,3 +348,19 @@ If no \"else\" clause is specified, it is \"True\" by default."
      [:weight-sum weight-sum]
      [:energy-sum energy-sum]
      ]]])
+
+(defn $member
+  "Creates a member constraint. Ensures var takes its values in [LB, UB]
+   Creates a member constraint. Ensures var takes its values in table"
+  {:choco ["member(IntVar var, int[] table)"
+           "member(IntVar var, int lb, int ub)"]}
+  ([var table]
+   {:pre [(coll? table)
+          (every? integer? table)]}
+   [:constraint [:member [var [:table (preserve-consts (vec table))]]]])
+
+  ([var lb ub]
+   {:pre [(integer? lb) (integer? ub)]}
+   [:constraint [:member [var
+                          [:lower-bound (preserve-consts lb)]
+                          [:upper-bound (preserve-consts ub)]]]]))
