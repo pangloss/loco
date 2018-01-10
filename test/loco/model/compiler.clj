@@ -174,6 +174,13 @@
       ($in :y 0 2)
       ($div :x :y 0)]))
 
+  (testing "square"
+    (constraints-assert
+     '("SQUARE ([y = {0..25} = x = {0..5}^2])")
+     [($in :x 0 5)
+      ($in :y 0 (* 5 5))
+      ($square :y :x)]))
+
   (testing "all-equal"
     (constraints-assert
      '("ATMOSTNVALUES ([PropAtMostNValues(x, y, 1, cste -- 1)])")

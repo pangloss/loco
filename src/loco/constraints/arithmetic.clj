@@ -6,6 +6,11 @@
 ;;TODO: implement below functions
 ;; square(IntVar var1, IntVar var2)
 
+(defn square
+  "Creates a square constraint: result = dependency^2"
+  [result dependency]
+  [:constraint [:square [result dependency]]])
+
 (defn neg
   "takes a partial constraint and creates a negative constraint from
   it (neg (- :x :b)) also can be used to create a neg var

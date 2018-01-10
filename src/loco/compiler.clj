@@ -151,8 +151,10 @@
                  (lookup-var weight-sum)
                  (lookup-var energy-sum)
                  (int-array weights)
-                 (int-array energies)
-                 )
+                 (int-array energies))
+
+      [:square [result dep]]
+      (.square model (lookup-var result) (lookup-var dep))
       ))))
 
 (defn compile-vars [model ast]
