@@ -28,8 +28,6 @@
 ;; atMostNValues(IntVar[] vars, IntVar nValues, boolean STRONG)
 ;; count(int value, IntVar[] vars, IntVar limit)
 ;; count(IntVar value, IntVar[] vars, IntVar limit)
-;; sort(IntVar[] vars, IntVar[] sortedVars)
-;; nValues(IntVar[] vars, IntVar nValues)
 ;;
 ;; bitsIntChanneling(BoolVar[] bits, IntVar var)
 ;; boolsIntChanneling(BoolVar[] bVars, IntVar var, int offset)
@@ -378,3 +376,26 @@ If no \"else\" clause is specified, it is \"True\" by default."
    [:constraint [:not-member [var
                               [:lower-bound (preserve-consts lb)]
                               [:upper-bound (preserve-consts ub)]]]]))
+
+(defn $n-values
+  "Creates an nValue constraint. Let N be the number of distinct values
+  assigned to the variables of the vars collection. Enforce condition
+  N = nValues to hold."
+  {:choco "nValues(IntVar[] vars, IntVar nValues)"}
+  [vars n-values]
+  {:pre [(coll? vars)]}
+  [:constraint [:n-values [(vec vars) n-values]]])
+
+(defn $sort
+  "Creates a sort constraint which ensures that the variables of
+  sorted-vars correspond to the variables of vars according to a
+  permutation. The variables of sortedVars are also sorted in increasing
+  order.
+
+  For example:
+  - X= (4,2,1,3)
+  - Y= (1,2,3,4)"
+  {:choco "sort(IntVar[] vars, IntVar[] sortedVars)"}
+  [vars sorted-vars]
+  {:pre [(coll? vars) (coll? sorted-vars)]}
+  [:constraint [:sort [(vec vars) (vec sorted-vars)]]])

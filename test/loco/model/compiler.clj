@@ -344,8 +344,7 @@
     (constraints-assert
      '("MEMBER ([x in [25,75]])")
      [($in :x 0 50)
-      ($member :x 25 75)]
-     )
+      ($member :x 25 75)])
 
     (constraints-assert
      '("MEMBER ([x in [29, 28, 27, 26, 25]])")
@@ -356,11 +355,32 @@
     (constraints-assert
      '("NOTMEMBER ([x outside [25,75]])")
      [($in :x 0 50)
-      ($not-member :x 25 75)]
-     )
+      ($not-member :x 25 75)])
 
     (constraints-assert
      '("NOTMEMBER ([x outside [29, 28, 27, 26, 25]])")
      [($in :x 0 50)
       ($not-member :x (range 25 30))]))
+
+  (testing "n-values"
+    (constraints-assert
+     '("NVALUES ([PropAtLeastNValues(x, y, z, nvalue), PropAtMostNValues(x, y, z, nvalue), PropAMNV(x, y, z, nvalue)])")
+     [($in :x 0 5)
+      ($in :y 0 5)
+      ($in :z 0 5)
+      ($in :nvalue 1 3)
+      ($n-values [:x :y :z] :nvalue)]))
+
+  (testing "sort"
+    (constraints-assert
+     '("KEYSORT ([PropKeysorting(a, b, c, ..., p_3)])")
+     [($in :x 0 5)
+      ($in :y 0 5)
+      ($in :z 0 5)
+      ($in :a 0 5)
+      ($in :b 0 5)
+      ($in :c 0 5)
+      ($sort [:a :b :c] [:x :y :z])]
+     ))
+
   )

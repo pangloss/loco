@@ -167,6 +167,15 @@
 
       [:not-member [var [:table table]]]
       (.notMember model (lookup-var var) (int-array table))
+
+      [:n-values [vars n-values]]
+      (.nValues model (->> vars (map lookup-var) (into-array IntVar)) (lookup-var n-values))
+
+      [:sort [vars sorted-vars]]
+      (.sort model
+             (->> vars (map lookup-var) (into-array IntVar))
+             (->> sorted-vars (map lookup-var) (into-array IntVar)))
+
       ))))
 
 (defn compile-vars [model ast]
