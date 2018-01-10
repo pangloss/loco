@@ -29,8 +29,6 @@
 ;; count(int value, IntVar[] vars, IntVar limit)
 ;; count(IntVar value, IntVar[] vars, IntVar limit)
 ;; sort(IntVar[] vars, IntVar[] sortedVars)
-;; notMember(IntVar var, int[] table)
-;; notMember(IntVar var, int lb, int ub)
 ;; nValues(IntVar[] vars, IntVar nValues)
 ;;
 ;; bitsIntChanneling(BoolVar[] bits, IntVar var)
@@ -360,7 +358,23 @@ If no \"else\" clause is specified, it is \"True\" by default."
    [:constraint [:member [var [:table (preserve-consts (vec table))]]]])
 
   ([var lb ub]
-   {:pre [(integer? lb) (integer? ub)]}
+   {:pre [(integer? lb) (integer? ub) (< lb ub)]}
    [:constraint [:member [var
                           [:lower-bound (preserve-consts lb)]
                           [:upper-bound (preserve-consts ub)]]]]))
+
+(defn $not-member
+  "Creates a member constraint. Ensures var does not take its values in [LB, UB]
+   Creates a member constraint. Ensures var does not take its values in table"
+  {:choco ["notMember(IntVar var, int[] table)"
+           "notMember(IntVar var, int lb, int ub)"]}
+  ([var table]
+   {:pre [(coll? table)
+          (every? integer? table)]}
+   [:constraint [:not-member [var [:table (preserve-consts (vec table))]]]])
+
+  ([var lb ub]
+   {:pre [(integer? lb) (integer? ub) (< lb ub)]}
+   [:constraint [:not-member [var
+                              [:lower-bound (preserve-consts lb)]
+                              [:upper-bound (preserve-consts ub)]]]]))

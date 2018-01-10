@@ -338,9 +338,7 @@
                  [5 6 7]                ; values
                  [:x :y :z]             ; occurrences
                  :W                     ; total weight
-                 :V)]
-     )
-    )
+                 :V)]))
 
   (testing "member"
     (constraints-assert
@@ -352,7 +350,17 @@
     (constraints-assert
      '("MEMBER ([x in [29, 28, 27, 26, 25]])")
      [($in :x 0 50)
-      ($member :x (range 25 30))]
+      ($member :x (range 25 30))]))
+
+  (testing "not-member"
+    (constraints-assert
+     '("NOTMEMBER ([x outside [25,75]])")
+     [($in :x 0 50)
+      ($not-member :x 25 75)]
      )
-    )
+
+    (constraints-assert
+     '("NOTMEMBER ([x outside [29, 28, 27, 26, 25]])")
+     [($in :x 0 50)
+      ($not-member :x (range 25 30))]))
   )

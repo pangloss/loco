@@ -161,6 +161,12 @@
 
       [:member [var [:table table]]]
       (.member model (lookup-var var) (int-array table))
+
+      [:not-member [var [:lower-bound lb] [:upper-bound ub]]]
+      (.notMember model (lookup-var var) lb ub)
+
+      [:not-member [var [:table table]]]
+      (.notMember model (lookup-var var) (int-array table))
       ))))
 
 (defn compile-vars [model ast]
