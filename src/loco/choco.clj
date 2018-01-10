@@ -19,18 +19,12 @@
   (let [model (:csolver *solver*)]
     (.intOffsetView model x const)))
 
-(defmethod ->choco* :neg
-  [{x :arg}]
-  (let [x (->choco x)
-        model (:csolver *solver*)]
-    (if (number? x)
-      (- x)
-      (.intMinusView model x))))
-
 (defn- $*view
   [x const]
   (let [model (:csolver *solver*)]
     (.intScaleView model x const)))
+
+
 
 ;;LOGIC
 (defmethod ->choco* :true

@@ -10,25 +10,38 @@
            org.chocosolver.solver.variables.IntVar)
   )
 
-(defn compile-var-statement [model statement]
-  (->
-   statement
-   (match
-    [:var var-name _ [:bool _ _]]
-    (.boolVar model (name var-name))
+(defn- lookup-var [vars-index name]
+  (if-let [var (get vars-index name)]
+    var
+    (if (number? name)
+      name
+      (throw (Exception. "Could not find variable: " name)))))
 
-    [:var var-name _ [:int (lb :guard integer?) (ub :guard integer?)]]
-    (.intVar model (name var-name) lb ub)
+(defn compile-var-statement [[vars-index vars model] statement]
+  (let [var (match
+             [statement (meta statement)]
 
-    [:var var-name _ [:int (lb :guard integer?) (ub :guard integer?) :bounded]]
-    (.intVar model (name var-name) lb ub true)
+             [[:var var-name _ _] {:neg dep-name}]
+             (.intMinusView model (lookup-var vars-index dep-name))
 
-    [:var var-name _ [:const (value :guard integer?)]]
-    (.intVar model (name var-name) value)
+             [[:var var-name _ [:bool _ _]] _]
+             (.boolVar model (name var-name))
 
-    [:var var-name _ [:int (enumeration :guard vector?)]]
-    (.intVar model (name var-name) (int-array enumeration))
-    )))
+             [[:var var-name _ [:int (lb :guard integer?) (ub :guard integer?)]] _]
+             (.intVar model (name var-name) lb ub)
+
+             [[:var var-name _ [:int (lb :guard integer?) (ub :guard integer?) :bounded]] _]
+             (.intVar model (name var-name) lb ub true)
+
+             [[:var var-name _ [:const (value :guard integer?)]] _]
+             (.intVar model (name var-name) value)
+
+             [[:var var-name _ [:int (enumeration :guard vector?)]] _]
+             (.intVar model (name var-name) (int-array enumeration))
+             )]
+    [(assoc vars-index (second statement) var)
+     (conj vars var)
+     model]))
 
 ;;handles boolVars and intVars
 (defn- sum-constraint [model sum-vars op eq-var]
@@ -41,12 +54,7 @@
             eq-var))))
 
 (defn compile-constraint-statement [vars-index model statement]
-  (let [lookup-var (fn [name] (if-let [var (get vars-index name)]
-                                var
-                                (if (number? name)
-                                  name
-                                  (throw (Exception. "Could not find variable: " name)))
-                                ))]
+  (let [lookup-var (partial lookup-var vars-index)]
     (->
      statement
      (match [:constraint constraint] constraint)
@@ -92,6 +100,7 @@
       [:not-all-equal vars]
       (.notAllEqual model (->> vars (map lookup-var) (into-array IntVar)))
 
+      ;;TODO: there is optimization for bools on min and max
       [:min [result :of vars]]
       (.min model (lookup-var result) (->> vars (map lookup-var) (into-array IntVar)))
 
@@ -149,7 +158,7 @@
 (defn compile-vars [model ast]
   (->>
    ast
-   (map (partial compile-var-statement model))))
+   (reduce compile-var-statement [{} [] model])))
 
 (defn compile-constraints [model vars-index ast]
   (->>
@@ -163,8 +172,8 @@
    (let [
          uncompiled-vars (->> ast (filter model/var?))
          uncompiled-constraints (->> ast (filter model/constraint?))
-         vars (compile-vars model uncompiled-vars)
-         vars-index (zipmap (map second uncompiled-vars) vars)
+         [vars-index vars _] (compile-vars model uncompiled-vars)
+         ;;vars-index (zipmap (map second uncompiled-vars) vars)
          constraints (->>
                       (compile-constraints model vars-index uncompiled-constraints)
                       (map (juxt identity (memfn post)))

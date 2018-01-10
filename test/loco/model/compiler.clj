@@ -69,7 +69,20 @@
        ["9" 1 3 false "9 = [1,3]"])
      [($in :7 7 7)
       ($in :8 -1000 1000)
-      ($in :9 1 3 :bounded)])))
+      ($in :9 1 3 :bounded)]))
+
+  (testing "neg"
+    (vars-assert
+     '(["i" 0 5 true "i = {0..5}"]
+       ["-(i)" -5 0 true "-(i = {0..5}) = [-5,0]"])
+     [($in :i 0 5)
+      ($neg :-i :i)
+      ]
+     )
+    )
+
+
+  )
 
 (deftest compiling-constraints-test
   (testing "sum"
@@ -139,7 +152,7 @@
   (testing "neg"
     (constraints-assert
      '("TABLE ([CSPLarge({x = {-5..5}, , y = {0..2}, , x*y = {-25..10}, })])"
-       "ARITHM ([-x*y = 0])")
+       "ARITHM ([-(x*y) = 0])")
      [($in :x -5 5)
       ($in :y 0 2)
       ($= 0 ($neg ($* :x :y)))])
@@ -147,8 +160,8 @@
 
   (testing "subtration"
     (constraints-assert
-     '("SUM ([PropXplusYeqZ(y, -x, y-x)])"
-       "SUM ([PropXplusYeqZ(x, -y-x, x-y-x)])"
+     '("SUM ([PropXplusYeqZ(y, -(x), y-x)])"
+       "SUM ([PropXplusYeqZ(x, -(y-x), x-y-x)])"
        "ARITHM ([x-y-x = 5])")
      [($in :x 0 5)
       ($in :y 0 5)
