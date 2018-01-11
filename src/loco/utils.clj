@@ -1,12 +1,23 @@
-(ns loco.utils)
+(ns loco.utils
+  (:require [clojure.core.match :refer [match]]))
 
 (def p partial)
 (def c comp)
 
 (defn debug-print [prefix list]
-  (doseq [item list]
-    (println prefix item))
-  list)
+  (match
+   [prefix list]
+   [(aprefix :guard #(or (symbol? %) (keyword? %) (string? %))) alist]
+   (do
+     (doseq [item alist]
+       (println aprefix item))
+     alist)
+
+   [alist (aprefix :guard #(or (symbol? %) (keyword? %) (string? %)))]
+   (do
+     (doseq [item alist]
+       (println aprefix item))
+     alist)))
 
 (defn remove-dupes [ast]
   ;; we use a vec to maintain order, and a set for fast lookup of dupes

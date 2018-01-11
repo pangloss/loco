@@ -59,10 +59,31 @@
   )
 
 (deftest reify-test
-  [[:var :x :public [:int 0 1]]
-   [:constraint [:all-equal [[:reify [:constraint :true]] :x]]]
-   [:constraint [:all-equal [[:reify [:constraint :false]]
-                             [:constraint :partial [:- [1 :x]]]]]]]
+  (compiled-assert
+   [[:var :a :hidden [:bool 0 1]]
+    [:reify :a [:constraint [:and [[:constraint :true]]]]]]
+   [($reify :a ($and ($true)))])
+
+  (compiled-assert
+   [[:var :b :public [:int 0 2]]
+    [:var :c :public [:int 0 2]]
+    [:var :a :hidden [:bool 0 1]]
+    [:var :2 :hidden [:const 2]]
+    [:var :b+2 :proto [:int 2 4]]
+    [:constraint [:sum [:b+2 := [:b :2]]]]
+    [:reify :a [:constraint [:arithm [:c := :b+2]]]]]
+   [($in :b 0 2)
+    ($in :c 0 2)
+    ($reify :a ($= :c ($+ :b 2)))])
+
+  (compiled-assert
+   [[:var :a :public [:bool 0 1]]
+    [:reify :a [:constraint [:and [[:constraint :true]]]]]]
+   [($bool :a)
+    ($reify :a ($and ($true)))]
+   "should preserve user declared var")
+
+  ;;TODO: implement reify-partial...
   [($in :x 0 1)
    ($= ($reify ($true)) :x)
    ($= ($reify ($false)) ($- 1 :x))]

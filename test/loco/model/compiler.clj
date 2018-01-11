@@ -4,38 +4,7 @@
   (:use clojure.test
         loco.model.test
         loco.constraints)
-  (:import org.chocosolver.solver.Model)
-  )
-
-(defn constraints-assert
-  ([expected actual-input] (constraints-assert expected actual-input nil))
-  ([expected actual-input msg]
-   (is
-    (=
-     expected
-     (->> actual-input
-          model/compile
-          compiler/compile
-          :model
-          (.getCstrs)
-          (map (memfn toString))))
-    msg)))
-
-(defn vars-assert [expected actual-input]
-  (is
-   (=
-    expected
-    (->>
-     actual-input
-     model/compile
-     compiler/compile
-     :vars
-     (map (juxt
-           (memfn getName)
-           (memfn getLB)
-           (memfn getUB)
-           (memfn hasEnumeratedDomain)
-           (memfn toString)))))))
+  (:import org.chocosolver.solver.Model))
 
 (deftest compiling-vars-test
 
@@ -444,7 +413,9 @@
      '("BITSINTCHANNELING ([PropBitChanneling(int-var, b1, b2, ..., b4)])")
      [($in :int-var 0 16)
       ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]))
+)
 
+(deftest logic-compile-test
   (testing "and"
     (constraints-assert
      '("SUM ([b3 + b2 + b1 = IV_1 + 0])" "ARITHM ([IV_1 = 3])")
@@ -452,7 +423,16 @@
       ($bool :b2)
       ($bool :b3)
       ($and :b1 :b2 :b3)]
-     "should handle list of booleans"))
+     "should handle list of booleans")
+
+    (constraints-assert
+     '("REIF_1 = [0,1]=>TRUE ([true]), !REIF_1 = [0,1]=>OPPOSITE ([PropOpposite(cste -- 1)])"
+       "REIF_2 = [0,1]=>FALSE ([false]), !REIF_2 = [0,1]=>OPPOSITE ([PropOpposite(cste -- 0)])"
+       "SUM ([PropXplusYeqZ(REIF_1, REIF_2, IV_3)])"
+       "ARITHM ([IV_3 = 2])")
+     [($and ($true) ($false))]
+     )
+    )
 
   (testing "or"
     (constraints-assert
@@ -461,6 +441,103 @@
       ($bool :b2)
       ($bool :b3)
       ($or :b1 :b2 :b3)]
-     "should handle list of booleans"))
+     "should handle list of booleans")
 
+    (constraints-assert
+     '("REIF_1 = [0,1]=>TRUE ([true]), !REIF_1 = [0,1]=>OPPOSITE ([PropOpposite(cste -- 1)])"
+       "REIF_2 = [0,1]=>FALSE ([false]), !REIF_2 = [0,1]=>OPPOSITE ([PropOpposite(cste -- 0)])"
+       "SUM ([PropXplusYeqZ(REIF_1, REIF_2, IV_3)])"
+       "ARITHM ([IV_3 >= 1])")
+     [($or ($true) ($false))]
+     )
+    )
+
+  (testing "when"
+    (constraints-assert
+     '("REIF_1 = [0,1]=>FALSE ([false]), !REIF_1 = [0,1]=>OPPOSITE ([PropOpposite(cste -- 0)])"
+       "ARITHM ([REIF_1 = 0])")
+     [($when ($false) ($false))])
+
+    (constraints-assert
+     '("ARITHM ([when = 0])")
+     [($bool :when)
+      ($when :when ($false))])
+
+    (constraints-assert
+     '("REIF_1 = [0,1]=>TRUE ([true]), !REIF_1 = [0,1]=>OPPOSITE ([PropOpposite(cste -- 1)])"
+       "ARITHM ([prop(REIF_1.GEQ.when)])")
+     [($bool :when)
+      ($when :when ($true))])
+    )
+
+  (testing "if-then-else"
+    (constraints-assert
+     '("REIF_1 = [0,1]=>TRUE ([true]), !REIF_1 = [0,1]=>OPPOSITE ([PropOpposite(cste -- 1)])"
+       "REIF_2 = [0,1]=>TRUE ([true]), !REIF_2 = [0,1]=>OPPOSITE ([PropOpposite(cste -- 1)])"
+       "ARITHM ([prop(REIF_2.GEQ.REIF_1)])"
+       "ARITHM ([not(REIF_1) = 0])")
+     [($if ($true) ($true) ($false))])
+
+    (constraints-assert
+     '("REIF_1 = [0,1]=>TRUE ([true]), !REIF_1 = [0,1]=>OPPOSITE ([PropOpposite(cste -- 1)])"
+       "ARITHM ([prop(REIF_1.GEQ.if)])"
+       "ARITHM ([not(if) = 0])")
+     [($bool :if)
+      ($if :if ($true) ($false))])
+    )
+
+  #_(testing "cond"
+    (constraints-assert
+     '()
+     [($cond
+       ($false) ($true)
+       ($false) ($false)
+       ($true) ($true)
+       ($false) ($true)
+       :else ($true))])
+    )
+
+  (testing "not"
+    (constraints-assert
+     '("OPPOSITE ([PropOpposite(cste -- 0)])")
+     [($not ($false))])
+
+    (constraints-assert
+     '("TRUE ([true])")
+     [($not ($not ($true)))])
+
+    (constraints-assert
+     '("ARITHM ([prop(b.GEQ.a)])"
+       "ARITHM ([prop(a.NEQ.b)])"
+       "SUM ([a + b + c != 5])")
+     [($in :a 0 5)
+      ($in :b 0 5)
+      ($in :c 0 1)
+      ($not ($> :a :b))
+      ($not ($= :a :b))
+      ($not ($sum 5 := [:a :b :c]))]))
+
+  (testing "true false"
+    (constraints-assert
+     '("TRUE ([true])")
+     [($true)])
+
+    (constraints-assert
+     '("FALSE ([false])")
+     [($false)]))
+  )
+
+(deftest reify-compile-test
+  (constraints-assert
+   '("SUM ([PropXplusYeqZ(b, c, IV_1)])"
+     "a = [0,1]=>ARITHM ([IV_1 = 2]), !a = [0,1]=>ARITHM ([IV_1 =/= 2])")
+   [($bool :b)
+    ($bool :c)
+    ($reify :a ($and :b :c))])
+
+  (constraints-assert
+   '("a = [0,1]=>ARITHM ([prop(c.EQ.b+2)]), !a = [0,1]=>ARITHM ([prop(c.NEQ.b+2)])")
+   [($in :b 0 2)
+    ($in :c 0 2)
+    ($reify :a ($= :c ($+ :b 2)))])
   )

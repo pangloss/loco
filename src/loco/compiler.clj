@@ -7,7 +7,8 @@
    )
   (:import org.chocosolver.solver.Model
            org.chocosolver.solver.variables.BoolVar
-           org.chocosolver.solver.variables.IntVar)
+           org.chocosolver.solver.variables.IntVar
+           org.chocosolver.solver.constraints.Constraint)
   )
 
 (defn- lookup-var [vars-index name]
@@ -16,6 +17,12 @@
     (if (number? name)
       name
       (throw (Exception. (str "Could not find variable: " name))))))
+
+(defn- lookup-var-unchecked [vars-index name]
+  (if-let [var (get vars-index name)]
+    var
+    (when (number? name)
+      name)))
 
 (defn compile-var-statement [[vars-index vars model] statement]
   (let [var (match
@@ -54,7 +61,15 @@
             eq-var))))
 
 (defn compile-constraint-statement [vars-index model statement]
-  (let [lookup-var (partial lookup-var vars-index)]
+  (let [lookup-var (partial lookup-var vars-index)
+        lookup-var-unchecked (partial lookup-var-unchecked vars-index)
+        realize-nested-constraints (fn [constraints]
+                                     (->> constraints
+                                          (map (p compile-constraint-statement vars-index model))
+                                          (into-array Constraint)
+                                          ))
+        realize-nested-constraint (p compile-constraint-statement vars-index model)
+        ]
     (->
      statement
      (match [:constraint constraint] constraint)
@@ -217,13 +232,65 @@
                           (lookup-var int-var))
 
       ;; handle boolean lists
-      [:and (bools :guard #(->> % (map lookup-var) (every? (p instance? BoolVar))))]
+      [:and (bools :guard (p every? (c (p instance? BoolVar) lookup-var-unchecked)))]
       (.and model (->> bools (map lookup-var) (into-array BoolVar)))
 
+      [:and (constraints :guard (p every? model/constraint?))]
+      (.and model (realize-nested-constraints constraints))
+
       ;; handle boolean lists
-      [:or (bools :guard #(->> % (map lookup-var) (every? (p instance? BoolVar))))]
+      [:or (bools :guard (p every? (c (p instance? BoolVar) lookup-var-unchecked)))]
       (.or model (->> bools (map lookup-var) (into-array BoolVar)))
+
+      [:or (constraints :guard (p every? model/constraint?))]
+      (.or model (realize-nested-constraints constraints))
+
+      [:when [(bool :guard (c (p instance? BoolVar) lookup-var-unchecked)) then-constraint]]
+      (.ifThen model
+               (lookup-var bool)
+               (realize-nested-constraint then-constraint))
+
+      [:when [if-constraint then-constraint]]
+      (.ifThen model
+               (realize-nested-constraint if-constraint)
+               (realize-nested-constraint then-constraint))
+
+      [:if-else [(bool :guard (c (p instance? BoolVar) lookup-var-unchecked))
+                 then-constraint else-constraint]]
+      (.ifThenElse model
+                   (lookup-var bool)
+                   (realize-nested-constraint then-constraint)
+                   (realize-nested-constraint else-constraint))
+
+      [:if-else [if-constraint then-constraint else-constraint]]
+      (.ifThenElse model
+                   (realize-nested-constraint if-constraint)
+                   (realize-nested-constraint then-constraint)
+                   (realize-nested-constraint else-constraint))
+
+      [:not constraint]
+      (.not model (realize-nested-constraint constraint))
+
+      :true
+      (.trueConstraint model)
+
+      :false
+      (.falseConstraint model)
       ))))
+
+(defn compile-reify-statement [vars-index model statement]
+  (match statement
+         [:reify (var-name :guard (c (p instance? BoolVar)
+                                     (p lookup-var-unchecked vars-index))) constraint]
+         (.reification model
+                       (lookup-var vars-index var-name)
+                       (compile-constraint-statement vars-index model constraint))))
+
+(defn compile-reifies [model vars-index ast]
+  (->>
+   ast
+   (map (partial compile-reify-statement vars-index model))
+   doall))
 
 (defn compile-vars [model ast]
   (->>
@@ -233,7 +300,8 @@
 (defn compile-constraints [model vars-index ast]
   (->>
    ast
-   (map (partial compile-constraint-statement vars-index model))))
+   (map (partial compile-constraint-statement vars-index model))
+   doall))
 
 ;;FIXME: there is going to be an issue with reify, as it is part of a constraint object
 (defn compile
@@ -242,15 +310,20 @@
    (let [
          uncompiled-vars (->> ast (filter model/var?))
          uncompiled-constraints (->> ast (filter model/constraint?))
+         uncompiled-reifies (->> ast (filter model/reify?))
          [vars-index vars _] (compile-vars model uncompiled-vars)
-         ;;vars-index (zipmap (map second uncompiled-vars) vars)
+         _reifies (compile-reifies model vars-index uncompiled-reifies)
          constraints (->>
                       (compile-constraints model vars-index uncompiled-constraints)
-                      (map (juxt identity (memfn post)))
+                      ;;the conditional constraints return void, and are posted automatically
+                      ;;the (when %) prevents NULL.post()
+                      (map (juxt identity #(when % (.post %))))
                       (map first)
                       doall)
          ]
-     {:vars-index vars-index
-      :vars vars
+     {
       :constraints constraints
-      :model model})))
+      :model model
+      :vars vars
+      :vars-index vars-index
+      })))

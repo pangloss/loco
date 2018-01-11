@@ -182,8 +182,15 @@ If no \"else\" clause is specified, it is \"True\" by default."
 (defn $reify
   "Given a constraint C, will generate a bool-var V such that (V = 1) iff C."
   {:choco "reification(BoolVar var, Constraint cstr)"}
-  [constraint]
-  [:reify constraint])
+  ([var-label, constraint]
+   {:pre [(keyword? var-label)]}
+   (-> [($bool- var-label)
+        [:reify var-label constraint]]
+       (with-meta {:generated-vars true})))
+
+  ;;really don't know what to do with the 1-arity call
+  ([constraint]
+   [:reify constraint]))
 
 
 

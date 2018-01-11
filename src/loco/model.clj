@@ -10,33 +10,38 @@
 
 (defn var?
   [form]
-  (match [form]
-         [[:var & _]] true
+  (match form
+         [:var & _] true
          :else false))
 
 (defn public-var? [form]
-  (match [form]
-         [[:var _ :public & _]] true
+  (match form
+         [:var _ :public & _] true
          :else false))
 
 (defn- hidden-var? [form]
-  (match [form]
-         [[:var _ :hidden & _]] true
+  (match form
+         [:var _ :hidden & _] true
          :else false))
 
 (defn- proto-var? [form]
-  (match [form]
-         [[:var _ :proto & _]] true
+  (match form
+         [:var _ :proto & _] true
          :else false))
 
 (defn constraint? [form]
-  (match [form]
-         [[:constraint & _]] true
+  (match form
+         [:constraint & _] true
          :else false))
 
 (defn- partial-constraint? [form]
-  (match [form]
-         [[:constraint :partial & _]] true
+  (match form
+         [:constraint :partial & _] true
+         :else false))
+
+(defn reify? [form]
+  (match form
+         [:reify _ _] true
          :else false))
 
 ;;TODO: attach the name making function to the constraint itself via
@@ -118,19 +123,21 @@
   "the loco.constraints DSL allows for nested constraints, which aren't
   permitted in choco, this function will create intermediate variables
   and move deeply nested constraints to be top-level. should output
-  proto-vars sorted topologically based on deps"
+  proto-vars sorted topologically based on their dependancies"
   [statements]
-  (let [vars (filter var? statements)
-        constraints (filter constraint? statements)]
+  (->> statements
+       (mapcat
+        (fn [statement]
+          (match statement
+                 [:reify var-name constraint]
+                 (let [[transformed-original & vars] (unnest-partial-vars constraint)]
+                   (conj (vec vars)
+                         [:reify var-name [:constraint transformed-original]]))
 
-    (into
-     (vec vars)
-     (->> constraints
-          (mapcat
-           (fn [[type _statement-args :as statement]]
-             (let [[transformed-original & vars] (unnest-partial-vars statement)]
-               (conj (vec vars)
-                     [type transformed-original]))))))))
+                 [:constraint _statement-args]
+                 (let [[transformed-original & vars] (unnest-partial-vars statement)]
+                   (conj (vec vars)
+                         [:constraint transformed-original])))))))
 
 (defn- const-transform [statement]
   (let [acc (atom [])
@@ -394,8 +401,8 @@
     )))
 
 (defn domain-transform [statements]
-  (let [constraints (filter constraint? statements)
-        vars (remove constraint? statements)
+  (let [vars (filter var? statements)
+        constraints&reifs (remove var? statements)
         var-index (index-by second vars)
         var-missing-domain? (comp nil? (p get-domain))
         ]
@@ -428,7 +435,7 @@
          ;;holy shit, have to jump through some hoops to get desired output...
          ;;can probably use (into) here
          first
-         (vector constraints)
+         (vector constraints&reifs)
          reverse
          (apply concat)
          vec)))
@@ -436,20 +443,33 @@
 (defn to-ast [problem]
   (let [
         vars (filter var? problem)
-        transformed-problem (->> problem
-                                 (filter #(or (constraint? %) (partial-constraint? %)))
-                                 (mapcat const-transform)
+        [extracted-consts transformed-constraints]
+        (->> problem
+             (filter #(or
+                       (constraint? %)
+                       (partial-constraint? %)
+                       (reify? %)))
+             (mapcat const-transform)
+             ((juxt
+               (p filter hidden-var?)
+               (p remove hidden-var?))))
+        transformed-problem (->> transformed-constraints
+                                 (filter #(or
+                                           (constraint? %)
+                                           (partial-constraint? %)
+                                           (reify? %)))
                                  unnest-all-constraints)
-        hidden-vars (filter hidden-var? transformed-problem)
         constraints (filter constraint? transformed-problem)
-        proto-vars (filter proto-var? transformed-problem)
+        reifies     (filter reify? transformed-problem)
+        proto-vars  (filter proto-var? transformed-problem)
         ]
 
     (-> []
         (into vars)
-        (into hidden-vars)
+        (into extracted-consts)
         (into proto-vars)
-        (remove-dupes-by second)
+        (remove-dupes-by second) ;;only remove dupe vars
+        (into reifies)
         (into constraints)
         (->> (mapcat constraint-from-proto-var)
              (into []))
@@ -484,9 +504,9 @@
     (assert false remaining-partials)
     true))
 
-(defn- only-constraints-and-vars-present [ast]
+(defn- only-constraints-and-vars-and-reifies-present [ast]
   (->> ast
-       (every? (comp #{:constraint :var} first))))
+       (every? (comp #{:constraint :var :reify} first))))
 
 (defn compile
   "take in a representation of a model, a list of maps created using the
@@ -495,7 +515,7 @@
   [problem]
   {:pre [(all-partials-transformed? problem)]
    :post [
-          (only-constraints-and-vars-present %)
+          (only-constraints-and-vars-and-reifies-present %)
           (all-var-names-are-unique? %)
           ]}
   (let [unnest-generated-vars #(if (:generated-vars (meta %))
