@@ -536,7 +536,8 @@
     ($reify :a ($and :b :c))])
 
   (constraints-assert
-   '("a = [0,1]=>ARITHM ([prop(c.EQ.b+2)]), !a = [0,1]=>ARITHM ([prop(c.NEQ.b+2)])")
+   '("a = [0,1]=>ARITHM ([prop(c.EQ.b+2)]), !a = [0,1]=>ARITHM ([prop(c.NEQ.b+2)])"
+     "ARITHM ([prop(b.EQ.b+2+-2)])")
    [($in :b 0 2)
     ($in :c 0 2)
     ($reify :a ($= :c ($+ :b 2)))])
