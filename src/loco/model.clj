@@ -5,6 +5,11 @@
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk]))
 
+(defn keywordize [str]
+  (if (clojure.string/starts-with? str ":")
+    (keyword (.replace str ":" ""))
+    (keyword str)))
+
 (defn- neg-var-name [dep-name]
   (keyword (str "-" (name dep-name))))
 
@@ -49,48 +54,71 @@
 
 ;;TODO: these would be better if they were part of the function that
 ;;created the partial constraint (like on it's meta data)
+
+
+(defn nice-keyword-str? [str]
+  (not (or
+        (clojure.string/includes? str "[")
+        (clojure.string/includes? str "]")
+        (clojure.string/includes? str "{")
+        (clojure.string/includes? str "}")
+        (clojure.string/includes? str "(")
+        (clojure.string/includes? str ")")
+        (when (clojure.string/ends-with? str ":") true)
+        )))
+
+[(nice-keyword-str? "re")
+ (nice-keyword-str? ":re")
+ (nice-keyword-str? ":re:")
+ (nice-keyword-str? ":re[f]")
+ ]
+
 (defn constraint-to-keyword
   "takes an un-nested partial-constraint and tries to make a nice name
   from it and it's arguments. this will not work with nested
   constraints. use with postwalk"
   [statement]
-  (->
-   [statement]
-   (match [[:constraint :partial more]] [more])
-   (match
-    [[:neg dep-name]] (str "-" (name dep-name))
-    [[:abs [dep]]] (str "|" (name dep) "|")
-    [[op [dep]]] (str (name op) "_" (name dep))
+  (let [new-name (->
+                  statement
+                  (match [:constraint :partial more] more)
+                  (match
+                   [:neg dep-name] (str "-" (name dep-name))
+                   [:abs [dep]] (str "|" (name dep) "|")
+                   [op [dep]] (str (name op) "_" (name dep))
 
-    [[(op :guard #(->> % name count (= 1))) [& deps]]]
-    (->> (interpose (name op) (map name deps))
-         (apply str))
+                   [(op :guard #(->> % name count (= 1))) [& deps]]
+                   (->> deps
+                        (interpose (name op))
+                        (apply str))
 
-    [[op (args :guard #(->> % flatten count (< 10)))]]
-    (->> args hash (str (name op) "_"))
+                   [op (args :guard #(->> % flatten count (< 10)))]
+                   (->> args hash (str (name op) "_"))
 
-    [[:scalar [vars coeffs]]]
-    (->> [(map name vars) (repeat "*") coeffs]
-         (apply map vector)
-         (interpose "+")
-         flatten
-         (apply str "scalar_"))
+                   [:scalar [vars coeffs]]
+                   (->> [(map name vars) (repeat "*") coeffs]
+                        (apply map vector)
+                        (interpose "+")
+                        flatten
+                        (apply str "scalar_"))
 
-    ;;TODO: take this concept of making a name, and put it into $nth meta
-    ;;or the meta of the partial-constraint
-    ;;fetch the function from $nth and run it if exists
-    [[:$nth stuff]]
-    (->> stuff
-         flatten
-         (map str)
-         (interpose "_")
-         (apply str "$nth_"))
+                   ;;TODO: take this concept of making a name, and put it into $nth meta
+                   ;;or the meta of the partial-constraint
+                   ;;fetch the function from $nth and run it if exists
+                   [:$nth stuff]
+                   (->> stuff
+                        flatten
+                        (map str)
+                        (interpose "_")
+                        (apply str "$nth_"))
 
-    [[op [& deps]]]
-    (->> (interpose "_" (map name deps))
-         (apply str (name op) "_")))
+                   [op [& deps]]
+                   (->> (interpose "_" (map name deps))
+                        (apply str (name op) "_")))
 
-   keyword))
+                  )]
+    (if (nice-keyword-str? new-name)
+      (keywordize new-name)
+      new-name)))
 
 (defn- unnest-partial-vars
   "expects form of [:constraint [... ]]"
@@ -156,7 +184,7 @@
                           (swap! acc conj [:var var-name :hidden [:const const]])
                           var-name)
 
-                        [(form :guard vector?) {:preserve-consts true}]
+                        [(form :guard coll?) {:preserve-consts true}]
                         (->> form (map #(if (number? %)
                                           (with-meta [%] {:preserve-const true})
                                           %))
@@ -313,7 +341,10 @@
    ((juxt first last))))
 
 (defn abs-domain [_ [lb ub]]
-  (sort [(Math/abs lb) (Math/abs ub)]))
+  (match (vec (sort [lb ub]))
+         [(low :guard neg?) (high :guard neg?)] [(Math/abs high) (Math/abs low)]
+         [(low :guard neg?) high] [0 (max (Math/abs high) (Math/abs low))]
+         [low high] [(Math/abs low) (Math/abs high)]))
 
 (defn min-domains [[lb1 ub1] [lb2 ub2]]
   [(min lb1 lb2), (min ub1 ub2)])
@@ -508,6 +539,32 @@
   (->> ast
        (every? (comp #{:constraint :var :reify} first))))
 
+
+
+(defn- create-crazy-variable-replacement-map [ast]
+  (->>
+   ast
+   ((juxt (p filter var?) (p filter reify?)))
+   (apply concat)
+   (map second)
+   (map (juxt identity #(if (keyword? %)
+                          %
+                          (str %))))
+   (remove (p apply =))
+   (into {})
+   ))
+
+
+(->>
+ [[:var :p :public [:int 0 0]]
+  [:var [:p 0 1] :public [:int 0 0]]
+  [:reify :re [:constraint [:whatever []]]]
+  [:constraint
+   [:arithm
+    [[:p 0 1] := [:constraint :partial [:* [[:p 0 1] [:p 0 1]]]]]]]]
+ create-crazy-variable-replacement-map
+ )
+
 (defn compile
   "take in a representation of a model, a list of maps created using the
   constraints namespace. Transform into a model that can be consumed
@@ -522,6 +579,11 @@
                                  %
                                  [%])]
     (->> problem
+         ;;(debug-print 'problem)
          (mapcat unnest-generated-vars)
+         ;;(debug-print 'unnest)
+         ;; ((juxt create-crazy-variable-replacement-map identity))
+         ;; (debug-print 'replace-map)
+         ;; (apply walk/prewalk-replace)
          to-ast
          domain-transform)))

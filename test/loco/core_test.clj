@@ -1,20 +1,22 @@
 (ns loco.core-test
   (:use clojure.test
-        loco.core
         loco.constraints)
   (:require
+   [loco.solver :as solver]
    [loco.model :as model]
    [loco.automata :as a]))
 
-(defmacro test-constraint-model
+(defn test-constraint-model
   ([docstring model solution-maps]
-   `(testing ~docstring
-      (is (= ~(set solution-maps)
-             (set (solutions ~model))))))
+   (is
+    (=
+     (set solution-maps)
+     (set (solver/solutions model)))
+    docstring))
   ([model solution-maps]
-   `(test-constraint-model nil ~model ~solution-maps)))
+   (test-constraint-model nil model solution-maps)))
 
-(deftest basic-test
+(deftest basic-tests
   (test-constraint-model
    "Basic test with only 1 var"
    [($in :y 1 3)]
@@ -68,7 +70,7 @@
 
   (test-constraint-model
    [($in :x 0 5)
-    ($= ($- :x :5) 0)]
+    ($= ($- :x 5) 0)]
    [{:x 5}])
 
   (test-constraint-model
@@ -81,8 +83,12 @@
    [($in :x 0 5)
     ($in :y 0 5)
     ($= ($- :x :y) ($- :y :x))]
-   #{{:x 0, :y 0} {:x 2, :y 1} {:x 4, :y 2}})
-
+   #{{:x 0, :y 0}
+     {:x 1, :y 1}
+     {:x 2, :y 2}
+     {:x 4, :y 4}
+     {:x 3, :y 3}
+     {:x 5, :y 5}})
 
   (test-constraint-model
    [($in :x 0 5)
@@ -165,7 +171,7 @@
     ($not ($and ($true) ($false)))
     ($or ($true) ($false))
     ($if ($true) ($true) ($false))
-    ($if ($false) ($false))
+    ($when ($false) ($false))
     ($if ($false) ($false) ($true))
     ($cond
      ($false) ($true)
@@ -178,8 +184,10 @@
 (deftest reify-test
   (test-constraint-model
    [($in :x 0 1)
-    ($= ($reify ($true)) :x)
-    ($= ($reify ($false)) ($- 1 :x))]
+    ($reify :true ($true))
+    ($reify :false ($false))
+    ($= :true :x)
+    ($= :false ($- 1 :x))]
    [{:x 1}]))
 
 (deftest all-different-test
@@ -192,7 +200,7 @@
    [{:x 0 :y 1 :z 2}]))
 
 (deftest circuit-test
-  (-> (solution
+  (-> (solver/solution
         [($in :a 0 4)
          ($in :b [0])
          ($in :c 0 4)
@@ -210,8 +218,9 @@
                 i (sol y)
                 z (a i)]
             (is (= (count (distinct [v w x y z])) 5)))))
-  ;testing offset
-  (-> (solution
+
+  ;;testing offset
+  (-> (solver/solution
         [($in :a 1 5)
          ($in :b [1])
          ($in :c 1 5)
@@ -250,81 +259,89 @@
     ($= ($nth [:a :b :c :d :e] :x 1) :x)]
    [{:a 5 :b 5 :c 3 :d 5 :e 5 :x 3}]))
 
+;;holy crap, there are like 1000 assertions in this test
 (deftest automaton-test
-  (doseq [[description automaton]
-          [["string->automaton"
-            (a/string->automaton "12*3+")]
-           ["map->automaton"
-            (a/map->automaton {:q0 {1 :q1}
-                               :q1 {2 :q1
-                                    3 :q2}
-                               :q2 {3 :q2}}
-                              :q0 #{:q2})]
-           ["make-automaton"
-            (a/make-automaton [:q0 :q1 :q2]
-                              [[:q0 :q1 1]
-                               [:q1 :q1 2]
-                               [:q1 :q2 3]
-                               [:q2 :q2 3]]
-                              :q0 [:q2])]
-           ["Union two automata"
-            (a/union (a/string->automaton "12?3+")
-                     (a/string->automaton "12+3+"))]
-           ["Concatenate automata"
-            (reduce a/cat
-                    [(a/string->automaton "1")
-                     (a/string->automaton "2*")
-                     (a/string->automaton "3+")])]
-           ["Intersect automata"
-            (a/intersection (a/string->automaton "12*4*3+")
-                            (a/string->automaton "12*5?3+"))]
-           ["Minimized automaton via Hopcroft"
-            (-> (a/union (a/string->automaton "12?3+")
-                         (a/string->automaton "12+3+"))
-                (a/minimize!))]
-           ["Minimized automaton via Brzozowski"
-            (-> (a/union (a/string->automaton "12?3+")
-                         (a/string->automaton "12+3+"))
-                (a/minimize! :brzozowski))]
-           ["Minimized automaton via Huffman"
-            (-> (a/union (a/string->automaton "12?3+")
-                         (a/string->automaton "12+3+"))
-                (a/minimize! :huffman))]]]
-    (testing description
-      (are [x y] (= (set y) (set (solutions x)))
+  (def automations [["string->automaton"
+                     (a/string->automaton "12*3+")]
+                    ["map->automaton"
+                     (a/map->automaton {:q0 {1 :q1}
+                                        :q1 {2 :q1
+                                             3 :q2}
+                                        :q2 {3 :q2}}
+                                       :q0 #{:q2})]
+                    ["make-automaton"
+                     (a/make-automaton [:q0 :q1 :q2]
+                                       [[:q0 :q1 1]
+                                        [:q1 :q1 2]
+                                        [:q1 :q2 3]
+                                        [:q2 :q2 3]]
+                                       :q0 [:q2])]
+                    ["Union two automata"
+                     (a/union (a/string->automaton "12?3+")
+                              (a/string->automaton "12+3+"))]
+                    ["Concatenate automata"
+                     (reduce a/cat
+                             [(a/string->automaton "1")
+                              (a/string->automaton "2*")
+                              (a/string->automaton "3+")])]
+                    ["Intersect automata"
+                     (a/intersection (a/string->automaton "12*4*3+")
+                                     (a/string->automaton "12*5?3+"))]
+                    ["Minimized automaton via Hopcroft"
+                     (-> (a/union (a/string->automaton "12?3+")
+                                  (a/string->automaton "12+3+"))
+                         (a/minimize!))]
+                    ["Minimized automaton via Brzozowski"
+                     (-> (a/union (a/string->automaton "12?3+")
+                                  (a/string->automaton "12+3+"))
+                         (a/minimize! :brzozowski))]
+                    ["Minimized automaton via Huffman"
+                     (-> (a/union (a/string->automaton "12?3+")
+                                  (a/string->automaton "12+3+"))
+                         (a/minimize! :huffman))]])
+
+  (doseq [[description automaton] automations]
+    (testing (str description)
+      (are [x y] (= (set y) (set (solver/solutions x)))
         [($in :x 1 5)
          ($in :y 1 5)
          ($in :z 1 5)
          ($regular automaton [:x :y :z])]
-        '({:x 1 :y 2 :z 3}
-          {:x 1 :y 3 :z 3})
+        [{:x 1 :y 2 :z 3}
+         {:x 1 :y 3 :z 3}]
 
         [($in :x 1 5)
          ($regular automaton [:x])]
-        ())
-      (doseq [input [[1 3]
-                     [1 2 2 3]
-                     [1 3 3]
-                     [1 2 3 3]
-                     [1 2 2 3 3]]]
-        (is (= '({}) (solutions [($regular automaton input)]))
-            (str "Input " input " satisfies automaton constraint"))
-        (is (= true (a/run automaton input))
-            (str "Input " input " satisfies automaton")))
-      (doseq [input [[1]
-                     ;; [] ; doesn't work, see https://github.com/chocoteam/choco3/issues/335
-                     [1 2 3 4]
-                     [1 3 2]
-                     [1 2]
-                     [1 2 2]
-                     [2 2 3 3]]]
-        (is (empty? (solutions [($regular automaton input)]))
-            (str "Input " input " doesn't satisfy automaton constraint"))
-        (is (= false (a/run automaton input))
-            (str "Input " input " doesn't satisfy automaton"))))))
+        [])))
+
+  (doseq [[description automaton] automations]
+    (doseq [input [[1 3]
+                   [1 2 2 3]
+                   [1 3 3]
+                   [1 2 3 3]
+                   [1 2 2 3 3]]]
+      (is (= '({}) (solver/solutions [($regular automaton input)]))
+          (str "Input " input " satisfies automaton constraint"))
+      (is (= true (a/run automaton input))
+          (str "Input " input " satisfies automaton"))))
+
+  (doseq [[description automaton] automations]
+    (doseq [input [[1]
+                   ;; [] ; doesn't work, see https://github.com/chocoteam/choco3/issues/335
+                   [1 2 3 4]
+                   [1 3 2]
+                   [1 2]
+                   [1 2 2]
+                   [2 2 3 3]]]
+      (is (empty? (solver/solutions [($regular automaton input)]))
+          (str "Input " input " doesn't satisfy automaton constraint"))
+      (is (= false (a/run automaton input))
+          (str "Input " input " doesn't satisfy automaton"))))
+
+  )
 
 (deftest cardinality-test
-  (-> (solutions
+  (-> (solver/solutions
         [($in :a 1 5)
          ($in :b 1 5)
          ($in :c 1 5)
@@ -343,25 +360,30 @@
               is)))))
 
 (deftest optimization-test
-  (is (= (solution [($in :x 1 5)]
-                   :maximize :x)
+  (is (= (solver/solution [($in :x 1 5)]
+                          :maximize :x)
          {:x 5}))
-  (is (= (solution [($in :x 1 5)]
-                   :minimize :x)
+
+  (is (= (solver/solution [($in :x 1 5)]
+                          :minimize :x)
          {:x 1}))
-  (is (= (solution [($in :x 1 5) ($< :x 0)]
-                   :maximize :x)
+
+  (is (= (solver/solution [($in :x 1 5) ($< :x 0)]
+                          :maximize :x)
          nil))
-  (is (= (solution [($in :x 1 5) ($< :x 0)]
-                   :minimize :x)
-         nil)))
+
+  (is (= (solver/solution [($in :x 1 5) ($< :x 0)]
+                          :minimize :x)
+         nil))
+  )
 
 (deftest tricky-test-0-2-1
   "Target specific bug fixed by 0.2.1"
   (test-constraint-model
    [($in :a [5])
     ($in :b 0 1)
-    ($= :b ($reify ($< 0 :a)))]
+    ($reify :reify ($< 0 :a))
+    ($= :b :reify)]
    [{:a 5 :b 1}]))
 
 (deftest knapsack-test
@@ -369,6 +391,7 @@
    "Super basic knapsack constraint"
    [($knapsack [1 1] [1 1] [1 1] 2 2)]
    [{}])
+
   (test-constraint-model
    "Basic knapsack constraint"
    [($knapsack [2 3]
@@ -384,6 +407,7 @@
     {:x 1 :y 0 :total-weight 2 :total-value 6}
     {:x 0 :y 1 :total-weight 3 :total-value 5}
     {:x 0 :y 2 :total-weight 6 :total-value 10}])
+
   (test-constraint-model
    "Knapsack constraint with negatives"
    [($in :x -100 100)

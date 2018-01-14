@@ -168,6 +168,11 @@
                  (int-array weights)
                  (int-array energies))
 
+      [:regular [vars [:automation automation]]]
+      (.regular model
+                (->> vars (map lookup-var) (into-array IntVar))
+                automation)
+
       [:square [result dep]]
       (.square model (lookup-var result) (lookup-var dep))
 
@@ -268,6 +273,11 @@
                    (realize-nested-constraint then-constraint)
                    (realize-nested-constraint else-constraint))
 
+      [:iff [if-constraint then-constraint]]
+      (.ifOnlyIf model
+                 (realize-nested-constraint if-constraint)
+                 (realize-nested-constraint then-constraint))
+
       [:not constraint]
       (.not model (realize-nested-constraint constraint))
 
@@ -325,5 +335,8 @@
       :constraints constraints
       :model model
       :vars vars
+      :vars-map (map vector uncompiled-vars vars)
+      :public-vars-map (->> (map vector uncompiled-vars vars) (filter (c model/public-var? first)))
       :vars-index vars-index
-      })))
+      }
+     )))

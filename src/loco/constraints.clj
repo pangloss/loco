@@ -55,23 +55,27 @@
 
 
 ;;;;; VAR GENERATION
-;;FIXME: we don't have any tests in core-test that need this.
-;; tests in sudoku do use this feature
-(defn- valid-var-name? [var-name]
-  (match [var-name]
-         [(name :guard keyword?)] true
-         [[(name :guard keyword?)]] true
-         :else false))
+(defn- hidden-name? [keyword-name]
+  (.startsWith (name keyword-name) "_"))
+
+(defn- hidden-conversion
+  "this is for backwards compatibility"
+  [var]
+  (match var
+         [_  (name :guard #(and (keyword? %) (hidden-name? %))) & _]
+         (replace {:public :hidden} var)
+
+         :else var))
 
 (defn $const [var-name value]
   {:pre [(integer? value)]}
-  [:var var-name :hidden [:const value]])
+  (->> [:var var-name :hidden [:const value]]))
 
 (defn $bool [var-name]
-  [:var var-name :public [:bool 0 1]])
+  (->> [:var var-name :public [:bool 0 1]]
+       hidden-conversion))
 
-(defn $bool- [var-name]
-  [:var var-name :hidden [:bool 0 1]])
+(def $bool- (comp #(assoc % 2 :hidden) (partial $bool)))
 
 (defn $in
   "Declares that a variable must be in a certain domain.
@@ -81,14 +85,18 @@
    ($in :x 1 5 :bounded)"
   ([var-name lb ub bounded?]
    {:pre [(integer? lb) (integer? ub) (or (boolean? bounded?) (= bounded? :bounded))]}
-   (if bounded?
-     [:var var-name :public [:int lb ub :bounded]]
-     ($in var-name lb ub)))
+   (->>
+    (if bounded?
+      [:var var-name :public [:int lb ub :bounded]]
+      ($in var-name lb ub))
+    hidden-conversion))
 
   ([var-name lb ub]
-   (match (sort [lb ub])
-          [0 1] ($bool var-name)
-          :else [:var var-name :public [:int lb ub]]))
+   (->>
+    (match (sort [lb ub])
+           [0 1] ($bool var-name)
+           :else [:var var-name :public [:int lb ub]])
+    hidden-conversion))
 
   ([var-name values-or-const]
    {:pre [(or
@@ -96,15 +104,18 @@
            (and (coll? values-or-const)
                 (every? integer? values-or-const))
            )]}
-   (if (coll? values-or-const)
-     (match
-      [(vec (sort values-or-const))]
-      [[0 1]] ($bool var-name)
-      [domain] [:var var-name :public [:int domain]])
-     ($const var-name values-or-const))))
+   (->>
+    (if (coll? values-or-const)
+      (match
+       [(vec (sort values-or-const))]
+       [[single-value-domain]] ($in var-name single-value-domain single-value-domain)
+       [[0 1]] ($bool var-name)
+       [domain] [:var var-name :public [:int domain]])
+      ($const var-name values-or-const))
+    hidden-conversion)))
 
 (def $in-
-  (comp (partial replace {:public :hidden}) (partial $in)))
+  (comp #(assoc % 2 :hidden) (partial $in)))
 
 (def $int $in)
 
@@ -160,20 +171,25 @@ In other words, if P is true, Q must be true (otherwise the whole
   [if-this then-this else-this]
   [:constraint [:if-else [if-this then-this else-this]]])
 
+(defn $iff
+  "Posts an equivalence constraint stating that cstr1 is satisfied <=>
+  cstr2 is satisfied, BEWARE : it is automatically posted (it cannot
+  be reified)"
+  [if-this then-this]
+  [:constraint [:iff [if-this then-this]]])
 
-;;TODO: not sure how this should be implemented
 (defn $reify
   "Given a constraint C, will generate a bool-var V such that (V = 1) iff C."
   {:choco "reification(BoolVar var, Constraint cstr)"}
-  ([var-label, constraint]
-   {:pre [(keyword? var-label)]}
-   (-> [($bool- var-label)
-        [:reify var-label constraint]]
-       (with-meta {:generated-vars true})))
+  [var-label, constraint]
+  {:pre [(keyword? var-label)]}
+  (-> [($bool- var-label)
+       [:reify var-label constraint]]
+      (with-meta {:generated-vars true}))
 
-  ;;really don't know what to do with the 1-arity call
+  ;;personally, don't like the idea of reify being a partial
   ;;TODO: create partial
-  ([constraint]
+  #_([constraint]
    [:reify constraint]))
 
 (defn ^:dynamic *cond-name-gen*
@@ -323,10 +339,9 @@ In other words, if P is true, Q must be true (otherwise the whole
   namespace, and constrains that a list of variables represents an
   input string accepted by the automaton."
   {:choco "regular(IntVar[] vars, IAutomaton automaton)"}
-  [^FiniteAutomaton automaton list-of-vars]
-  {:type :regular
-   :list-of-vars list-of-vars
-   :automaton automaton})
+  [^FiniteAutomaton automaton vars]
+  {:pre [(coll? vars)]}
+  [:constraint [:regular [(vec vars) [:automation automaton]]]])
 
 (defn $cardinality
   "Takes a list of variables, and a frequency map (from numbers to
@@ -344,10 +359,10 @@ In other words, if P is true, Q must be true (otherwise the whole
   ([variables frequencies closed?]
    {:pre [
           (map? frequencies)
-          (vector? variables)
+          (coll? variables)
           (or (= closed? :closed) (boolean? closed?))
           (every? integer? (keys frequencies))
-          (every? keyword? (vals frequencies))
+          ;;(every? keyword? (vals frequencies))
           (distinct? (keys frequencies))
           (distinct? (vals frequencies))
           ]
@@ -359,7 +374,7 @@ In other words, if P is true, Q must be true (otherwise the whole
          occurences (vec (vals frequencies))]
      [:constraint
       [:cardinality
-       [variables [values occurences] [:closed closed]]]])))
+       [(vec variables) [values occurences] [:closed closed]]]])))
 
 (defn $knapsack
   "Creates a knapsack constraint. Ensures that :
@@ -377,16 +392,16 @@ In other words, if P is true, Q must be true (otherwise the whole
   {:pre [
          (every? integer? weight)
          (every? integer? energy)
-         (every? keyword? occurrences)
+         (coll? occurrences)   ;;(every? keyword? occurrences)
          (every? (p <= 0) weight) ;;all items in weight or energy must be above 1
          (every? (p <= 0) energy)
          ]}
   [:constraint
    [:knapsack
     [
-     [:weight (preserve-consts weight)]
-     [:energy (preserve-consts energy)]
-     [:occurrences occurrences]
+     [:weight (preserve-consts (vec weight))]
+     [:energy (preserve-consts (vec energy))]
+     [:occurrences (vec occurrences)]
      [:weight-sum weight-sum]
      [:energy-sum energy-sum]
      ]]])

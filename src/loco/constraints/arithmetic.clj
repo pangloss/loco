@@ -119,9 +119,9 @@
 (defn *
   "Takes two arguments. One of the arguments can be a number greater than or equal to -1."
   [& args]
-  (match [(vec args)]
-         [[x y]] [:constraint :partial [:* [x y]]]
-         [[x & more]] [:constraint :partial [:* [x (apply * more)]]]))
+  (match (vec args)
+         [x y] [:constraint :partial [:* [x y]]]
+         [x & more] [:constraint :partial [:* [x (apply * more)]]]))
 
 (defn div
   "Creates an euclidean division constraint. Ensures dividend / divisor

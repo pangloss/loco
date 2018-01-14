@@ -168,6 +168,18 @@
 
   )
 
+(deftest $--test
+  (compiled-assert
+   [[:var :x :public [:int 0 5]]
+    [:var :5 :hidden [:const 5]]
+    [:var :-5 :proto [:const -5]]
+    [:var :x-5 :proto [:int -5 0]]
+    [:constraint [:sum [:x-5 := [:x :-5]]]]
+    [:constraint [:arithm [:x-5 := 0]]]]
+   [($in :x 0 5)
+    ($= ($- :x 5) 0)])
+)
+
 (deftest $sum-test
   (compiled-assert
    [[:var :x :public [:bool 0 1]]
@@ -330,4 +342,11 @@
     ($in :z -5 0)
     ($= :y ($abs :z))])
 
+  (compiled-assert
+   [[:var :x :public [:int -5 5]]
+    [:var :|x| :proto [:int 0 5]]
+    [:constraint [:abs [:|x| := :x]]]
+    [:constraint [:arithm [:|x| := 2]]]]
+   [($in :x -5 5)
+    ($= ($abs :x) 2)])
   )

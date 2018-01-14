@@ -119,7 +119,14 @@
      '("ABSOLUTE ([y = {0..10} = |z = {-5..0}|])")
      [($in :y 0 10)
       ($in :z -5 0)
-      ($abs :y :z)]))
+      ($abs :y :z)])
+
+    (constraints-assert
+     '("ABSOLUTE ([|x| = {0..5} = |x = {-5..5}|])"
+      "ARITHM ([|x| = 2])")
+     [($in :x -5 5)
+      ($= ($abs :x) 2)])
+    )
 
   (testing "neg"
     (constraints-assert
