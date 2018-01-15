@@ -1,7 +1,8 @@
 (ns ^{:author "Andrea Richiardi"
       :doc "Magic Series example + tests. It makes use of loco's $cardinality global constraint.
             A series S = (S0,...Sn) is magic if Si represents the number of occurrences of i in S.
-            For example a Magic Series of length 5 is |2|1|2|0|0|"}
+            For example a Magic Series of length 5 is |2|1|2|0|0|"
+      :solutions true}
   loco.integer.magicseries1
   (:require [clojure.test :refer :all]
             ;[loco.core :refer :all]

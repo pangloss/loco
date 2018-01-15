@@ -1,4 +1,4 @@
-(ns ^:model loco.model.compiler
+(ns ^:compiler loco.model.compiler
   (:require [loco.compiler :as compiler]
             [loco.model :as model])
   (:use clojure.test
@@ -49,11 +49,7 @@
        ["-(i)" -5 0 true "-(i = {0..5}) = [-5,0]"])
      [($in :i 0 5)
       ($neg :-i :i)
-      ]
-     )
-    )
-
-
+      ]))
   )
 
 (deftest compiling-constraints-test

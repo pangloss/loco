@@ -1,4 +1,4 @@
-(ns loco.integer.sudoku
+(ns ^:solutions loco.integer.sudoku
   "The obligatory sudoku example"
   (:require [loco.solver :as solver])
   (:use

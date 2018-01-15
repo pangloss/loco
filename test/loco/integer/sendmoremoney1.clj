@@ -1,6 +1,7 @@
 (ns ^{:author "Andrea Richiardi"
       :doc "Send + More = Money example solution #1 + tests. This solution associate a var with a
-            letter in the domain (SENDMORY), and constraints it using $scalar." }
+            letter in the domain (SENDMORY), and constraints it using $scalar."
+      :solutions true}
   loco.integer.sendmoremoney1
   (:require [clojure.test :refer :all]
             ;[loco.core :refer :all]

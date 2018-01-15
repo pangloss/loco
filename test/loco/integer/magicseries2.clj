@@ -2,7 +2,8 @@
       :doc "Magic Series example #2 + tests. This implementation does not make use of loco's
             $cardinality, see Magic Series #1 for that.
             A series S = (S0,...Sn) is magic if Si represents the number of occurrences of i in S.
-            Example: A Magic Series of length 5 is |2|1|2|0|0|"}
+            Example: A Magic Series of length 5 is |2|1|2|0|0|"
+      :solutions true}
   loco.integer.magicseries2
   (:require [clojure.test :refer :all]
             ;[loco.core :refer :all]

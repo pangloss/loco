@@ -2,7 +2,8 @@
       :doc "Send + More = Money example solution #2 + tests. This solution takes the long road of
             having a var for each letter, constraints on the addends of the sum plus carries and
             does not make use of loco's $scalar constraint (see sendmoremoney1.clj for a more
-            concise implementation)." }
+            concise implementation)."
+      :solutions true}
   loco.integer.sendmoremoney2
   (:refer-clojure :exclude [send])
   (:require [clojure.test :refer :all]
