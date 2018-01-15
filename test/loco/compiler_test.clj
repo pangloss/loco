@@ -1,4 +1,4 @@
-(ns ^:compiler loco.model.compiler
+(ns ^:compiler loco.compiler-test
   (:require [loco.compiler :as compiler]
             [loco.model :as model])
   (:use clojure.test

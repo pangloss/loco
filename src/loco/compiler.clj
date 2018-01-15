@@ -3,8 +3,7 @@
         loco.utils)
   (:require
    [loco.model :as model]
-   [clojure.core.match :refer [match]]
-   )
+   [clojure.core.match :refer [match]])
   (:import org.chocosolver.solver.Model
            org.chocosolver.solver.variables.BoolVar
            org.chocosolver.solver.variables.IntVar
@@ -315,7 +314,6 @@
    (map (partial compile-constraint-statement vars-index model))
    doall))
 
-;;FIXME: there is going to be an issue with reify, as it is part of a constraint object
 (defn compile
   ([ast] (compile (Model.) ast))
   ([model ast]
