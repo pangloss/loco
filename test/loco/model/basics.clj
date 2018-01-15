@@ -6,11 +6,11 @@
 (deftest object-var-name-test
   (testing "var names that are not keywords should get converted into strings"
     (compiled-assert
-     [[:var "[:public]" :public [:int 1 1]]]
+     [[:var "[:public]" :public [:const 1]]]
      [($in [:public] [1])])
 
     (compiled-assert
-     [[:var "[:public]" :public [:int 1 1]]
+     [[:var "[:public]" :public [:const 1]]
       [:var "[:public]+[:public]" :proto [:int 2 2]]
       [:constraint [:sum ["[:public]+[:public]" := ["[:public]" "[:public]"]]]]
       [:constraint [:arithm ["[:public]" := "[:public]+[:public]"]]]]
@@ -18,7 +18,7 @@
       ($= [:public] ($+ [:public] [:public]))])
 
     (compiled-assert
-     [[:var "[:p 0 1]" :public [:int 0 0]]
+     [[:var "[:p 0 1]" :public [:const 0]]
       [:var "[:p 0 1]*[:p 0 1]" :proto [:int 0 0]]
       [:constraint
        [:times ["[:p 0 1]*[:p 0 1]" := "[:p 0 1]" :* "[:p 0 1]"]]]
@@ -31,16 +31,20 @@
 
 (deftest basics-test
   (compiled-assert
-   [[:var :a :public [:int 1 1]]]
+   [[:var :a :public [:const 1]]]
    [($in :a [1])])
 
   (compiled-assert
-   [[:var :public :hidden [:int 1 1]]]
+   [[:var :public :hidden [:const 1]]]
    [($in- :public [1])])
 
   (compiled-assert
-   [[:var :public :public [:int 1 1]]]
+   [[:var :public :public [:const 1]]]
    [($in :public [1])])
+
+  (compiled-assert
+   [[:var :public :public [:const 1]]]
+   [($in :public [1 1 1])])
 
   (compiled-assert
    [[:var :x :public [:int 1 5]]
@@ -74,6 +78,10 @@
 
   (compiled-assert
    [[:var :7 :hidden [:const 7]]]
+   [($const- :7 7)])
+
+  (compiled-assert
+   [[:var :7 :public [:const 7]]]
    [($const :7 7)])
 
   (compiled-assert
@@ -100,8 +108,8 @@
     ($= :a ($+ :b :c))])
 
   (compiled-assert
-   [[:var :a :public [:int [1 2 3 5 8 13]]]
-    [:var :b :public [:int [1 2 3 5 8 13]]]
+   [[:var :a :public [:int fib]]
+    [:var :b :public [:int fib]]
     [:var :c :public [:int [1 2 3 5 8]]]
     [:var :b+c :proto [:int 2 (+ 13 8)]]
     [:constraint [:sum [:b+c := [:b :c]]]]

@@ -50,12 +50,10 @@
    "Basic test case with $= and bounded vars "
    [($in :x 1 3)
     ($in :y 1 3 :bounded)
-    ($in :z [1 3 2])
+    ($in :z [1 2 3])
     ($= :x :y)
     ($= :y :z)]
    [{:x 1 :y 1 :z 1} {:x 2 :y 2 :z 2} {:x 3 :y 3 :z 3}]))
-
-
 
 (deftest arithmetic-test
   (test-constraint-model

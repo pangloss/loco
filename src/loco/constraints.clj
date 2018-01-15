@@ -35,7 +35,8 @@
         loco.constraints.utils)
   (:require [clojure.core.match :refer [match]]
             loco.automata
-            loco.constraints.arithmetic)
+            loco.constraints.arithmetic
+            loco.vars)
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
 
 (defn- inherit-def [prefix sym var-to-inherit]
@@ -46,77 +47,14 @@
      (reset-meta! (meta var-to-inherit)))))
 
 (def ^:private to-inherit
-  (->> ['loco.constraints.arithmetic]
+  (->> [
+        'loco.vars
+        'loco.constraints.arithmetic]
        (map ns-publics)
        (into {})))
 
 (doseq [[sym var] to-inherit]
   (inherit-def "$" sym var))
-
-
-;;;;; VAR GENERATION
-(defn- hidden-name? [keyword-name]
-  (.startsWith (name keyword-name) "_"))
-
-(defn- hidden-conversion
-  "this is for backwards compatibility"
-  [var]
-  (match var
-         [_  [(name :guard #(and (keyword? %) (hidden-name? %))) & _] & _] (assoc var 2 :hidden)
-         [_  (name :guard #(and (keyword? %) (hidden-name? %))) & _] (assoc var 2 :hidden)
-         :else var))
-
-(defn $const [var-name value]
-  {:pre [(integer? value)]}
-  (->> [:var var-name :hidden [:const value]]))
-
-(defn $bool [var-name]
-  (->> [:var var-name :public [:bool 0 1]]
-       hidden-conversion))
-
-(def $bool- (comp #(assoc % 2 :hidden) (partial $bool)))
-
-(defn $in
-  "Declares that a variable must be in a certain domain.
-   Possible arglist examples:
-   ($in :x 1 5)
-   ($in :x [1 2 3 4 5])
-   ($in :x 1 5 :bounded)"
-  ([var-name lb ub bounded?]
-   {:pre [(integer? lb) (integer? ub) (or (boolean? bounded?) (= bounded? :bounded))]}
-   (->>
-    (if bounded?
-      [:var var-name :public [:int lb ub :bounded]]
-      ($in var-name lb ub))
-    hidden-conversion))
-
-  ([var-name lb ub]
-   (->>
-    (match (sort [lb ub])
-           [0 1] ($bool var-name)
-           :else [:var var-name :public [:int lb ub]])
-    hidden-conversion))
-
-  ([var-name values-or-const]
-   {:pre [(or
-           (integer? values-or-const)
-           (and (coll? values-or-const)
-                (every? integer? values-or-const))
-           )]}
-   (->>
-    (if (coll? values-or-const)
-      (match
-       [(vec (sort values-or-const))]
-       [[single-value-domain]] ($in var-name single-value-domain single-value-domain)
-       [[0 1]] ($bool var-name)
-       [domain] [:var var-name :public [:int domain]])
-      ($const var-name values-or-const))
-    hidden-conversion)))
-
-(def $in-
-  (comp #(assoc % 2 :hidden) (partial $in)))
-
-(def $int $in)
 
 
 ;;;;; LOGIC

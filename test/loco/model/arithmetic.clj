@@ -315,7 +315,7 @@
     [:constraint [:arithm [:z := :x%y]]]]
 
    [($in :x 0 100)
-    ($const :y 10)
+    ($const- :y 10)
     ($in :z 0 5)
     ($= :z ($% :x :y))])
 
