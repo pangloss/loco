@@ -47,6 +47,10 @@
    [($in :public [1 1 1])])
 
   (compiled-assert
+   [[:var :public :hidden [:const 1]]]
+   [($in- :public [1 1 1])])
+
+  (compiled-assert
    [[:var :x :public [:int 1 5]]
     [:var :y :public [:int 1 5]]
     [:var :z :public [:int 1 5]]
