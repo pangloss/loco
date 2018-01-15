@@ -12,19 +12,26 @@
          [_  (name :guard #(and (keyword? %) (hidden-name? %))) & _] (assoc var 2 :hidden)
          :else var))
 
-(defn const [var-name value]
+(defn const
+  "Declares that a variable must be a specific value (integer)"
+  [var-name value]
   {:pre [(integer? value)]}
   (->> [:var var-name :public [:const value]]))
 
 (def const- (comp #(assoc % 2 :hidden) (partial const)))
+(reset-meta! (var const-) (meta (var const)))
 
-(defn bool [var-name]
+(defn bool
+  "Declares that a variable must be a boolean (true/false or [0 1])
+  some constraints have optimizations for booleans/boolean-lists (e.g. Model.sum|and|or)"
+  [var-name]
   (->> [:var var-name :public [:bool 0 1]]
        hidden-conversion))
 
 (def bool- (comp #(assoc % 2 :hidden) (partial bool)))
+(reset-meta! (var bool-) (meta (var bool)))
 
-(defn in
+(defn int
   "Declares that a variable must be in a certain domain.
    Possible arglist examples:
    (in :x 1)
@@ -36,7 +43,7 @@
    (->>
     (if bounded?
       [:var var-name :public [:int lb ub :bounded]]
-      (in var-name lb ub))
+      (int var-name lb ub))
     hidden-conversion))
 
   ([var-name lb ub]
@@ -60,7 +67,11 @@
            domain-list [:var var-name :public [:int domain-list]])
     hidden-conversion)))
 
-(def in-
-  (comp #(assoc % 2 :hidden) (partial in)))
+(def int- (comp #(assoc % 2 :hidden) (partial int)))
 
-(def int in)
+(def in int)
+(def in- int-)
+
+(reset-meta! (var in) (meta (var int)))
+(reset-meta! (var in-) (meta (var int)))
+(reset-meta! (var int-) (meta (var int)))
