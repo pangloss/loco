@@ -43,7 +43,7 @@
     (println "creating def" (str *ns* "/" (name sym)))
     (->
      (intern *ns* sym var-to-inherit)
-     (alter-meta! ,,, merge (dissoc (meta var-to-inherit) :name)))))
+     (reset-meta! (meta var-to-inherit)))))
 
 (def ^:private to-inherit
   (->> ['loco.constraints.arithmetic]
