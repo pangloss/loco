@@ -4,10 +4,11 @@
             does not make use of loco's $scalar constraint (see sendmoremoney1.clj for a more
             concise implementation)." }
   loco.integer.sendmoremoney2
-  (:refer-clojure :exclude [send]) 
+  (:refer-clojure :exclude [send])
   (:require [clojure.test :refer :all]
-            [loco.core :refer :all]
-            [loco.constraints :refer :all]))
+            ;;[loco.core :refer :all]
+            [loco.constraints :refer :all]
+            [loco.solver :as  solver]))
 
 (defn initialize-digits [vars]
   (for [v vars]
@@ -22,7 +23,7 @@
 
 (def smm2-model
   "Model #2. Constraints on the addends with carries:
-               c3 c2 c1 c0     
+               c3 c2 c1 c0
                 S  E  N  D +
                 M  O  R  E =
              ---------------
@@ -41,6 +42,5 @@
 (deftest sendmoremoney-tests
   "Testing Send + More = Money solution #2"
 
-  (is (= 1 (count (solutions smm2-model))) "Just one solution")
-  (is (= (solutions smm2-model) '({:S 9 :E 5 :N 6 :D 7 :M 1 :O 0 :R 8 :Y 2})) "Has correct solution"))
-
+  (is (= 1 (count (solver/solutions smm2-model))) "Just one solution")
+  (is (= (solver/solutions smm2-model) '({:S 9 :E 5 :N 6 :D 7 :M 1 :O 0 :R 8 :Y 2})) "Has correct solution"))

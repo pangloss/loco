@@ -67,7 +67,7 @@
         (when (clojure.string/ends-with? str ":") true)
         )))
 
-[(nice-keyword-str? "re")
+#_[(nice-keyword-str? "re")
  (nice-keyword-str? ":re")
  (nice-keyword-str? ":re:")
  (nice-keyword-str? ":re[f]")
@@ -275,32 +275,9 @@
 
       :else [statement]))))
 
-(defn- get-domain [statement]
-  (match [statement]
-         [[:var _ _ domain]] domain
-         ;; [[:var _ _ [:int lb ub]]] [:int lb ub]
-         ;; [[:var _ _ [:const val]]] [:const val]
-         ;; [[:var _ _ [:int (domain :guard vector?)]]]
-         :else nil))
+
 
 ;;TODO: add a deps meta tag to partial constraints!
-(defn- var-get-dependancies [statement]
-  (->
-   [statement (meta statement)]
-
-   (match
-    [[:var _ _]       {:neg dep}]                          [:neg dep]
-    [[:var _ :proto]  {:from [:constraint :partial more]}] more
-    [[:var _ :proto]  {:from constraint}]                  constraint
-    [[:var _ _ deps]  nil]                                 deps
-    )
-
-   (match
-    [:neg dep] [dep]
-    [:scalar [deps _]] deps
-    [:$nth [deps [:at index] & _]] (into [index] deps)
-    [:cardinality [deps [values occurences] _]] deps
-    [_type deps] deps)))
 
 (defn- lb-ub-seq [domains]
   (->>
@@ -431,6 +408,32 @@
     (cardinality-domain var-name values occurences dep-domains)
     )))
 
+(defn- get-domain [statement]
+  (match [statement]
+         [[:var _ _ domain]] domain
+         ;; [[:var _ _ [:int lb ub]]] [:int lb ub]
+         ;; [[:var _ _ [:const val]]] [:const val]
+         ;; [[:var _ _ [:int (domain :guard vector?)]]]
+         :else nil))
+
+(defn- var-get-dependancies [statement]
+  (->
+   [statement (meta statement)]
+
+   (match
+    [[:var _ _]       {:neg dep}]                          [:neg dep]
+    [[:var _ :proto]  {:from [:constraint :partial more]}] more
+    [[:var _ :proto]  {:from constraint}]                  constraint
+    [[:var _ _ deps]  nil]                                 deps
+    )
+
+   (match
+    [:neg dep] [dep]
+    [:scalar [deps _]] deps
+    [:$nth [deps [:at index] & _]] (into [index] deps)
+    [:cardinality [deps [values occurences] _]] deps
+    [_type deps] deps)))
+
 (defn domain-transform [statements]
   (let [vars (filter var? statements)
         constraints&reifs (remove var? statements)
@@ -472,6 +475,9 @@
          vec)))
 
 (defn to-ast [problem]
+  {:pre
+   ;;very basic validation of objects in the ast list
+   [(->> problem (every? #(->> % ((juxt var? reify? constraint?)) (some (c not nil?)))))]}
   (let [
         vars (filter var? problem)
         [extracted-consts transformed-constraints]
@@ -539,9 +545,7 @@
   (->> ast
        (every? (comp #{:constraint :var :reify} first))))
 
-
-
-(defn- create-crazy-variable-replacement-map [ast]
+(defn- create-variable-name-replacement-map [ast]
   (->>
    ast
    ((juxt (p filter var?) (p filter reify?)))
@@ -551,19 +555,11 @@
                           %
                           (str %))))
    (remove (p apply =))
-   (into {})
-   ))
+   (into {})))
 
-
-(->>
- [[:var :p :public [:int 0 0]]
-  [:var [:p 0 1] :public [:int 0 0]]
-  [:reify :re [:constraint [:whatever []]]]
-  [:constraint
-   [:arithm
-    [[:p 0 1] := [:constraint :partial [:* [[:p 0 1] [:p 0 1]]]]]]]]
- create-crazy-variable-replacement-map
- )
+(defn reverse-map [map]
+  (reduce (fn [acc [key val]]
+            (assoc acc val key)) {} map))
 
 (defn compile
   "take in a representation of a model, a list of maps created using the
@@ -577,13 +573,13 @@
           ]}
   (let [unnest-generated-vars #(if (:generated-vars (meta %))
                                  %
-                                 [%])]
-    (->> problem
-         ;;(debug-print 'problem)
-         (mapcat unnest-generated-vars)
-         ;;(debug-print 'unnest)
-         ;; ((juxt create-crazy-variable-replacement-map identity))
-         ;; (debug-print 'replace-map)
-         ;; (apply walk/prewalk-replace)
-         to-ast
-         domain-transform)))
+                                 [%])
+        flattened-problem (mapcat unnest-generated-vars problem)
+        var-name-obj-to-str-mapping (create-variable-name-replacement-map flattened-problem)
+        ast (->> flattened-problem
+                 (walk/prewalk-replace var-name-obj-to-str-mapping)
+                 to-ast
+                 domain-transform)
+        ]
+    (-> ast
+        (with-meta {:var-name-mapping (reverse-map var-name-obj-to-str-mapping)}))))

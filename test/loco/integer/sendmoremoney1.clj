@@ -3,8 +3,9 @@
             letter in the domain (SENDMORY), and constraints it using $scalar." }
   loco.integer.sendmoremoney1
   (:require [clojure.test :refer :all]
-            [loco.core :refer :all]
-            [loco.constraints :refer :all]))
+            ;[loco.core :refer :all]
+            [loco.constraints :refer :all]
+            [loco.solver :as solver]))
 
 (defn initialize-digits [vars]
   (for [v vars]
@@ -25,5 +26,5 @@
 (deftest sendmoremoney-tests
   "Testing Send + More = Money solution #1 with $scalar"
 
-  (is (= 1 (count (solutions smm-model))) "Just one solution")
-  (is (= (solutions smm-model) '({:S 9 :E 5 :N 6 :D 7 :M 1 :O 0 :R 8 :Y 2})) "Has correct solution"))
+  (is (= 1 (count (solver/solutions smm-model))) "Just one solution")
+  (is (= (solver/solutions smm-model) '({:S 9 :E 5 :N 6 :D 7 :M 1 :O 0 :R 8 :Y 2})) "Has correct solution"))

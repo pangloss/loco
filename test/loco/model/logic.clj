@@ -100,10 +100,4 @@
    [($bool :a)
     ($reify :a ($and ($true)))]
    "should preserve user declared var")
-
-  ;;TODO: implement reify-partial...
-  [($in :x 0 1)
-   ($= ($reify ($true)) :x)
-   ($= ($reify ($false)) ($- 1 :x))]
-
   )

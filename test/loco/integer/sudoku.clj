@@ -1,6 +1,8 @@
 (ns loco.integer.sudoku
   "The obligatory sudoku example"
-  (:use loco.core
+  (:require [loco.solver :as solver])
+  (:use
+   ;;loco.core
         loco.constraints
         clojure.test))
 
@@ -72,6 +74,6 @@ to further define the specific puzzle."
 (deftest sudoku-test
   (is (= (->> sample-puzzle
            sudoku-puzzle->model
-           solutions
+           solver/solutions
            (map solution->board))
          (list sample-solution))))

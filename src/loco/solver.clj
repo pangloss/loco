@@ -55,13 +55,14 @@
          {:minimize var-name} (.setObjective model Model/MINIMIZE (var-name vars-index))
          {} nil))
 
-(defn extract-solution [var-map, ^Solution solution]
+(defn extract-solution [var-map, var-key-name-fn, ^Solution solution]
   ;;var-map looks like:
   ;;
   ;;[[:var :y :public [:int 1 3]] #object[org.chocosolver.solver.variables.impl.BitsetIntVarImpl 0x56881196 y = {1..3}]]
   (->> var-map
        (map (fn [[[_ var-name _ _] var]]
-              [var-name (.getIntVal solution var)]))
+              ;;TODO: memoization optimization possible
+              [(var-key-name-fn var-name) (.getIntVal solution var)]))
        (into {})))
 
 (defn solutions
@@ -74,14 +75,17 @@
   Note: returned solution maps have the metadata {:loco/solution <n>} denoting that it is the nth solution found (starting with 0)."
   [problem & args]
   (let [args-map (apply hash-map args)
-        {
-         constraints :constraints
-         model :model
-         vars :public-vars-map
-         vars-index :vars-index
+        {:keys [constraints
+                model
+                public-vars-map
+                vars-index
+                var-name-mapping]
          } (problem->solver problem)
         solver      (.getSolver model)
-        solution-extractor (p extract-solution vars)
+        var-key-name-fn (if (empty? var-name-mapping)
+                          identity
+                          (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
+        solution-extractor (p extract-solution public-vars-map var-key-name-fn)
         ]
     ;;(set-search-monitor-settings! solver args-map)
     (set-model-objective! model vars-index args-map)

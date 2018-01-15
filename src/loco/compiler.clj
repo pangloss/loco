@@ -8,8 +8,7 @@
   (:import org.chocosolver.solver.Model
            org.chocosolver.solver.variables.BoolVar
            org.chocosolver.solver.variables.IntVar
-           org.chocosolver.solver.constraints.Constraint)
-  )
+           org.chocosolver.solver.constraints.Constraint))
 
 (defn- lookup-var [vars-index name]
   (if-let [var (get vars-index name)]
@@ -329,14 +328,14 @@
                       ;;the (when %) prevents NULL.post()
                       (map (juxt identity #(when % (.post %))))
                       (map first)
-                      doall)
-         ]
+                      doall)]
      {
+      :ast ast
+      :var-name-mapping (:var-name-mapping (meta ast))
       :constraints constraints
       :model model
       :vars vars
       :vars-map (map vector uncompiled-vars vars)
       :public-vars-map (->> (map vector uncompiled-vars vars) (filter (c model/public-var? first)))
       :vars-index vars-index
-      }
-     )))
+      })))

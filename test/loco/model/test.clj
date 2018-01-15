@@ -15,10 +15,7 @@
     msg))
 
   ([expected model-input]
-   (is
-    (=
-     expected
-     (model/compile model-input)))))
+   (compiled-assert expected model-input nil)))
 
 (defn constraints-assert
   "used for testing compile chain model/compile -> compiler/compile

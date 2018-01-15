@@ -3,60 +3,31 @@
         loco.model.test
         loco.constraints))
 
-(deftest partials-crazy-var-name-test
-  (compiled-assert
-   [[:var [:public] :public [:int 1 1]]
-    [:var :v#:public+v#:public :proto [:int 2 2]]
-    [:constraint
-     [:sum [:v#:public+v#:public := [[:public] [:public]]]]]
-    [:constraint [:arithm [[:public] := :v#:public+v#:public]]]]
-   [($in [:public] [1])
-    ($= [:public] ($+ [:public] [:public]))])
+(deftest object-var-name-test
+  (testing "var names that are not keywords should get converted into strings"
+    (compiled-assert
+     [[:var "[:public]" :public [:int 1 1]]]
+     [($in [:public] [1])])
 
-  (compiled-assert
-   [[:var [:p 0 1] :public [:int 0 0]]
-    [:var "[:p 0 1]*[:p 0 1]" :proto]
+    (compiled-assert
+     [[:var "[:public]" :public [:int 1 1]]
+      [:var "[:public]+[:public]" :proto [:int 2 2]]
+      [:constraint [:sum ["[:public]+[:public]" := ["[:public]" "[:public]"]]]]
+      [:constraint [:arithm ["[:public]" := "[:public]+[:public]"]]]]
+     [($in [:public] [1])
+      ($= [:public] ($+ [:public] [:public]))])
 
-    [:constraint
-     [:sum
-      ["[:p 0 1]*[:p 0 1]" := [[:p 0 1] [:p 0 1]]]]]
-    [:constraint
-     [:arithm [[:p 0 1] := "[:p 0 1]*[:p 0 1]"]]]]
-   [
-    ($in [:p 0 1] [0])
-
-    ($= [:p 0 1]
-        ($* [:p 0 1] [:p 0 1])
-
-        )])
+    (compiled-assert
+     [[:var "[:p 0 1]" :public [:int 0 0]]
+      [:var "[:p 0 1]*[:p 0 1]" :proto [:int 0 0]]
+      [:constraint
+       [:times ["[:p 0 1]*[:p 0 1]" := "[:p 0 1]" :* "[:p 0 1]"]]]
+      [:constraint [:arithm ["[:p 0 1]" := "[:p 0 1]*[:p 0 1]"]]]]
+     [($in [:p 0 1] [0])
+      ($= [:p 0 1] ($* [:p 0 1] [:p 0 1]))])
+    )
   )
 
-(->>
- [($in [:p 0 1] [0])
-  ($= [:p 0 1] ($* [:p 0 1] [:p 0 1]))]
- loco.model/compile
- )
-
-;;don't even deal with the name problem, extract all of the vars
-;;first, create this mapping, then run prewalk-replace on the
-;;proto-ast
-;;after this is done, all of the crazy names and crazy name refs will become strings
-(-> {[:p 0 1] "[:p 0 1]"}
-    (clojure.walk/prewalk-replace [[:var [:p 0 1] :public [:int 0 0]]
-                                   [:var "[:p 0 1]*[:p 0 1]" :proto]
-                                   [:constraint
-                                    [:sum
-                                     ["[:p 0 1]*[:p 0 1]" := [[:p 0 1] [:p 0 1]]]]]
-                                   [:constraint
-                                    [:arithm [[:p 0 1] := "[:p 0 1]*[:p 0 1]"]]]])
-)
-(clojure.walk/prewalk-demo [[:var [:p 0 1] :public [:int 0 0]]
-                            [:var "[:p 0 1]*[:p 0 1]" :proto]
-                            [:constraint
-                             [:sum
-                              ["[:p 0 1]*[:p 0 1]" := [[:p 0 1] [:p 0 1]]]]]
-                            [:constraint
-                             [:arithm [[:p 0 1] := "[:p 0 1]*[:p 0 1]"]]]])
 
 (deftest basics-test
   (compiled-assert
@@ -68,8 +39,8 @@
    [($in- :public [1])])
 
   (compiled-assert
-   [[:var [:public] :public [:int 1 1]]]
-   [($in [:public] [1])])
+   [[:var :public :public [:int 1 1]]]
+   [($in :public [1])])
 
   (compiled-assert
    [[:var :x :public [:int 1 5]]

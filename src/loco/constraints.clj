@@ -62,9 +62,8 @@
   "this is for backwards compatibility"
   [var]
   (match var
-         [_  (name :guard #(and (keyword? %) (hidden-name? %))) & _]
-         (replace {:public :hidden} var)
-
+         [_  [(name :guard #(and (keyword? %) (hidden-name? %))) & _] & _] (assoc var 2 :hidden)
+         [_  (name :guard #(and (keyword? %) (hidden-name? %))) & _] (assoc var 2 :hidden)
          :else var))
 
 (defn $const [var-name value]
@@ -182,15 +181,9 @@ In other words, if P is true, Q must be true (otherwise the whole
   "Given a constraint C, will generate a bool-var V such that (V = 1) iff C."
   {:choco "reification(BoolVar var, Constraint cstr)"}
   [var-label, constraint]
-  {:pre [(keyword? var-label)]}
   (-> [($bool- var-label)
        [:reify var-label constraint]]
-      (with-meta {:generated-vars true}))
-
-  ;;personally, don't like the idea of reify being a partial
-  ;;TODO: create partial
-  #_([constraint]
-   [:reify constraint]))
+      (with-meta {:generated-vars true})))
 
 (defn ^:dynamic *cond-name-gen*
   "useful to change bindings for tests and if you want to use the
@@ -264,8 +257,8 @@ In other words, if P is true, Q must be true (otherwise the whole
   values, i.e. no two of them are equal."
   {:choco "allDifferent(IntVar... vars)"}
   [vars]
-  {:pre [(vector? vars)]}
-  [:constraint [:distinct vars]])
+  {:pre [(coll? vars)]}
+  [:constraint [:distinct (vec vars)]])
 
 (def $all-different $distinct)
 
@@ -274,8 +267,8 @@ In other words, if P is true, Q must be true (otherwise the whole
   to 0. There can be multiple variables equal to 0."
   {:choco "allDifferentExcept0(IntVar[] vars)"}
   [vars]
-  {:pre [(vector? vars)]}
-  [:constraint [:distinct-except-0 vars]])
+  {:pre [(coll? vars)]}
+  [:constraint [:distinct-except-0 (vec vars)]])
 
 (def $all-different-except-0 $distinct-except-0)
 
@@ -289,20 +282,20 @@ In other words, if P is true, Q must be true (otherwise the whole
   ([vars]
     ($circuit vars 0))
   ([vars offset]
-   {:pre [(integer? offset)]}
-   [:constraint [:circuit [vars [:offset (preserve-consts offset)]]]]))
+   {:pre [(integer? offset) (coll? vars)]}
+   [:constraint [:circuit [(vec vars) [:offset (preserve-consts offset)]]]]))
 
 (defn $nth
   "partial for $element"
   {:choco "element(IntVar value, IntVar[] table, IntVar index, int offset)"}
-  ([var-list index]
-   ($nth var-list index 0))
+  ([vars index]
+   ($nth vars index 0))
 
-  ([var-list index offset]
-   {:pre [(integer? offset) (vector? var-list)]}
-   (let [table (if (every? integer? var-list)
-                 (preserve-consts var-list)
-                 var-list)]
+  ([vars index offset]
+   {:pre [(integer? offset) (coll? vars)]}
+   (let [table (if (every? integer? vars)
+                 (preserve-consts (vec vars))
+                 vars)]
 
      [:constraint :partial [:$nth [table
                                    [:at index]
@@ -322,7 +315,7 @@ In other words, if P is true, Q must be true (otherwise the whole
    ($element value var-list index 0))
 
   ([value var-list index offset]
-   {:pre [(integer? offset) (vector? var-list)]}
+   {:pre [(integer? offset) (coll? var-list)]}
    (let [table (if (every? integer? var-list)
                  (preserve-consts var-list)
                  var-list)]
