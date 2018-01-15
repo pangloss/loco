@@ -63,7 +63,8 @@
      [($bool :x)
       ($bool :y)
       ($bool :z)
-      ($sum 1 := [:x :y :z])])
+      ($sum 1 := [:x :y :z])]
+     "should handle list of booleans")
 
     (constraints-assert
      '("SUM ([z + y + x = 2])")
