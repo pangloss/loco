@@ -45,12 +45,15 @@
              [[:var var-name _ [:int (enumeration :guard vector?)]] _]
              (.intVar model (name var-name) (int-array enumeration))
              )]
-    [(assoc vars-index (second statement) var)
+    [(-> vars-index
+         (with-meta {:ast-statement statement})
+         (assoc (second statement) var))
      (conj vars var)
      model]))
 
-;;handles boolVars and intVars
-(defn- sum-constraint [model sum-vars op eq-var]
+(defn- sum-constraint
+  "this handles the IntVar and BoolVar arguments method dispatching for Model.sum"
+  [model sum-vars op eq-var]
   (if-let [homogeneous? (->> sum-vars (map class) (apply =))]
     (.sum model (into-array sum-vars) (name op) eq-var)
     (let [casted-to-intvars (map #(cast IntVar %) sum-vars)]
@@ -321,6 +324,8 @@
          uncompiled-constraints (->> ast (filter model/constraint?))
          uncompiled-reifies (->> ast (filter model/reify?))
          [vars-index vars _] (compile-vars model uncompiled-vars)
+         public-var-names (->> uncompiled-vars (filter model/public-var?) (map second))
+         public-vars-index (select-keys vars-index public-var-names)
          _reifies (compile-reifies model vars-index uncompiled-reifies)
          constraints (->>
                       (compile-constraints model vars-index uncompiled-constraints)
@@ -336,6 +341,6 @@
       :model model
       :vars vars
       :vars-map (map vector uncompiled-vars vars)
-      :public-vars-map (->> (map vector uncompiled-vars vars) (filter (c model/public-var? first)))
+      :public-vars-index public-vars-index
       :vars-index vars-index
       })))

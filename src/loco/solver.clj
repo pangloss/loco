@@ -55,15 +55,20 @@
          {:minimize var-name} (.setObjective model Model/MINIMIZE (var-name vars-index))
          {} nil))
 
-(defn extract-solution [var-map, var-key-name-fn, ^Solution solution]
+(defn extract-solution
+  "the user is allowed to make var-names vectors or other objects, these
+  are converted to strings before the Model is created, here we remap
+  those strings back to the original objects that they possibly
+  are. most likely the var-key-name-fn is the identity function"
+  [var-map, var-key-name-fn, ^Solution solution]
   ;;var-map looks like:
   ;;
-  ;;[[:var :y :public [:int 1 3]] #object[org.chocosolver.solver.variables.impl.BitsetIntVarImpl 0x56881196 y = {1..3}]]
+  ;;{:y #object[org.chocosolver.solver.variables.impl.BitsetIntVarImpl 0x56881196 y = {1..3}}
   (->> var-map
-       (map (fn [[[_ var-name _ _] var]]
-              ;;TODO: memoization optimization possible
-              [(var-key-name-fn var-name) (.getIntVal solution var)]))
-       (into {})))
+       (reduce (fn [acc [var-name var]]
+                 (assoc acc
+                        (var-key-name-fn var-name)
+                        (.getIntVal solution var))) {})))
 
 (defn solutions
   "Solves the problem using the specified constraints and returns a map from variable names to their values (or nil if there is no solution).
@@ -77,15 +82,15 @@
   (let [args-map (apply hash-map args)
         {:keys [constraints
                 model
-                public-vars-map
+                public-vars-index
                 vars-index
                 var-name-mapping]
          } (problem->solver problem)
-        solver      (.getSolver model)
+        solver (.getSolver model)
         var-key-name-fn (if (empty? var-name-mapping)
                           identity
                           (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
-        solution-extractor (p extract-solution public-vars-map var-key-name-fn)
+        solution-extractor (p extract-solution public-vars-index var-key-name-fn)
         ]
     ;;(set-search-monitor-settings! solver args-map)
     (set-model-objective! model vars-index args-map)
