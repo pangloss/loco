@@ -104,7 +104,7 @@
 
     (->
      solver
-     (.streamSolutions nil) ;;lawl
+     (.streamSolutions nil) ;;lawl, doesn't work without args
      (.iterator)
      iterator-seq
      (->>
@@ -114,8 +114,11 @@
                  :model model
                  :model-objective model-objective}))))
 
-(defn solution
-  "Solves the problem using the specified constraints and returns a map from variable names to their values (or nil if there is no solution).
+(def solution (c first (p solutions)))
+(alter-meta! (var solution) merge (select-keys (meta (var solutions)) [:doc :arglists]))
+
+(defn optimal-solutions
+    "Solves the problem using the specified constraints and returns a map from variable names to their values (or nil if there is no solution).
   Keyword arguments:
   - :maximize <var> - finds the solution maximizing the given variable.
   - :minimize <var> - finds the solution minimizing the given variable.
@@ -123,15 +126,37 @@
   - :timeout <number> - stops after a certain amount of milliseconds (returns nil, or best solution so far when min/maxing a variable)
   Note: returned solution maps have the metadata {:loco/solution <n>} denoting that it is the nth solution found (starting with 0)."
   [problem & args]
-  ;;setup solution
-  ;;to maximize X
-  ;;model.setObjective(Model.MAXIMIZE, X);
-  ;;or model.setObjective(Model.MINIMIZE, X); to minimize X
-  ;;{:pre [(even? (count args))]}
-  (->> (apply solutions problem args)
-       first))
+  {:pre [(->> args (filter #{:minimize :maximize}) count (p = 1))]}
+  (let [args-map (apply hash-map args)
+        {:keys [constraints
+                model
+                public-vars-index
+                vars-index
+                var-name-mapping]
+         } (problem->solver problem)
+        solver (.getSolver model)
+        var-key-name-fn (if (empty? var-name-mapping)
+                          identity
+                          (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
+        solution-extractor (p extract-solution public-vars-index var-key-name-fn)
+        search-monitors (set-search-monitor-settings! solver args-map)
+        [optimization-type optimized-var-name] (->
+                                                args-map
+                                                (select-keys [:minimize :maximize])
+                                                vec
+                                                first)
+        optimization-var (optimized-var-name vars-index)
+        optimization-type-TF ({:maximize true :minimize false} optimization-type)
+        ]
 
-;;converting java steam to clojure seq
-#_(-> stream
-    .iterator
-    iterator-seq)
+
+    (->
+     solver
+     (.streamOptimalSolutions optimization-var optimization-type-TF nil)
+     (.iterator)
+     iterator-seq
+     (->>
+      (map solution-extractor))
+     (with-meta {:solver solver
+                 :search-monitors search-monitors
+                 :model model}))))

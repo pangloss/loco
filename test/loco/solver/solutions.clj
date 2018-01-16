@@ -8,6 +8,7 @@
 (def model [($const :a 1)
             ($const :b 2)
             ($int :z [1 2 3])
+            ($int :y [4 5 6])
             ])
 
 (defmacro assert-objective [expected model & args]
@@ -72,4 +73,32 @@
      meta
      :search-monitors))
    "should include all executed search monitors in meta")
+  )
+
+(deftest solutions-objective-test
+  (is
+   (=
+    '({:a 1, :b 2, :z 1, :y 6})
+    (solver/solutions model :maximize :y)))
+
+  (is
+   (=
+    '({:a 1, :b 2, :z 1, :y 4})
+    (solver/solutions model :minimize :y)))
+  )
+
+(deftest optimal-solutions-test
+  (is
+   (=
+    '({:a 1, :b 2, :z 1, :y 6}
+      {:a 1, :b 2, :z 2, :y 6}
+      {:a 1, :b 2, :z 3, :y 6})
+    (solver/optimal-solutions model :maximize :y)))
+
+  (is
+   (=
+    '({:a 1, :b 2, :z 1, :y 4}
+      {:a 1, :b 2, :z 2, :y 4}
+      {:a 1, :b 2, :z 3, :y 4})
+    (solver/optimal-solutions model :minimize :y)))
   )
