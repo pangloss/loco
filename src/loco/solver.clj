@@ -10,7 +10,7 @@
    org.chocosolver.solver.Solver
    org.chocosolver.solver.Solution))
 
-(defn problem->solver
+(defn- problem->solver
   "creates a model from declarations from loco.constraints namespace. e.g. ($in...)"
   [problem-from-dsl]
   {:pre [(coll? problem-from-dsl)]}
@@ -41,7 +41,7 @@
    (map (c (juxt ->kebab-case (c symbol name))))
    (into (sorted-map))))
 
-(defn set-search-monitor-settings! [solver named-params]
+(defn- set-search-monitor-settings! [solver named-params]
   (->>
    named-params
    (keep (fn [[method-name args]]
@@ -51,7 +51,7 @@
    (into {})
    doall))
 
-(defn set-model-objective! [model vars-index named-params]
+(defn- set-model-objective! [model vars-index named-params]
   (match named-params
          {:maximize var-name} (do
                                 (.setObjective model Model/MAXIMIZE (var-name vars-index))
@@ -61,7 +61,7 @@
                                 {:minimize var-name})
          {} nil))
 
-(defn extract-solution
+(defn- extract-solution
   "the user is allowed to make var-names vectors or other objects, these
   are converted to strings before the Model is created, here we remap
   those strings back to the original objects that they possibly
@@ -79,11 +79,27 @@
 (defn solutions
   "Solves the problem using the specified constraints and returns a map from variable names to their values (or nil if there is no solution).
   Keyword arguments:
-  - :maximize <var> - finds the solution maximizing the given variable.
-  - :minimize <var> - finds the solution minimizing the given variable.
-  - :feasible true - optimizes time by guaranteeing that the problem is feasible before trying to maximize/minimize a variable.
-  - :timeout <number> - stops after a certain amount of milliseconds (returns nil, or best solution so far when min/maxing a variable)
-  Note: returned solution maps have the metadata {:loco/solution <n>} denoting that it is the nth solution found (starting with 0)."
+  - :maximize <var-name> - finds the solution maximizing the given variable.
+  - :minimize <var-name> - finds the solution minimizing the given variable.
+  - :feasible <bool> - optimizes time by guaranteeing that the problem is feasible before trying to maximize/minimize a variable.
+
+  available Search Monitor features:
+  :limit-backtrack <int>
+  :limit-fail <int>
+  :limit-node <int>
+  :limit-search <int>
+  :limit-solution <int>
+  :limit-time <int> | <string>
+  :set-no-good-recording-from-restarts <nil>
+  :set-no-good-recording-from-solutions <[IntVar...]>
+
+  Note: returned solution maps have the metadata:
+  {
+   :solver <Solver>
+   :search-monitors <Map>
+   :model <Model>
+   :model-objective <Map>
+  }"
   [problem & args]
   (let [args-map (apply hash-map args)
         {:keys [constraints
@@ -118,13 +134,9 @@
 (alter-meta! (var solution) merge (select-keys (meta (var solutions)) [:doc :arglists]))
 
 (defn optimal-solutions
-    "Solves the problem using the specified constraints and returns a map from variable names to their values (or nil if there is no solution).
-  Keyword arguments:
-  - :maximize <var> - finds the solution maximizing the given variable.
-  - :minimize <var> - finds the solution minimizing the given variable.
-  - :feasible true - optimizes time by guaranteeing that the problem is feasible before trying to maximize/minimize a variable.
-  - :timeout <number> - stops after a certain amount of milliseconds (returns nil, or best solution so far when min/maxing a variable)
-  Note: returned solution maps have the metadata {:loco/solution <n>} denoting that it is the nth solution found (starting with 0)."
+  "Like solutions, however requires that :maximize or :minimize is
+  present in keyword args. returns sequence of all found optimal
+  solutions for that variable"
   [problem & args]
   {:pre [(->> args (filter #{:minimize :maximize}) count (p = 1))]}
   (let [args-map (apply hash-map args)
