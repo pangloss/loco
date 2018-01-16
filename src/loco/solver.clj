@@ -42,17 +42,23 @@
    (into (sorted-map))))
 
 (defn set-search-monitor-settings! [solver named-params]
-  (doseq [[method-name arg] named-params]
-    ;;only execute methods in the scope of SearchMonitor
-    (when-let [method (method-name implemented-search-monitor-methods)]
-        (if (nil? arg)
-          (. solver method)
-          (. solver method arg)))))
+  (->>
+   named-params
+   (keep (fn [[method-name args]]
+           (when-let [method (method-name implemented-search-monitor-methods)]
+             `(. ~solver ~method ~@args)
+             {method-name args})))
+   (into {})
+   doall))
 
 (defn set-model-objective! [model vars-index named-params]
   (match named-params
-         {:maximize var-name} (.setObjective model Model/MAXIMIZE (var-name vars-index))
-         {:minimize var-name} (.setObjective model Model/MINIMIZE (var-name vars-index))
+         {:maximize var-name} (do
+                                (.setObjective model Model/MAXIMIZE (var-name vars-index))
+                                {:maximize var-name})
+         {:minimize var-name} (do
+                                (.setObjective model Model/MINIMIZE (var-name vars-index))
+                                {:minimize var-name})
          {} nil))
 
 (defn extract-solution
@@ -91,16 +97,22 @@
                           identity
                           (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
         solution-extractor (p extract-solution public-vars-index var-key-name-fn)
+        search-monitors (set-search-monitor-settings! solver args-map)
+        model-objective (set-model-objective! model vars-index args-map)
         ]
-    ;;(set-search-monitor-settings! solver args-map)
-    (set-model-objective! model vars-index args-map)
+
+
     (->
      solver
      (.streamSolutions nil) ;;lawl
      (.iterator)
      iterator-seq
      (->>
-      (map solution-extractor)))))
+      (map solution-extractor))
+     (with-meta {:solver solver
+                 :search-monitors search-monitors
+                 :model model
+                 :model-objective model-objective}))))
 
 (defn solution
   "Solves the problem using the specified constraints and returns a map from variable names to their values (or nil if there is no solution).
