@@ -8,9 +8,11 @@
   (:import
    org.chocosolver.solver.Model
    org.chocosolver.solver.Solver
-   org.chocosolver.solver.Solution))
+   org.chocosolver.solver.Solution
+   org.chocosolver.solver.ParallelPortfolio
+   ))
 
-(defn- problem->solver
+(defn- problem->Model
   "creates a model from declarations from loco.constraints namespace. e.g. ($in...)"
   [problem-from-dsl]
   {:pre [(coll? problem-from-dsl)]}
@@ -107,7 +109,7 @@
                 public-vars-index
                 vars-index
                 var-name-mapping]
-         } (problem->solver problem)
+         } (problem->Model problem)
         solver (.getSolver model)
         var-key-name-fn (if (empty? var-name-mapping)
                           identity
@@ -123,8 +125,7 @@
      (.streamSolutions nil) ;;lawl, doesn't work without args
      (.iterator)
      iterator-seq
-     (->>
-      (map solution-extractor))
+     (->> (map solution-extractor))
      (with-meta {:solver solver
                  :search-monitors search-monitors
                  :model model
@@ -145,7 +146,7 @@
                 public-vars-index
                 vars-index
                 var-name-mapping]
-         } (problem->solver problem)
+         } (problem->Model problem)
         solver (.getSolver model)
         var-key-name-fn (if (empty? var-name-mapping)
                           identity
@@ -167,8 +168,134 @@
      (.streamOptimalSolutions optimization-var optimization-type-TF nil)
      (.iterator)
      iterator-seq
-     (->>
-      (map solution-extractor))
+     (->> (map solution-extractor))
      (with-meta {:solver solver
                  :search-monitors search-monitors
                  :model model}))))
+
+(declare parallel-portfolio)
+(declare portfolio-seq)
+
+(defn parallel-solutions [problem]
+  (let [;;args-map (apply hash-map args)
+        {:keys [constraints
+                model
+                public-vars-index
+                vars-index
+                var-name-mapping]
+         } (problem->Model problem)
+        ;;solver (.getSolver model)
+        var-key-name-fn (if (empty? var-name-mapping)
+                          identity
+                          (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
+        solution-extractor (p extract-solution public-vars-index var-key-name-fn)
+        ;; search-monitors (set-search-monitor-settings! solver args-map)
+        ;; [optimization-type optimized-var-name] (->
+        ;;                                         args-map
+        ;;                                         (select-keys [:minimize :maximize])
+        ;;                                         vec
+        ;;                                         first)
+        ;; optimization-var (optimized-var-name vars-index)
+        ;; optimization-type-TF ({:maximize true :minimize false} optimization-type)
+
+        ;;taken from pmap
+        n (+ 2 (.. Runtime getRuntime availableProcessors))
+        models (repeatedly n #(->> problem problem->Model))
+        portfolio (parallel-portfolio models)
+        ]
+    ;;(println 'models models)
+
+    (portfolio-seq portfolio models)))
+
+
+(defn- parallel-portfolio
+  " A Portfolio helper.
+
+  The ParallelPortfolio resolution of a problem is made of four steps:
+
+    adding models to be run in parallel,
+    running resolution in parallel,
+    getting the model which finds a solution (or the best one), if any.
+
+  Each of the four steps is needed and the order is imposed too. In
+  particular, in step 1. each model should be populated individually
+  with a model of the problem (presumably the same model, but not
+  required). Populating model is not managed by this class and should
+  be done before applying step 2., with a dedicated method for
+  instance.  Note also that there should not be pending resolution
+  process in any models. Otherwise, unexpected behaviors may occur.
+
+  The resolution process is synchronized. As soon as one model
+  ends (naturally or by hitting a limit) the other ones are eagerly
+  stopped. Moreover, when dealing with an optimization problem, cut on
+  the objective variable's value is propagated to all models on
+  solution. It is essential to eagerly declare the objective
+  variable(s) with Model.setObjective(boolean, Variable).
+
+  Note that the similarity of the models declared is not
+  required. However, when dealing with an optimization problem, keep
+  in mind that the cut on the objective variable's value is propagated
+  among all models, so different objectives may lead to wrong results.
+
+  Since there is no condition on the similarity of the models, once
+  the resolution ends, the model which finds the (best) solution is
+  internally stored. "
+  [models]
+  ;; ParallelPortfolio pares = new ParallelPortfolio();
+  ;; int n = 4; // number of models to use
+  ;; for (int i = 0; i < n; i++) {
+  ;;          pares.addModel(modeller());
+  ;;          }
+  ;; pares.solve();
+  ;; IOutputFactory.printSolutions(pares.getBestModel());
+
+  (let [portfolio (ParallelPortfolio.)]
+    (doseq [model models]
+      (.addModel portfolio (:model model)))
+    portfolio))
+
+(defn- extract-model
+  "the user is allowed to make var-names vectors or other objects, these
+  are converted to strings before the Model is created, here we remap
+  those strings back to the original objects that they possibly
+  are. most likely the var-key-name-fn is the identity function"
+  [model]
+  ;;var-map looks like:
+  ;;
+  ;;{:y #object[org.chocosolver.solver.variables.impl.BitsetIntVarImpl 0x56881196 y = {1..3}}
+  (let [{:keys [constraints
+                model
+                public-vars-index
+                vars-index
+                var-name-mapping]
+         } model
+
+        ;;would need to assoc this to the models for memoize to work
+        var-key-name-fn (if (empty? var-name-mapping)
+                          identity
+                          (memoize (fn [var-name] (get var-name-mapping var-name var-name))))]
+
+    (->> public-vars-index
+         (reduce (fn [acc [var-name var]]
+                   (assoc acc
+                          (var-key-name-fn var-name)
+                          (.getValue var)))
+                 {}))))
+
+(defn- portfolio-seq [^ParallelPortfolio portfolio, models]
+  (let [
+        ;;search-monitors (set-search-monitor-settings! solver args-map)
+        ;;model-objective (set-model-objective! model vars-index args-map)
+        find-model (fn [best-model] (first
+                                     (drop-while #(not= best-model (:model %)) models)))
+        ]
+
+    (when (.solve portfolio)
+      (lazy-seq
+       (cons
+        (->>
+         (.getBestModel portfolio)
+         find-model
+         extract-model)
+        (portfolio-seq portfolio models)
+        )))))
