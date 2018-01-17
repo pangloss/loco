@@ -199,19 +199,31 @@
                (name op)
                (lookup-var result))
 
-      [:element [result [:in (vars :guard #(every? integer? %))] [:at index] [:offset offset]]]
-      (.element model
-                (lookup-var result)
-                (int-array vars)
-                (lookup-var index)
-                offset)
+      [:element [result [:in var-names] [:at index] [:offset offset]]]
+      (match
+       (mapv lookup-var var-names)
+       (vars :guard (p every? integer?))
+       (.element model
+                 (lookup-var result)
+                 (int-array vars)
+                 (lookup-var index)
+                 offset)
 
-      [:element [result [:in (vars :guard #(every? keyword? %))] [:at index] [:offset offset]]]
-      (.element model
-                (lookup-var result)
-                (->> vars (map lookup-var) (into-array IntVar))
-                (lookup-var index)
-                offset)
+       (vars :guard (p every? int-var?))
+       (.element model
+                 (lookup-var result)
+                 (into-array IntVar vars)
+                 (lookup-var index)
+                 offset)
+
+       (vars :guard (p every? set-var?))
+       (.element model
+                 (lookup-var index)
+                 (into-array SetVar vars)
+                 offset
+                 (lookup-var result))
+       )
+
 
       ;;TODO: let user choose consistency ("DEFAULT" "BC" "AC")
       [:distinct var-names]

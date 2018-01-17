@@ -323,6 +323,16 @@
      )
 
     (constraints-assert
+     '("SETELEMENT ([PropElement(a, b, c, ..., index), PropElement(a, b, c, ..., index)])")
+     [($set :a [1 9] [1 9 2 3])
+      ($set :b [0 9] [0 9 2 3])
+      ($set :c [0 8] [0 8 7 6])
+      ($in :index 0 2)
+      ($set :value [0] [0 9 8])
+      ($element :value [:a :b :c] :index 2)]
+     )
+
+    (constraints-assert
      '("ELEMENT ([PropElementV_fast($nth_:a_:2_:3_:4_:5_:at_:index_:offset_0, index, a, ..., 5)])"
        "ARITHM ([$nth_:a_:2_:3_:4_:5_:at_:index_:offset_0 = 4])")
      [($in :a 100 200)

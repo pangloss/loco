@@ -253,8 +253,14 @@ In other words, if P is true, Q must be true (otherwise the whole
   value - an integer variable taking its value in table
   var-list - an array of integer values or variables
   index - an integer variable representing the value of value in table
-  offset - offset matching index.lb and table[0] (Generally 0)"
-  {:choco "element(IntVar value, IntVar[] table, IntVar index, int offset)"}
+  offset - offset matching index.lb and table[0] (Generally 0)
+
+  Creates a constraint enabling to retrieve an element set in sets: sets[index-offset] = set
+  Creates a constraint enabling to retrieve an element set in sets: sets[index] = set"
+  {:choco ["element(IntVar value, int[] table, IntVar index, int offset)"
+           "element(IntVar value, IntVar[] table, IntVar index, int offset)"
+           "element(IntVar index, SetVar[] sets, SetVar set)"
+           "element(IntVar index, SetVar[] sets, int offset, SetVar set)"]}
   ([value var-list index]
    ($element value var-list index 0))
 
@@ -269,6 +275,7 @@ In other words, if P is true, Q must be true (otherwise the whole
                              [:offset (preserve-consts offset)]]]])))
 
 (def $elem $element)
+(reset-meta! (var $elem) (meta (var $element)))
 
 ;;TODO: figure this out when we get to automata solution tests
 (defn $regular
