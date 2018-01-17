@@ -351,7 +351,19 @@
     (constraints-assert
      '("NOTMEMBER ([x outside [29, 28, 27, 26, 25]])")
      [($in :x 0 50)
-      ($not-member :x (range 25 30))]))
+      ($not-member :x (range 25 30))])
+
+    (constraints-assert
+     '("SETNOTMEMBER ([PropNotMemberIntSet(x, set), PropNotMemberSetInt(set)])")
+     [($in :x 0 50)
+      ($set :set [1 2 3 4 5 6 7 8])
+      ($not-member :x :set)])
+
+    (constraints-assert
+     '("SETNOTMEMBER ([PropIntCstNotMemberSet(set)])")
+     [($set :set [1 2 3 4 5 6 7 8])
+      ($not-member 4 :set)])
+    )
 
   (testing "n-values"
     (constraints-assert

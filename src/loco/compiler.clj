@@ -204,7 +204,10 @@
       [:not-member [var [:lower-bound lb] [:upper-bound ub]]]
       (.notMember model (lookup-var var) lb ub)
 
-      [:not-member [var [:table table]]]
+      [:not-member [var :of (set-var :guard lookup-set-var?)]]
+      (.notMember model (lookup-var var) (lookup-var set-var))
+
+      [:not-member [var :of (table :guard (p every? integer?))]]
       (.notMember model (lookup-var var) (int-array table))
 
       [:n-values [vars n-values]]

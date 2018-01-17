@@ -355,13 +355,21 @@ In other words, if P is true, Q must be true (otherwise the whole
 
 (defn $not-member
   "Creates a member constraint. Ensures var does not take its values in [LB, UB]
-   Creates a member constraint. Ensures var does not take its values in table"
+   Creates a member constraint. Ensures var does not take its values in table
+   Creates a member constraint stating that the constant cst is not in set
+   Creates a member constraint stating that the value of intVar is not in set"
   {:choco ["notMember(IntVar var, int[] table)"
-           "notMember(IntVar var, int lb, int ub)"]}
-  ([var table]
-   {:pre [(coll? table)
-          (every? integer? table)]}
-   [:constraint [:not-member [var [:table (preserve-consts (vec table))]]]])
+           "notMember(IntVar var, int lb, int ub)"
+           "notMember(int cst, SetVar set)"
+           "notMember(IntVar var, SetVar set)"]}
+  ([var-or-cst ints-or-set]
+   (match [var-or-cst ints-or-set]
+          [int-var (table :guard #(and (sequential? %) (every? integer? %)))]
+          [:constraint [:not-member [int-var :of (preserve-consts (vec table))]]]
+
+          [int-var (set :guard keyword?)]
+          [:constraint [:not-member [int-var :of set]]]
+          ))
 
   ([var lb ub]
    {:pre [(integer? lb) (integer? ub) (< lb ub)]}
