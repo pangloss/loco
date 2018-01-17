@@ -43,6 +43,14 @@
 
              [[:var var-name _ [:int (enumeration :guard vector?)]] _]
              (.intVar model (name var-name) (int-array enumeration))
+
+             [[:var var-name _ [:set (constants :guard set?)]] _]
+             (.setVar model (name var-name) (into-array Integer/TYPE constants))
+
+             [[:var var-name _ [:set (lb :guard set?) (ub :guard set?)]] _]
+             (.setVar model (name var-name)
+                      (into-array Integer/TYPE lb)
+                      (into-array Integer/TYPE ub))
              )]
     [(-> vars-index
          (with-meta {:ast-statement statement})

@@ -10,6 +10,8 @@
    org.chocosolver.solver.Solver
    org.chocosolver.solver.Solution
    org.chocosolver.solver.ParallelPortfolio
+   org.chocosolver.solver.variables.IntVar
+   org.chocosolver.solver.variables.SetVar
    ))
 
 (defn- problem->Model
@@ -76,7 +78,11 @@
        (reduce (fn [acc [var-name var]]
                  (assoc acc
                         (var-key-name-fn var-name)
-                        (.getIntVal solution var))) {})))
+                        (cond
+                          (instance? IntVar var) (.getIntVal solution var)
+                          (instance? SetVar var) (set (.getSetVal solution var)))
+                        ))
+               {})))
 
 (defn solutions
   "Solves the problem using the specified constraints and returns a map from variable names to their values (or nil if there is no solution).

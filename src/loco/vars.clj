@@ -1,5 +1,64 @@
 (ns loco.vars
-  (:require [clojure.core.match :refer [match]]))
+  (:require [clojure.core.match :refer [match]]
+            [clojure.set :as set]))
+
+;;TODO: var methods:
+;;boolVar, boolVar, boolVar, boolVar,
+;;boolVarArray, boolVarArray,
+;;boolVarMatrix, boolVarMatrix,
+;;checkIntDomainRange, checkRealDomainRange,
+;;generateName, generateName,
+;;intVar, intVar, intVar, intVar, intVar, intVar, intVar, intVar,
+;;intVarArray, intVarArray, intVarArray, intVarArray, intVarArray, intVarArray,
+;;intVarMatrix, intVarMatrix, intVarMatrix, intVarMatrix, intVarMatrix, intVarMatrix,
+;;realVar, realVar, realVar, realVar, realVar,
+;;realVarArray, realVarArray, realVarMatrix, realVarMatrix,
+;;setVar, setVar, setVar, setVar,
+;;setVarArray, setVarArray,
+;;setVarMatrix, setVarMatrix,
+;;taskVar, taskVar, taskVar,
+;;taskVarArray,
+;;taskVarMatrix,
+;;toBoolVar
+
+;; -------------------- Sets --------------------
+
+;; default SetVar[] 	setVarArray(int size, int[] lb, int[] ub)
+;; Creates an array of size set variables, taking their domain in [lb, ub]
+;; default SetVar[] 	setVarArray(String name, int size, int[] lb, int[] ub)
+;; Creates an array of size set variables, taking their domain in [lb, ub]
+;; default SetVar[][] 	setVarMatrix(int dim1, int dim2, int[] lb, int[] ub)
+;; Creates a matrix of dim1*dim2 set variables, taking their domain in [lb, ub]
+;; default SetVar[][] 	setVarMatrix(String name, int dim1, int dim2, int[] lb, int[] ub)
+;; Creates a matrix of dim1*dim2 set variables, taking their domain in [lb, ub]
+
+(defn set
+  "Creates a set variable taking its domain in [lb, ub], For
+   instance [#{0,3}, #{-2,0,2,3}] means the variable must include both
+   0 and 3 and can additionnaly include -2, and 2
+
+  if only a single int set is given, then Creates a constant set variable"
+  {:choco ["setVar(String name, int[] lb, int[] ub)"
+           "setVar(String name, int... value)"]}
+  ([var-name lb ub]
+   ;;TODO: possible that lb should be subset of ub
+   {:pre [(or (set? lb) (sequential? lb)) (or (set? ub) (sequential? ub))
+          ;;all elements from lb must be in ub
+          (every? (clojure.core/set ub) (clojure.core/set lb))
+          (every? integer? lb)
+          (every? integer? ub)]}
+
+   [:var var-name :public [:set (clojure.core/set lb) (clojure.core/set ub)]])
+
+  ([var-name ints]
+   {:pre [(or (set? ints) (sequential? ints))
+          (every? integer? ints)]}
+
+   [:var var-name :public [:set (clojure.core/set ints)]]))
+
+(def set- (comp #(assoc % 2 :hidden) (partial set)))
+(reset-meta! (var set-) (meta (var set)))
+;; -------------------- Utils --------------------
 
 (defn- hidden-name? [keyword-name]
   (.startsWith (name keyword-name) "_"))
@@ -12,6 +71,8 @@
          [_  (name :guard #(and (keyword? %) (hidden-name? %))) & _] (assoc var 2 :hidden)
          :else var))
 
+;; -------------------- Constants --------------------
+
 (defn const
   "Declares that a variable must be a specific value (integer)"
   [var-name value]
@@ -20,6 +81,8 @@
 
 (def const- (comp #(assoc % 2 :hidden) (partial const)))
 (reset-meta! (var const-) (meta (var const)))
+
+;; -------------------- booleans --------------------
 
 (defn bool
   "Declares that a variable must be a boolean (true/false or [0 1])
@@ -30,6 +93,8 @@
 
 (def bool- (comp #(assoc % 2 :hidden) (partial bool)))
 (reset-meta! (var bool-) (meta (var bool)))
+
+;; -------------------- Integers --------------------
 
 (defn int
   "Declares that a variable must be in a certain domain.
