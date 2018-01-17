@@ -221,9 +221,7 @@
                  (lookup-var index)
                  (into-array SetVar vars)
                  offset
-                 (lookup-var result))
-       )
-
+                 (lookup-var result)))
 
       ;;TODO: let user choose consistency ("DEFAULT" "BC" "AC")
       [:distinct var-names]
@@ -271,8 +269,16 @@
       [:member [var :of (set-var :guard lookup-set-var?)]]
       (.member model (lookup-var var) (lookup-var set-var))
 
+      [:member [(member :guard lookup-set-var?)
+                :of (sets :guard [sequential? (p every? lookup-set-var?)])]]
+      (.member model
+               (into-array SetVar (map lookup-var sets))
+               (lookup-var member))
+
       [:member [var :of (table :guard (p every? integer?))]]
       (.member model (lookup-var var) (int-array table))
+
+
 
       [:not-member [var [:lower-bound lb] [:upper-bound ub]]]
       (.notMember model (lookup-var var) lb ub)

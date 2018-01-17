@@ -423,6 +423,14 @@
      '("SETMEMBER ([PropIntCstMemberSet(set)])")
      [($set :set [1 2 3 4 5 6 7 8])
       ($member 4 :set)])
+
+    (constraints-assert
+     '("SETELEMENT ([PropElement(a, b, c, ..., idx_tmp), PropElement(a, b, c, ..., idx_tmp)])")
+     [($set :a [1 2 3 4 5 6 7 8])
+      ($set :b [0 1] [0 1 9])
+      ($set :c [3 4] [1 2 3 4])
+      ($set :member-of [1 2] [1 2 3 4 5 6])
+      ($member :member-of [:a :b :c])])
     )
 
   (testing "not-member"

@@ -355,16 +355,16 @@ In other words, if P is true, Q must be true (otherwise the whole
    Creates a member constraint. Ensures var takes its values in table
    Creates a member constraint stating that the constant cst is in set
    Creates a member constraint stating that the value of intVar is in set
-"
+  Creates a member constraint stating that set belongs to sets"
   {:choco ["member(IntVar var, int[] table)"
            "member(IntVar var, int lb, int ub)"
            "member(int cst, SetVar set)"
            "member(IntVar intVar, SetVar set)"
-
+           "member(SetVar[] sets, SetVar set)"
 ]}
-  ([var-or-cst ints-or-set]
-   (match [var-or-cst ints-or-set]
-          [int-var (table :guard #(and (sequential? %) (every? integer? %)))]
+  ([member-of collection]
+   (match [member-of collection]
+          [int-var (table :guard sequential?)]
           [:constraint [:member [int-var :of (preserve-consts (vec table))]]]
 
           [int-var (set :guard keyword?)]
