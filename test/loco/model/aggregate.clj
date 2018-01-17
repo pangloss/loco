@@ -11,19 +11,21 @@
    [[:var :y :public [:int 0 10]]
     [:var :z :public [:int 0 10]]
     [:var :x :public [:int 0 10]]
-    [:constraint [:min [:z :of [:x :y]]]]]
+    [:var :a :public [:int 0 10]]
+    [:constraint [:min [:z [:of [:x :y :a]]]]]]
 
    [($in :y 0 10)
     ($in :z 0 10)
     ($in :x 0 10)
-    ($min :z [:x :y])])
+    ($in :a 0 10)
+    ($min :z [:x :y :a])])
 
   (compiled-assert
    [[:var :y :public [:int 0 10]]
     [:var :z :public [:int 0 1]]
     [:var :x :public [:int 0 5]]
     [:var :min_x_y :proto [:int 0 5]]
-    [:constraint [:min [:min_x_y :of [:x :y]]]]
+    [:constraint [:min [:min_x_y [:of [:x :y]]]]]
     [:constraint [:arithm [:z := :min_x_y]]]]
 
    [($in :y 0 10)
@@ -32,18 +34,33 @@
     ($= :z ($min [:x :y]))])
 
   (compiled-assert
-   [[:var :y :public [:int 0 10]]
-    [:var :z :public [:int 0 10]]
-    [:var :x :public [:int 0 10]]
-    [:var :a :public [:int 0 10]]
-    [:constraint [:min [:z :of [:x :y :a]]]]]
+   [[:constraint
+     [:min
+      [:min
+       [:of [9 3 28 1 4 50 6 2 100]]
+       [:indices :set-indices]
+       [:offset 4]
+       [:not-empty? true]]]]]
+   [($min :set-indices [9 3 28 1 4 50 6 2 100] 4 :min true)])
 
-   [($in :y 0 10)
-    ($in :z 0 10)
-    ($in :x 0 10)
-    ($in :a 0 10)
-    ($min :z [:x :y :a])])
+  (compiled-assert
+   [[:constraint
+     [:min [:min [:of :set-indices] [:not-empty? true]]]]]
+   [($min :set-indices :min true)])
 
+  (is (=
+       [[:constraint :partial [:min [1 2]]]
+        [:constraint :partial [:min [1 2]]]
+        [:constraint :partial [:min [1]]]
+        [:constraint :partial [:min [1 2 3]]]
+        [:constraint :partial [:min [1 2 3 4 5]]]
+        [:constraint :partial [:min [1 2 3 4 5 6]]]]
+       [($min [1 2])
+        ($min 1 2)
+        ($min 1)
+        ($min 1 2 3)
+        ($min 1 2 3 4 5)
+        ($min 1 2 3 4 5 6)]))
   )
 
 (deftest max-test

@@ -204,24 +204,7 @@
      )
     )
 
-  (testing "min max"
-    (constraints-assert
-     '("MIN ([z = {0..2} = min(x = {0..5}, y = {0..2}, 1 = 1)])")
-     [($in :x 0 5)
-      ($in :y 0 2)
-      ($in :z 0 2)
-      ($min :z [:x :y 1])]
-     )
-
-    (constraints-assert
-     ' ("MIN ([min_x_y = {0..2}.MIN(x = {0..5},y = {0..2})])"
-        "ARITHM ([prop(z.EQ.min_x_y)])")
-     [($in :x 0 5)
-      ($in :y 0 2)
-      ($in :z 0 2)
-      ($= :z ($min :x :y))]
-     )
-
+  (testing "max"
     (constraints-assert
      '("MAX ([z = {0..2} = max(x = {0..5}, y = {0..2}, 3 = 3)])")
      [($in :x 0 5)
@@ -229,6 +212,12 @@
       ($in :z 0 2)
       ($max :z [:x :y 3])]
      )
+
+    (constraints-assert
+     '("MAX ([z = [0,1].MAX(x = [0,1],y = [0,1])])")
+     [($bools :x :y :z)
+      ($max :z [:x :y])]
+     "should optimize for bools")
 
     (constraints-assert
      '("MAX ([max_x_y = {0..5}.MAX(x = {0..5},y = {0..2})])"
@@ -248,14 +237,53 @@
       ($max :set :max false)]
      )
 
-
     (constraints-assert
      '("SETMAX ([PropNotEmpty(set-indices), PropMaxElement(set-indices, max)])")
      [($in :max 0 50)
       ($set :set-indices [1 2 3 4 5 6 7])
       ($max :set-indices [9 3 28 1 4 50 6 2 100] 4 :max true)]
      )
+    )
 
+  (testing "min"
+    (constraints-assert
+     '("MIN ([z = {0..2} = min(x = {0..5}, y = {0..2}, 3 = 3)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($in :z 0 2)
+      ($min :z [:x :y 3])]
+     )
+
+    (constraints-assert
+     '("MIN ([z = [0,1].MIN(x = [0,1],y = [0,1])])")
+     [($bools :x :y :z)
+      ($min :z [:x :y])]
+     "should optimize for bools")
+
+    (constraints-assert
+     '("MIN ([min_x_y = {0..2}.MIN(x = {0..5},y = {0..2})])"
+       "ARITHM ([prop(z.EQ.min_x_y)])")
+     [($in :x 0 5)
+      ($in :y 0 2)
+      ($in :z 0 2)
+      ($= :z ($min :x :y))]
+     )
+
+    (constraints-assert
+     '("SETMIN ([PropNotEmpty(set), PropMinElement(set, min)])"
+       "SETMIN ([PropMinElement(set, min)])")
+     [($in :min 0 50)
+      ($set :set [1 2 3 4 5 6 7])
+      ($min :set :min true)
+      ($min :set :min false)]
+     )
+
+    (constraints-assert
+     '("SETMIN ([PropNotEmpty(set-indices), PropMinElement(set-indices, min)])")
+     [($in :min 0 50)
+      ($set :set-indices [1 2 3 4 5 6 7])
+      ($min :set-indices [9 3 28 1 4 50 6 2 100] 4 :min true)]
+     )
     )
 
   (testing "scalrar"

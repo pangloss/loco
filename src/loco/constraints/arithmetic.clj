@@ -1,7 +1,9 @@
 (ns loco.constraints.arithmetic
   (:use loco.utils
         loco.constraints.utils)
-  (:require [clojure.core.match :refer [match]]))
+  (:require [clojure.core.match :refer [match]]
+            [defun.core :refer [defun]]))
+
 
 ;;TODO: implement below functions
 ;; square(IntVar var1, IntVar var2)
@@ -146,23 +148,40 @@
   [x y z]
   [:constraint [:times [z := x :* y]]])
 
-(defn min
-  "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers."
-  {:choco "min(IntVar min, IntVar[] vars)"}
-  [& more]
-  (let [morev (vec more)]
-    (match
-     morev
-     [(result :guard keyword?) (vars :guard vector?)] [:constraint [:min [result :of vars]]]
-     [(vars :guard vector?)]                          [:constraint :partial [:min vars]]
-     [& vars]                                         [:constraint :partial [:min (vec vars)]])))
+(defn- min-partial [& vars]
+  [:constraint :partial [:min (vec vars)]])
 
+(defun min
+  "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers
+  Creates a constraint over the minimum element in a set: min{i | i in set} = minElementValue
+  Creates a constraint over the minimum element induces by a set: min{weights[i-offset] | i in indices} = minElementValue"
+  {:choco
+   ["min(IntVar min, IntVar[] vars)"
+    "min(SetVar set, IntVar minElementValue, boolean notEmpty)"
+    "min(SetVar indices, int[] weights, int offset, IntVar minElementValue, boolean notEmpty)"]}
+  ([(min-list :guard sequential?)] (apply min-partial min-list))
+  ([min (vars :guard sequential?)]
+   [:constraint [:min [min [:of (vec vars)]]]])
+  ([set-var min (not-empty? :guard boolean?)]
+   [:constraint [:min [min [:of set-var] [:not-empty? not-empty?]]]])
+  ([set-indices,
+    (weights :guard [sequential? (p every? integer?)])
+    (offset :guard integer?)
+    min,
+    (not-empty? :guard boolean?)]
+   [:constraint [:min [min
+                       [:of (preserve-consts (vec weights))]
+                       [:indices set-indices]
+                       [:offset (preserve-consts offset)]
+                       [:not-empty? not-empty?]]]])
+  ([& int-vars] (apply min-partial int-vars)))
 
 (defn- max-partial [& vars]
   [:constraint :partial [:max (vec vars)]])
 
+;;TODO: fix arglists
 (defun max
-  "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers
+  "The maximum of several arguments. The arguments can be a mixture of int-vars and numbers
   Creates a constraint over the maximum element in a set: max{i | i in set} = maxElementValue
   Creates a constraint over the maximum element induces by a set: max{weights[i-offset] | i in indices} = maxElementValue"
   {:choco

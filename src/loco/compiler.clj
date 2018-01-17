@@ -59,6 +59,7 @@
      (conj vars var)
      model]))
 
+;;TODO: refactor these boolean optimizations, they are all the same
 (defn- sum-constraint
   "this handles the IntVar and BoolVar arguments method dispatching for Model.sum"
   [model sum-vars op eq-var]
@@ -69,6 +70,22 @@
             (into-array IntVar casted-to-intvars)
             (name op)
             eq-var))))
+
+(defn- min-constraint
+  "this handles the IntVar and BoolVar arguments method dispatching for Model.min"
+  [model eq-var min-vars]
+  (if-let [homogeneous? (->> min-vars (map class) (apply =))]
+    (.min model eq-var (into-array min-vars))
+    (let [casted-to-intvars (map #(cast IntVar %) min-vars)]
+      (.min model eq-var (into-array IntVar casted-to-intvars)))))
+
+(defn- max-constraint
+  "this handles the IntVar and BoolVar arguments method dispatching for Model.max"
+  [model eq-var max-vars]
+  (if-let [homogeneous? (->> max-vars (map class) (apply =))]
+    (.max model eq-var (into-array max-vars))
+    (let [casted-to-intvars (map #(cast IntVar %) max-vars)]
+      (.max model eq-var (into-array IntVar casted-to-intvars)))))
 
 (defn compile-constraint-statement [vars-index model statement]
   (let [lookup-var (partial lookup-var vars-index)
@@ -134,9 +151,23 @@
       [:not-all-equal vars]
       (.notAllEqual model (->> vars (map lookup-var) (into-array IntVar)))
 
-      ;;TODO: there is optimization for bools on min and max
-      [:min [result :of vars]]
-      (.min model (lookup-var result) (->> vars (map lookup-var) (into-array IntVar)))
+      [:min [min
+             [:of weights]
+             [:indices set-indices]
+             [:offset offset]
+             [:not-empty? not-empty?]]]
+      (.min model
+            (lookup-var set-indices)
+            (into-array Integer/TYPE weights)
+            offset
+            (lookup-var min)
+            not-empty?)
+
+      [:min [min [:of set-var] [:not-empty? not-empty?]]]
+      (.min model (lookup-var set-var) (lookup-var min) not-empty?)
+
+      [:min [min [:of vars]]]
+      (min-constraint model (lookup-var min) (map lookup-var vars))
 
       [:max [max
              [:of weights]
@@ -154,7 +185,7 @@
       (.max model (lookup-var set-var) (lookup-var max) not-empty?)
 
       [:max [max [:of vars]]]
-      (.max model (lookup-var max) (->> vars (map lookup-var) (into-array IntVar)))
+      (max-constraint model (lookup-var max) (map lookup-var vars))
 
       [:scalar [result op vars coeffs]]
       (.scalar model
