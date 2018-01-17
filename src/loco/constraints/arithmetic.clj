@@ -97,17 +97,23 @@
    [:constraint :partial [:- (vec args)]]))
 
 (defn sum
-  "Creates a sum constraint. Enforces that ∑i in |vars|varsi operator sum."
-  {:choco "sum(IntVar[] vars, String operator, IntVar sum)"}
+  "Creates a sum constraint. Enforces that ∑i in |vars|varsi operator sum
+  Creates a constraint summing elements of set sum{i | i in set} = sum"
+  {:choco ["sum(IntVar[] vars, String operator, IntVar sum)"
+           "sum(SetVar set, IntVar sum)"]
+   :partial true}
   ([vars]
-   {:pre [(vector? vars)]}
+   {:pre [(sequential? vars)]}
    [:constraint :partial [:+ vars]]) ;; this is named differently
                                        ;; because it creates nice var
                                        ;; names. gets converted into a
                                        ;; :sum at compile step
 
+  ([summation set-var]
+   [:constraint [:sum [summation := set-var]]])
+
   ([summation operator vars]
-   {:pre [(vector? vars) (comparison-operator? operator)]}
+   {:pre [(sequential? vars) (comparison-operator? operator)]}
    [:constraint [:sum [summation operator vars]]]))
 
 (defn +

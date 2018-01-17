@@ -5,6 +5,7 @@
    [loco.model :as model]
    [clojure.core.match :refer [match]])
   (:import org.chocosolver.solver.Model
+           org.chocosolver.solver.variables.SetVar
            org.chocosolver.solver.variables.BoolVar
            org.chocosolver.solver.variables.IntVar
            org.chocosolver.solver.constraints.Constraint))
@@ -78,11 +79,20 @@
                                           (into-array Constraint)
                                           ))
         realize-nested-constraint (p compile-constraint-statement vars-index model)
+        int-var? (p instance? IntVar)
+        set-var? (p instance? SetVar)
+        lookup-set-var? (c set-var? lookup-var-unchecked)
         ]
     (->
      statement
      (match [:constraint constraint] constraint)
      (match
+      [:sum [(set-var :guard lookup-set-var?) := eq-var]]
+      (.sum model (lookup-var set-var) (lookup-var eq-var))
+
+      [:sum [eq-var := (set-var :guard lookup-set-var?)]]
+      (.sum model (lookup-var set-var) (lookup-var eq-var))
+
       [:sum [eq-var op (sum-vars :guard vector?)]]
       (sum-constraint model (map lookup-var sum-vars) (name op) (lookup-var eq-var))
 
