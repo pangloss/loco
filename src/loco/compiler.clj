@@ -208,8 +208,15 @@
                 (lookup-var index)
                 offset)
 
-      [:distinct vars]
-      (.allDifferent model (->> vars (map lookup-var) (into-array IntVar)) "DEFAULT")
+      ;;TODO: let user choose consistency ("DEFAULT" "BC" "AC")
+      [:distinct var-names]
+      (match (mapv lookup-var var-names)
+             (vars :guard (p every? int-var?))
+             (.allDifferent model (into-array IntVar vars) "DEFAULT")
+
+             (vars :guard (p every? set-var?))
+             ;;set-version doesn't have consistency argument
+             (.allDifferent model (into-array SetVar vars)))
 
       [:distinct-except-0 vars]
       (.allDifferentExcept0 model (->> vars (map lookup-var) (into-array IntVar)))

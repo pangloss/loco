@@ -332,6 +332,14 @@
       ($in :c 0 9)
       ($distinct [:a :b :c 0])]
      )
+
+    (constraints-assert
+     '("SETALLDIFFERENT ([PropAllDiff(a, b, c), PropAllDiff(a, b, c), PropAtMost1Empty(a, b, c)])")
+     [($set :a [0 9] [0 9 1 2 3 4 5])
+      ($set :b [0 9] [0 9 1 2 3 4 5])
+      ($set :c [0 9] [0 9 1 2 3 4 5])
+      ($distinct [:a :b :c])]
+     )
     )
 
   (testing "all different except 0"

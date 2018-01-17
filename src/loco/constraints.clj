@@ -192,13 +192,19 @@ In other words, if P is true, Q must be true (otherwise the whole
 
 (defn $distinct
   "Given a bunch of int-vars, ensures that all of them have different
-  values, i.e. no two of them are equal."
-  {:choco "allDifferent(IntVar... vars)"}
+  values, i.e. no two of them are equal.
+
+  Creates a constraint stating that sets should all be different (not
+  necessarily disjoint) Note that there cannot be more than one empty
+  set."
+  {:choco ["allDifferent(IntVar... vars)"
+           "allDifferent(SetVar... sets)"]}
   [vars]
   {:pre [(coll? vars)]}
   [:constraint [:distinct (vec vars)]])
 
 (def $all-different $distinct)
+(reset-meta! (var $all-different) (meta (var $distinct)))
 
 (defn $distinct-except-0
   "Creates an allDifferent constraint for variables that are not equal
