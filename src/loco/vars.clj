@@ -94,6 +94,13 @@
 (def bool- (comp #(assoc % 2 :hidden) (partial bool)))
 (reset-meta! (var bool-) (meta (var bool)))
 
+(defn bools
+  "Declares a list of booleans with given var-names"
+  [& var-names]
+  (->
+   (mapv bool var-names)
+   (with-meta {:generated-vars true})))
+
 ;; -------------------- Integers --------------------
 
 (defn int
