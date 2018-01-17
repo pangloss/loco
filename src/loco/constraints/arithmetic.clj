@@ -157,16 +157,34 @@
      [(vars :guard vector?)]                          [:constraint :partial [:min vars]]
      [& vars]                                         [:constraint :partial [:min (vec vars)]])))
 
-(defn max
-  "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers."
-  {:choco "max(IntVar max, IntVar[] vars)"}
-  [& more]
-  (let [morev (vec more)]
-    (match
-     morev
-     [(result :guard keyword?) (vars :guard vector?)] [:constraint [:max [result :of vars]]]
-     [(vars :guard vector?)]                          [:constraint :partial [:max vars]]
-     [& vars]                                         [:constraint :partial [:max (vec vars)]])))
+
+(defn- max-partial [& vars]
+  [:constraint :partial [:max (vec vars)]])
+
+(defun max
+  "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers
+  Creates a constraint over the maximum element in a set: max{i | i in set} = maxElementValue
+  Creates a constraint over the maximum element induces by a set: max{weights[i-offset] | i in indices} = maxElementValue"
+  {:choco
+   ["max(IntVar max, IntVar[] vars)"
+    "max(SetVar set, IntVar maxElementValue, boolean notEmpty)"
+    "max(SetVar indices, int[] weights, int offset, IntVar maxElementValue, boolean notEmpty)"]}
+  ([(max-list :guard sequential?)] (apply max-partial max-list))
+  ([max (vars :guard sequential?)]
+   [:constraint [:max [max [:of (vec vars)]]]])
+  ([set-var max (not-empty? :guard boolean?)]
+   [:constraint [:max [max [:of set-var] [:not-empty? not-empty?]]]])
+  ([set-indices,
+    (weights :guard [sequential? (p every? integer?)])
+    (offset :guard integer?)
+    max,
+    (not-empty? :guard boolean?)]
+   [:constraint [:max [max
+                       [:of (preserve-consts (vec weights))]
+                       [:indices set-indices]
+                       [:offset (preserve-consts offset)]
+                       [:not-empty? not-empty?]]]])
+  ([& int-vars] (apply max-partial int-vars)))
 
 (defn mod
   "Creates a modulo constraint. Ensures X % Y = Z"

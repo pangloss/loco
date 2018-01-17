@@ -138,8 +138,23 @@
       [:min [result :of vars]]
       (.min model (lookup-var result) (->> vars (map lookup-var) (into-array IntVar)))
 
-      [:max [result :of vars]]
-      (.max model (lookup-var result) (->> vars (map lookup-var) (into-array IntVar)))
+      [:max [max
+             [:of weights]
+             [:indices set-indices]
+             [:offset offset]
+             [:not-empty? not-empty?]]]
+      (.max model
+            (lookup-var set-indices)
+            (into-array Integer/TYPE weights)
+            offset
+            (lookup-var max)
+            not-empty?)
+
+      [:max [max [:of set-var] [:not-empty? not-empty?]]]
+      (.max model (lookup-var set-var) (lookup-var max) not-empty?)
+
+      [:max [max [:of vars]]]
+      (.max model (lookup-var max) (->> vars (map lookup-var) (into-array IntVar)))
 
       [:scalar [result op vars coeffs]]
       (.scalar model

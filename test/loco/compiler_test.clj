@@ -238,6 +238,24 @@
       ($in :z 0 2)
       ($= :z ($max :x :y))]
      )
+
+    (constraints-assert
+     '("SETMAX ([PropNotEmpty(set), PropMaxElement(set, max)])"
+       "SETMAX ([PropMaxElement(set, max)])")
+     [($in :max 0 50)
+      ($set :set [1 2 3 4 5 6 7])
+      ($max :set :max true)
+      ($max :set :max false)]
+     )
+
+
+    (constraints-assert
+     '("SETMAX ([PropNotEmpty(set-indices), PropMaxElement(set-indices, max)])")
+     [($in :max 0 50)
+      ($set :set-indices [1 2 3 4 5 6 7])
+      ($max :set-indices [9 3 28 1 4 50 6 2 100] 4 :max true)]
+     )
+
     )
 
   (testing "scalrar"

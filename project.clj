@@ -12,6 +12,7 @@
   :dependencies [
                  [org.clojure/clojure "1.9.0"]
                  [org.clojure/core.match "0.3.0-alpha5"]
+                 [defun "0.3.0-RC1"]
                  [camel-snake-kebab "0.4.0"]
                  [org.choco-solver/choco-solver "4.0.6"]
                  ])
