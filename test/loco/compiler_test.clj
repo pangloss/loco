@@ -340,7 +340,19 @@
     (constraints-assert
      '("MEMBER ([x in [29, 28, 27, 26, 25]])")
      [($in :x 0 50)
-      ($member :x (range 25 30))]))
+      ($member :x (range 25 30))])
+
+    (constraints-assert
+     '("SETMEMBER ([PropIntEnumMemberSet(set, x)])")
+     [($in :x 0 50)
+      ($set :set [1 2 3 4 5 6 7 8])
+      ($member :x :set)])
+
+    (constraints-assert
+     '("SETMEMBER ([PropIntCstMemberSet(set)])")
+     [($set :set [1 2 3 4 5 6 7 8])
+      ($member 4 :set)])
+    )
 
   (testing "not-member"
     (constraints-assert

@@ -339,13 +339,23 @@ In other words, if P is true, Q must be true (otherwise the whole
 
 (defn $member
   "Creates a member constraint. Ensures var takes its values in [LB, UB]
-   Creates a member constraint. Ensures var takes its values in table"
+   Creates a member constraint. Ensures var takes its values in table
+   Creates a member constraint stating that the constant cst is in set
+   Creates a member constraint stating that the value of intVar is in set
+"
   {:choco ["member(IntVar var, int[] table)"
-           "member(IntVar var, int lb, int ub)"]}
-  ([var table]
-   {:pre [(coll? table)
-          (every? integer? table)]}
-   [:constraint [:member [var [:table (preserve-consts (vec table))]]]])
+           "member(IntVar var, int lb, int ub)"
+           "member(int cst, SetVar set)"
+           "member(IntVar intVar, SetVar set)"
+
+]}
+  ([var-or-cst ints-or-set]
+   (match [var-or-cst ints-or-set]
+          [int-var (table :guard #(and (sequential? %) (every? integer? %)))]
+          [:constraint [:member [int-var :of (preserve-consts (vec table))]]]
+
+          [int-var (set :guard keyword?)]
+          [:constraint [:member [int-var :of set]]]))
 
   ([var lb ub]
    {:pre [(integer? lb) (integer? ub) (< lb ub)]}
