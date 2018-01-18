@@ -37,6 +37,7 @@
   (:require [clojure.core.match :refer [match]]
             loco.automata
             loco.constraints.arithmetic
+            loco.constraints.set
             loco.vars)
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
 
@@ -50,7 +51,8 @@
 (def ^:private to-inherit
   (->> [
         'loco.vars
-        'loco.constraints.arithmetic]
+        'loco.constraints.arithmetic
+        'loco.constraints.set]
        (map ns-publics)
        (into {})))
 

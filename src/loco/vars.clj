@@ -129,11 +129,10 @@
    {:pre [(or
            (integer? values)
            (and (sequential? values)
-                (every? integer? values)
-                (apply <= values))
+                (every? integer? values))
            )]}
    (->>
-    (match (vec (dedupe (flatten [values])))
+    (match (vec (dedupe (sort (flatten [values]))))
            [single-value-domain] (const var-name single-value-domain)
            [0 1] (bool var-name)
            domain-list [:var var-name :public [:int domain-list]])

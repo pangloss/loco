@@ -43,6 +43,20 @@
       ($in :8 -1000 1000)
       ($in :9 1 3 :bounded)]))
 
+  (testing "setVars"
+    (vars-string-assert
+     '("a = {}")
+     [($set :a [] [])])
+
+    (vars-string-assert
+     '("a = [{}, {1, 2, 3}]")
+     [($set :a [] [1 2 3])])
+
+    (vars-string-assert
+     '("a = [{1}, {1, 2, 3}]")
+     [($set :a [1] [1 2 3])])
+    )
+
   (testing "neg"
     (vars-assert
      '(["i" 0 5 true "i = {0..5}"]
@@ -663,4 +677,68 @@
    [($in :b 0 2)
     ($in :c 0 2)
     ($reify :a ($= :c ($+ :b 2)))])
+  )
+
+(deftest set-constraints-compile-test
+  (testing "intersection"
+    (constraints-assert
+     '("SETINTERSECTION ([PropIntersection(a, b, c, intersection)])")
+     [($set :intersection [0 1 2 3] [0 1 2 3 4 5 6 7 8 9])
+      ($set :a [0] [0 9 8])
+      ($set :b [1] [1 7 6])
+      ($set :c [2] [2 5 4])
+      ($intersection :intersection [:a :b :c])]
+     )
+    )
+
+  (testing "union"
+    (constraints-assert
+     '("SETUNION ([PropUnion(a, b, result), PropUnion(a, b, result)])")
+     [($set :result [0 1] [0 1 9 8 7 6])
+      ($set :a [0] [0 9 8])
+      ($set :b [1] [1 7 6])
+      ($union :result [:a :b])]
+     )
+
+    (constraints-assert
+     '("SETINTVALUESUNION ([PropSetIntValuesUnion(a, b, result), PropSetIntValuesUnion(a, b, result)])")
+     [($set :result [] [0 1 9 8 7 6])
+      ($int :a [0 9 8])
+      ($int :b [1 7 6])
+      ($union :result [:a :b])]
+     "should work with IntVar[] variant")
+    )
+
+  (testing "nb-empty"
+    (constraints-assert
+     '("SETNBEMPTY ([PropNbEmpty(a, b, c, empty)])")
+     [($set :a [] [0 9 8])
+      ($set :b [] [1 7 6])
+      ($set :c [] [0 9 3])
+      ($int :empty 0 3)
+      ($nb-empty :empty [:a :b :c])])
+
+    (constraints-assert
+     '("SETNBEMPTY ([PropNbEmpty(a, b, c, cste -- 3)])")
+     [($set :a [] [0 9 8])
+      ($set :b [] [1 7 6])
+      ($set :c [] [0 9 3])
+      ($count-empty 3 [:a :b :c])])
+    )
+
+  (testing "not-empty"
+    (constraints-assert
+     []
+     [($set :a [] [0 1 2 3])
+      ($not-empty :a)]))
+
+  (testing "off-set"
+    (constraints-assert
+     []
+     [($set :a [] [0 1 2 3])
+      ($set :b [] [2 3 4 5 6])
+      ($off-set :a :b 1)]))
+
+  ;;TODO: partition, subset-equal ;;  subsetEq ;;  sumElements ;;  sumElements ;;  symmetric ;;  symmetric ;;  allDisjoint ;;  disjoint , set-bools-channeling, sets-ints-channeling
+
   )

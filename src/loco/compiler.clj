@@ -48,7 +48,9 @@
              [[:var var-name _ [:set (constants :guard set?)]] _]
              (.setVar model (name var-name) (into-array Integer/TYPE constants))
 
-             [[:var var-name _ [:set (lb :guard set?) (ub :guard set?)]] _]
+             [[:var var-name _ [:set
+                                (lb :guard [set? (p every? integer?)])
+                                (ub :guard [set? (p every? integer?)])]] _]
              (.setVar model (name var-name)
                       (into-array Integer/TYPE lb)
                       (into-array Integer/TYPE ub))
@@ -98,7 +100,10 @@
         realize-nested-constraint (p compile-constraint-statement vars-index model)
         int-var? (p instance? IntVar)
         set-var? (p instance? SetVar)
+        bool-var? (p instance? BoolVar)
         lookup-set-var? (c set-var? lookup-var-unchecked)
+        lookup-int-var? (c int-var? lookup-var-unchecked)
+        lookup-bool-var? (c bool-var? lookup-var-unchecked)
         ]
     (->
      statement
@@ -387,7 +392,94 @@
 
       :false
       (.falseConstraint model)
+
+      ;;-------------------- sets only --------------------
+
+      [:intersection [intersection-set [:of sets] [:bound-consistent bounds-consistent?]]]
+      (.intersection model
+                     (into-array SetVar (map lookup-var sets))
+                     (lookup-var intersection-set)
+                     bounds-consistent?)
+
+      [:union [union-set [:of (sets :guard (p every? lookup-set-var?))]]]
+      (.union model
+              (into-array SetVar (map lookup-var sets))
+              (lookup-var union-set))
+
+      [:union [union-set [:of (ints :guard (p every? lookup-int-var?))]]]
+      (.union model
+              (into-array IntVar (map lookup-var ints))
+              (lookup-var union-set))
+
+      [:nb-empty [num-empty [:of (sets :guard (p every? lookup-set-var?))]]]
+      (.nbEmpty model
+                (into-array SetVar (map lookup-var sets))
+                (lookup-var num-empty))
+
+      [:not-empty (set-var :guard lookup-set-var?)]
+      (.notEmpty model (lookup-var set-var))
+
+      [:off-set [(set1 :guard lookup-set-var?) (set2 :guard lookup-set-var?)
+                 [:offset (offset :guard integer?)]]]
+      (.offSet model (lookup-var set1) (lookup-var set2) offset)
+
+      [:partition [(sets :guard [sequential? (p every? lookup-set-var?)])
+                   [:universe (universe :guard lookup-set-var?)]]]
+      (.partition model (into-array SetVar (map lookup-var sets)) (lookup-var universe))
+
+      [:subset-eq (sets :guard (p every? lookup-set-var?))]
+      (.subsetEq model (into-array SetVar (map lookup-var sets)))
+
+      [:sum-elements [(result-var :guard lookup-int-var?)
+                      [:indices (indices-set :guard lookup-set-var?)]
+                      [:weights (weights :guard [sequential? (p every? integer?)])]
+                      [:offset (offset :guard integer?)]]]
+      (.sumElements model
+                    (lookup-var indices-set)
+                    (int-array weights)
+                    offset
+                    (lookup-var result-var))
+
+      [:symetric [(sets :guard [sequential? (p every? lookup-set-var?)])
+                  [:offset (offset :guard integer?)]]]
+      (.symmetric model (into-array SetVar (map lookup-var sets)) offset)
+
+      [:all-disjoint (sets :guard [sequential? (p every? lookup-set-var?)])]
+      (.allDisjoint model (into-array SetVar (map lookup-var sets)))
+
+      [:disjoint [(set1 :guard lookup-set-var?) (set2 :guard lookup-set-var?)]]
+      (.disjoint model (lookup-var set1) (lookup-var set2))
+
+      [:set-bools-channeling [(set-var :guard lookup-set-var?)
+                              [:channel (bools :guard [sequential? (p every? lookup-bool-var?)])]
+                              [:offset (offset :guard integer?)]]]
+      (.setBoolsChanneling model
+                           (into-array BoolVar (map lookup-var bools))
+                           (lookup-var set-var)
+                           offset)
+
+      [:sets-ints-channeling [[:ints (ints :guard [sequential? (p every? lookup-int-var?)])
+                               :offset (offset-ints :guard integer?)]
+                              [:sets (sets :guard [sequential? (p every? lookup-set-var?)])
+                               :offset (offset-set :guard integer?)]]]
+      (.setsIntsChanneling model
+                           (into-array SetVar (map lookup-var sets))
+                           (into-array IntVar (map lookup-var ints))
+                           offset-set
+                           offset-ints)
+
+      [:inverse [[:inverse-sets (inverse-sets :guard [sequential? (p every? lookup-set-var?)])
+                  :offset (offset-inverse-set :guard integer?)]
+                 [:sets (sets :guard [sequential? (p every? lookup-set-var?)])
+                  :offset (offset-set :guard integer?)]]]
+      (.setsIntsChanneling model
+                           (into-array SetVar (map lookup-var sets))
+                           (into-array SetVar (map lookup-var inverse-sets))
+                           offset-set
+                           offset-inverse-set)
       ))))
+
+
 
 (defn compile-reify-statement [vars-index model statement]
   (match statement
