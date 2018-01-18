@@ -1,5 +1,4 @@
-;;TODO: apply these to meta data of functions as completed
-;; boolsIntChanneling(BoolVar[] bVars, IntVar var, int offset)
+;;TODO: constraint factory methods
 ;; circuit(IntVar[] vars, int offset, CircuitConf conf)
 ;; clausesIntChanneling(IntVar var, BoolVar[] eVars, BoolVar[] lVars)
 ;; costRegular(IntVar[] vars, IntVar cost, ICostAutomaton costAutomaton)
@@ -8,19 +7,19 @@
 ;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)
 ;; intValuePrecedeChain(IntVar[] X, int[] V)
 ;; intValuePrecedeChain(IntVar[] X, int S, int T)
-;; inverseChanneling(IntVar[] vars1, IntVar[] vars2)
-;; inverseChanneling(IntVar[] vars1, IntVar[] vars2, int offset1, int offset2)
-;; keySort(IntVar[][] vars, IntVar[] PERMvars, IntVar[][] SORTEDvars, int K)
 ;; lexChainLess(IntVar[]... vars)
 ;; lexChainLessEq(IntVar[]... vars)
 ;; lexLess(IntVar[] vars1, IntVar[] vars2)
 ;; lexLessEq(IntVar[] vars1, IntVar[] vars2)
-;; mddc(IntVar[] vars, MultivaluedDecisionDiagram MDD)
-;; multiCostRegular(IntVar[] vars, IntVar[] costVars, ICostAutomaton costAutomaton)
 ;; path(IntVar[] vars, IntVar start, IntVar end)
 ;; path(IntVar[] vars, IntVar start, IntVar end, int offset)
-;; subCircuit(IntVar[] vars, int offset, IntVar subCircuitLength)
 ;; subPath(IntVar[] vars, IntVar start, IntVar end, int offset, IntVar SIZE)
+;; subCircuit(IntVar[] vars, int offset, IntVar subCircuitLength)
+;; inverseChanneling(IntVar[] vars1, IntVar[] vars2)
+;; inverseChanneling(IntVar[] vars1, IntVar[] vars2, int offset1, int offset2)
+;; keySort(IntVar[][] vars, IntVar[] PERMvars, IntVar[][] SORTEDvars, int K)
+;; mddc(IntVar[] vars, MultivaluedDecisionDiagram MDD)
+;; multiCostRegular(IntVar[] vars, IntVar[] costVars, ICostAutomaton costAutomaton)
 ;; table(IntVar[] vars, Tuples tuples)
 ;; table(IntVar[] vars, Tuples tuples, String algo)
 ;; table(IntVar var1, IntVar var2, Tuples tuples)
@@ -29,6 +28,8 @@
 ;; tree(IntVar[] succs, IntVar nbTrees, int offset)
 ;; allDifferent(IntVar[] vars, String CONSISTENCY)
 ;; allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)
+
+
 
 (ns loco.constraints
   (:use loco.utils
@@ -189,6 +190,9 @@ In other words, if P is true, Q must be true (otherwise the whole
 
 ;;TODO: organize functions better
 ;;;;; GLOBAL
+
+;; default Constraint
+;;
 
 (defn $distinct
   "Given a bunch of int-vars, ensures that all of them have different
@@ -507,6 +511,7 @@ In other words, if P is true, Q must be true (otherwise the whole
                   [:offset (preserve-consts offset)]]]]))
 
 
+;;TODO: implement this when converting choco tests
 #_(defn diff-n
   "Creates a diffN constraint. Constrains each rectangle[i], given by
   their origins X[i],Y[i] and sizes width[i], height[i], to be non-overlapping."
@@ -516,7 +521,6 @@ In other words, if P is true, Q must be true (otherwise the whole
   )
 
 
-;;TODO: it could be interesting to generate the bit-vars
 (defn $bits-channeling
   "Creates an channeling constraint between an integer variable and a set of bit variables. Ensures that var = 20*BIT_1 + 21*BIT_2 + ... 2n-1*BIT_n.
   BIT_1 is related to the first bit of OCTET (2^0), BIT_2 is related
@@ -529,3 +533,12 @@ In other words, if P is true, Q must be true (otherwise the whole
       (into (mapv $bool bits))
       (into [[:constraint [:bit-channeling [(vec bits) int-var]]]])
       (with-meta {:generated-vars true})))
+
+;;TODO: implement this when converting choco tests
+#_(defn bools-int-channeling
+  "Creates an channeling constraint between an integer variable and a
+  set of boolean variables. Maps the boolean assignments variables
+  bVars with the standard assignment variable var. var = i <->
+  bVars[i-offset] = 1"
+  {:choco "boolsIntChanneling(BoolVar[] bVars, IntVar var, int offset)"}
+  )

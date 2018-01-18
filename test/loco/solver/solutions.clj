@@ -102,3 +102,9 @@
       {:a 1, :b 2, :z 3, :y 4})
     (solver/optimal-solutions model :minimize :y)))
   )
+
+(deftest parallel-solutions-test
+  (->> (solver/parallel-solutions model)
+       (take 10))
+
+  )
