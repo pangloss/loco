@@ -3,6 +3,7 @@
         loco.utils)
   (:require
    [loco.model :as model]
+   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]])
   (:import org.chocosolver.solver.Model
            org.chocosolver.solver.variables.SetVar
@@ -24,7 +25,7 @@
       name)))
 
 (defn compile-var-statement [[vars-index vars model] statement]
-  (let [var (match
+  (let [var (match+
              [statement (meta statement)]
 
              [[:var var-name _ _] {:neg dep-name}]
@@ -33,24 +34,22 @@
              [[:var var-name _ [:bool _ _]] _]
              (.boolVar model (name var-name))
 
-             [[:var var-name _ [:int (lb :guard integer?) (ub :guard integer?)]] _]
+             [[:var var-name _ [:int lb ub]] _] :guard [[lb ub] integer?]
              (.intVar model (name var-name) lb ub)
 
-             [[:var var-name _ [:int (lb :guard integer?) (ub :guard integer?) :bounded]] _]
+             [[:var var-name _ [:int lb ub :bounded]] _] :guard [[lb ub] integer?]
              (.intVar model (name var-name) lb ub true)
 
-             [[:var var-name _ [:const (value :guard integer?)]] _]
+             [[:var var-name _ [:const value]] _] :guard [value integer?]
              (.intVar model (name var-name) value)
 
-             [[:var var-name _ [:int (enumeration :guard vector?)]] _]
+             [[:var var-name _ [:int enumeration]] _] :guard [enumeration vector?]
              (.intVar model (name var-name) (int-array enumeration))
 
-             [[:var var-name _ [:set (constants :guard set?)]] _]
+             [[:var var-name _ [:set constants]] _] :guard [constants set?]
              (.setVar model (name var-name) (into-array Integer/TYPE constants))
 
-             [[:var var-name _ [:set
-                                (lb :guard [set? (p every? integer?)])
-                                (ub :guard [set? (p every? integer?)])]] _]
+             [[:var var-name _ [:set lb ub]] _] :guard [[lb ub] [set? (p every? integer?)]]
              (.setVar model (name var-name)
                       (into-array Integer/TYPE lb)
                       (into-array Integer/TYPE ub))
@@ -89,6 +88,10 @@
     (let [casted-to-intvars (map #(cast IntVar %) max-vars)]
       (.max model eq-var (into-array IntVar casted-to-intvars)))))
 
+
+
+
+
 (defn compile-constraint-statement [vars-index model statement]
   (let [lookup-var (partial lookup-var vars-index)
         lookup-var-unchecked (partial lookup-var-unchecked vars-index)
@@ -108,7 +111,7 @@
     (->
      statement
      (match [:constraint constraint] constraint)
-     (match
+     (match+
       [:sum [(set-var :guard lookup-set-var?) := eq-var]]
       (.sum model (lookup-var set-var) (lookup-var eq-var))
 
@@ -274,16 +277,14 @@
       [:member [var :of (set-var :guard lookup-set-var?)]]
       (.member model (lookup-var var) (lookup-var set-var))
 
-      [:member [(member :guard lookup-set-var?)
-                :of (sets :guard [sequential? (p every? lookup-set-var?)])]]
+      [:member [member :of sets]] :guard [member lookup-set-var?
+                                          sets [sequential? (p every? lookup-set-var?)]]
       (.member model
                (into-array SetVar (map lookup-var sets))
                (lookup-var member))
 
       [:member [var :of (table :guard (p every? integer?))]]
       (.member model (lookup-var var) (int-array table))
-
-
 
       [:not-member [var [:lower-bound lb] [:upper-bound ub]]]
       (.notMember model (lookup-var var) lb ub)
@@ -458,20 +459,20 @@
                            (lookup-var set-var)
                            offset)
 
-      [:sets-ints-channeling [[:ints (ints :guard [sequential? (p every? lookup-int-var?)])
-                               :offset (offset-ints :guard integer?)]
-                              [:sets (sets :guard [sequential? (p every? lookup-set-var?)])
-                               :offset (offset-set :guard integer?)]]]
+      [:sets-ints-channeling [[:ints ints :offset offset-ints]
+                              [:sets sets :offset offset-set]]]
+      :guard [[ints sets] [sequential? (p every? lookup-set-var?)]
+              [offset-set offset-inverse-set] integer?]
       (.setsIntsChanneling model
                            (into-array SetVar (map lookup-var sets))
                            (into-array IntVar (map lookup-var ints))
                            offset-set
                            offset-ints)
 
-      [:inverse [[:inverse-sets (inverse-sets :guard [sequential? (p every? lookup-set-var?)])
-                  :offset (offset-inverse-set :guard integer?)]
-                 [:sets (sets :guard [sequential? (p every? lookup-set-var?)])
-                  :offset (offset-set :guard integer?)]]]
+      [:inverse [[:inverse-sets inverse-sets :offset offset-inverse-set]
+                 [:sets sets :offset offset-set]]]
+      :guard [[inverse-sets sets] [sequential? (p every? lookup-set-var?)]
+              [offset-set offset-inverse-set] integer?]
       (.setsIntsChanneling model
                            (into-array SetVar (map lookup-var sets))
                            (into-array SetVar (map lookup-var inverse-sets))
