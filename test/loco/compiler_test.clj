@@ -371,6 +371,20 @@
       ($set :c [0 9] [0 9 1 2 3 4 5])
       ($distinct [:a :b :c])]
      )
+
+    (constraints-assert
+     '("ALLDIFFERENT ([PropAllDiffInst(a, b), PropAllDiffAC(a, b)])")
+     [($in :a 0 9)
+      ($in :b 0 9)
+      ($distinct [:a :b] :ac)]
+     )
+
+    (constraints-assert
+     '("ALLDIFFERENT ([PropAllDiffInst(a, b), PropAllDiffBC(a, b)])")
+     [($in :a 0 9)
+      ($in :b 0 9)
+      ($distinct [:a :b] :bc)]
+     )
     )
 
   (testing "all different except 0"
@@ -390,6 +404,30 @@
       ($in :b 0 9)
       ($in :c 100 1000)
       ($circuit [:a :b :c])]
+     )
+
+    (constraints-assert
+     '("CIRCUIT ([PropAllDiffInst(a, b, c), PropAllDiffAC(a, b, c), PropNoSubTour([a = {10..99}, b = {0..9}, c = {100..1000}])])")
+     [($in :a 10 99)
+      ($in :b 0 9)
+      ($in :c 100 1000)
+      ($circuit [:a :b :c] 0 :light)]
+     )
+
+    (constraints-assert
+     '("CIRCUIT ([PropAllDiffInst(a, b, c), PropAllDiffAC(a, b, c), PropNoSubTour([a = {10..99}, b = {0..9}, c = {100..1000}]), PropCircuit_ArboFiltering(a, b, c), PropCircuit_AntiArboFiltering(a, b, c), PropCircuitSCC(a, b, c)])")
+     [($in :a 10 99)
+      ($in :b 0 9)
+      ($in :c 100 1000)
+      ($circuit [:a :b :c] 0 :first)]
+     )
+
+    (constraints-assert
+     '("CIRCUIT ([PropAllDiffInst(a, b, c), PropAllDiffAC(a, b, c), PropNoSubTour([a = {10..99}, b = {0..9}, c = {100..1000}]), PropCircuit_ArboFiltering(a, b, c), PropCircuit_AntiArboFiltering(a, b, c), PropCircuitSCC(a, b, c)])")
+     [($in :a 10 99)
+      ($in :b 0 9)
+      ($in :c 100 1000)
+      ($circuit [:a :b :c] 0 :rd)]
      )
     )
 
@@ -549,7 +587,253 @@
      '("BITSINTCHANNELING ([PropBitChanneling(int-var, b1, b2, ..., b4)])")
      [($in :int-var 0 16)
       ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]))
-)
+
+  ;;wtf lawl
+  (testing "diff-n"
+    (constraints-assert
+     '("DIFFNWITHCUMULATIVE ([DIFFN([x1 = {0..5},y1 = {0..5},w1 = {0..5},h1 = {0..5}],[x3 = {0..5},y2 = {0..5},w2 = {0..5},h2 = {0..5}],[x3 = {0..5},y3 = {0..5},w3 = {0..5},h3 = {0..5}]), DIFFN([x1 = {0..5},y1 = {0..5},w1 = {0..5},h1 = {0..5}],[x3 = {0..5},y2 = {0..5},w2 = {0..5},h2 = {0..5}],[x3 = {0..5},y3 = {0..5},w3 = {0..5},h3 = {0..5}]), diffN_8 = [0,10] = min(x1 = {0..5}, x3 = {0..5}, x3 = {0..5}), diffN_7 = [0,10] = max(diffN_1 = [0,10], diffN_3 = [0,10], diffN_5 = [0,10]), PropXplusYeqZ(diffN_9, diffN_8, diffN_7), PropGraphCumulative([x1 = {0..5},w1 = {0..5},diffN_1 = [0,10],h1 = {0..5}],[x3 = {0..5},w2 = {0..5},diffN_3 = [0,10],h2 = {0..5}],[x3 = {0..5},w3 = {0..5},diffN_5 = [0,10],h3 = {0..5}],diffN_12 = [0,10]), PropGraphCumulative([x1 = {0..5},w1 = {0..5},diffN_1 = [0,10],h1 = {0..5}],[x3 = {0..5},w2 = {0..5},diffN_3 = [0,10],h2 = {0..5}],[x3 = {0..5},w3 = {0..5},diffN_5 = [0,10],h3 = {0..5}],diffN_12 = [0,10]), diffN_11 = [0,10] = min(y1 = {0..5}, y2 = {0..5}, y3 = {0..5}), diffN_10 = [0,10] = max(diffN_2 = [0,10], diffN_4 = [0,10], diffN_6 = [0,10]), PropXplusYeqZ(diffN_12, diffN_11, diffN_10), PropGraphCumulative([y1 = {0..5},h1 = {0..5},diffN_2 = [0,10],w1 = {0..5}],[y2 = {0..5},h2 = {0..5},diffN_4 = [0,10],w2 = {0..5}],[y3 = {0..5},h3 = {0..5},diffN_6 = [0,10],w3 = {0..5}],diffN_9 = [0,10]), PropGraphCumulative([y1 = {0..5},h1 = {0..5},diffN_2 = [0,10],w1 = {0..5}],[y2 = {0..5},h2 = {0..5},diffN_4 = [0,10],w2 = {0..5}],[y3 = {0..5},h3 = {0..5},diffN_6 = [0,10],w3 = {0..5}],diffN_9 = [0,10])])")
+
+     [
+      ($in :x1 0 5)
+      ($in :x2 0 5)
+      ($in :x3 0 5)
+
+      ($in :y1 0 5)
+      ($in :y2 0 5)
+      ($in :y3 0 5)
+
+      ($in :w1 0 5)
+      ($in :w2 0 5)
+      ($in :w3 0 5)
+
+      ($in :h1 0 5)
+      ($in :h2 0 5)
+      ($in :h3 0 5)
+
+      ($diff-n [:x1 :x3 :x3]
+               [:y1 :y2 :y3]
+               [:w1 :w2 :w3]
+               [:h1 :h2 :h3]
+               true)
+      ]
+     )
+    )
+
+  (testing "bools-int-channeling"
+    (constraints-assert
+     '("BOOLCHANNELING ([PropEnumDomainChanneling(a, b, c, ..., int)])")
+     [($bools :a :b :c :d)
+      ($in :int 0 4)
+      ($bools-int-channeling [:a :b :c :d] :int)])
+
+    (constraints-assert
+     '("BOOLCHANNELING ([PropEnumDomainChanneling(a, b, c, ..., int)])")
+     [($bools :a :b :c :d)
+      ($in :int 0 4)
+      ($bools-int-channeling [:a :b :c :d] :int 2)])
+    )
+
+  (testing "clauses-int-channeling"
+    ;;TODO: throw as model/compile time
+    (is
+      (thrown?
+       org.chocosolver.solver.exception.SolverException
+       (->> [($int :int 0 4)
+             ($bools :a :b :c :d)
+             ($bools :e :f :g :h)
+             ($clauses-int-channeling :int [:a :b :c :d] [:e :f :g :h])]
+            model/compile
+            compiler/compile))
+      "should throw when domain of int is larger than bools-list size")
+
+    (is
+     (compile-constraint?
+      '("CLAUSESINTCHANNELING ([PropClauseChanneling(int, a, b, ..., h)])")
+      [($int :int 0 3)
+       ($bools :a :b :c :d)
+       ($bools :e :f :g :h)
+       ($clauses-int-channeling :int [:a :b :c :d] [:e :f :g :h])]))
+    )
+
+  (testing "sub-circuit"
+    (is
+     (compile-constraint?
+      '("ARITHM ([sub-length = {1..3} + nLoops = [0,3] = 3])"
+        "SUBCIRCUIT ([PropAllDiffInst(a, b, c), PropAllDiffAC(a, b, c), PropKLoops(a, b, c, nLoops), PropSubcircuit(a, b, c, sub-length), PropSubcircuitDominatorFilter(a, b, c)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :sub-length 1 3)
+       ($sub-circuit [:a :b :c] :sub-length 0)]))
+    )
+
+  (testing "int-value-precede-chain"
+    (is
+     (compile-constraint?
+      '("INT_VALUE_PRECEDE ([PropIntValuePrecedeChain(a, b, c), PropIntValuePrecedeChain(a, b, c)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int-value-precede-chain [:a :b :c] [0 1 2])]))
+
+    (is
+     (compile-constraint?
+      '("INT_VALUE_PRECEDE ([PropIntValuePrecedeChain(a, b, c)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int-value-precede-chain [:a :b :c] 0 3)]))
+    )
+
+  (testing "lex-less"
+    (is
+     (compile-constraint?
+      '("LEX ([LEX <a = {0..3}, b = {0..3}, c = {0..3}>, <x = {0..3}, y = {0..3}, z = {0..3}>])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :x 0 3)
+       ($int :y 0 3)
+       ($int :z 0 3)
+       ($lex-less [:a :b :c] [:x :y :z])]))
+    )
+
+  (testing "lex-less-equal"
+    (is
+     (compile-constraint?
+      '("LEX ([LEX <a = {0..3}, b = {0..3}, c = {0..3}>, <x = {0..3}, y = {0..3}, z = {0..3}>])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :x 0 3)
+       ($int :y 0 3)
+       ($int :z 0 3)
+       ($lex-less-equal [:a :b :c] [:x :y :z])]))
+    )
+
+  (testing "lex-chain-less"
+    (is
+     (compile-constraint?
+      '()
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($lex-chain-less [:a :b :c])]))
+    )
+
+  (testing "lex-chain-less-equal"
+    (is
+     (compile-constraint?
+      '()
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($lex-chain-less-equal [:a :b :c])]))
+
+    (is
+     (compile-constraint?
+      '()
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($lex-chain-less-equal :a :b :c)]))
+    )
+
+  (testing "path"
+    (is
+     (compile-constraint?
+      '("PATH ([prop(start.NEQ.end), PropAllDiffInst(a, b, c, start), PropAllDiffAC(a, b, c, start), PropNoSubTour([a = {0..3}, b = {0..3}, c = {0..3}, start = {0..3}]), PropCircuit_ArboFiltering(a, b, c, start), PropCircuit_AntiArboFiltering(a, b, c, start), PropCircuitSCC(a, b, c, start), PropElementV_fast(cste -- 3, end, a, ..., c)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :start 0 3)
+       ($int :end 0 3)
+       ($path [:a :b :c] :start :end)]))
+
+    (is
+     (compile-constraint?
+      '("PATH ([prop(start.NEQ.end), PropAllDiffInst(a, b, c, start), PropAllDiffAC(a, b, c, start), PropNoSubTour([a = {0..3}, b = {0..3}, c = {0..3}, start = {0..3}]), PropCircuit_ArboFiltering(a, b, c, start), PropCircuit_AntiArboFiltering(a, b, c, start), PropCircuitSCC(a, b, c, start), PropElementV_fast(cste -- 4, end, a, ..., c)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :start 0 3)
+       ($int :end 0 3)
+       ($path [:a :b :c] :start :end 1)]))
+
+    )
+
+  (testing "sub-path"
+    (is
+     (compile-constraint?
+      '("ARITHM ([(size = {0..3} + 1) = [1,4] + nLoops = [0,4] = 4])"
+        "SUBPATH ([start <= 2, PropAllDiffInst(a, b, c, start), PropAllDiffAC(a, b, c, start), PropKLoops(a, b, c, ..., nLoops), PropSubcircuit(a, b, c, ..., (size+1)), PropSubcircuitDominatorFilter(a, b, c, start), PropElementV_fast(cste -- 3, end, a, ..., c)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :start 0 3)
+       ($int :end 0 3)
+       ($int :size 0 3)
+       ($sub-path [:a :b :c] :start :end :size)]))
+
+    (is
+     (compile-constraint?
+      '("ARITHM ([(size = {0..3} + 1) = [1,4] + nLoops = [0,4] = 4])"
+        "SUBPATH ([start <= 3, PropAllDiffInst(a, b, c, start), PropAllDiffAC(a, b, c, start), PropKLoops(a, b, c, ..., nLoops), PropSubcircuit(a, b, c, ..., (size+1)), PropSubcircuitDominatorFilter(a, b, c, start), PropElementV_fast(cste -- 4, end, a, ..., c)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :start 0 3)
+       ($int :end 0 3)
+       ($int :size 0 3)
+       ($sub-path [:a :b :c] :start :end :size 1)]))
+
+    )
+
+  (testing "inverse-channeling"
+    (is
+     (compile-constraint?
+      '("INVERSECHANNELING ([PropAllDiffInst(a, b, c), PropAllDiffBC(a, b, c), PropAllDiffAdaptative(a, b, c), PropAllDiffInst(x, y, z), PropAllDiffBC(x, y, z), PropAllDiffAdaptative(x, y, z), Inverse_AC({a = {0..3}...}{x = {0..3}...})])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :x 0 3)
+       ($int :y 0 3)
+       ($int :z 0 3)
+       ($inverse-channeling [:a :b :c] [:x :y :z])]))
+
+    (is
+     (compile-constraint?
+      '("INVERSECHANNELING ([PropAllDiffInst(a, b, c), PropAllDiffBC(a, b, c), PropAllDiffAdaptative(a, b, c), PropAllDiffInst(x, y, z), PropAllDiffBC(x, y, z), PropAllDiffAdaptative(x, y, z), Inverse_AC({a = {0..3}...}{x = {0..3}...})])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :x 0 3)
+       ($int :y 0 3)
+       ($int :z 0 3)
+       ($inverse-channeling [:a :b :c] 1 [:x :y :z] 1)]))
+    )
+
+  (testing "tree"
+    (is
+     (compile-constraint?
+      '("TREE ([PropAntiArborescences(a, b, c), PropKLoops(a, b, c, nb-trees)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :nb-trees 0 100)
+       ($tree [:a :b :c] :nb-trees)]))
+
+    (is
+     (compile-constraint?
+      '("TREE ([PropAntiArborescences(a, b, c, d), PropKLoops(a, b, c, ..., nb-trees)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :d 0 3)
+       ($int :nb-trees 0 100)
+       ($tree [:a :b :c :d] :nb-trees 1)]))
+    )
+  )
 
 (deftest logic-compile-test
   (testing "and"
@@ -727,18 +1011,196 @@
     )
 
   (testing "not-empty"
-    (constraints-assert
-     []
-     [($set :a [] [0 1 2 3])
-      ($not-empty :a)]))
+    (is (compile-constraint?
+         '("SETNOTEMPTY ([PropNotEmpty(a)])")
+         [($set :a [] [0 1 2 3])
+          ($not-empty :a)])))
 
   (testing "off-set"
-    (constraints-assert
-     []
-     [($set :a [] [0 1 2 3])
-      ($set :b [] [2 3 4 5 6])
-      ($off-set :a :b 1)]))
+    (is (compile-constraint?
+         '("SETOFFSET ([PropOffSet(a, b)])")
+         [($set :a [] [0 1 2 3])
+          ($set :b [] [2 3 4 5 6])
+          ($off-set :a :b 1)])))
 
-  ;;TODO: partition, subset-equal ;;  subsetEq ;;  sumElements ;;  sumElements ;;  symmetric ;;  symmetric ;;  allDisjoint ;;  disjoint , set-bools-channeling, sets-ints-channeling
+  (testing "partition"
+    (is
+     (compile-constraint?
+      '("SETPARTITION ([PropAllDisjoint(a, b, c, d), PropUnion(a, b, c, ..., universe), PropUnion(a, b, c, ..., universe)])")
+      [
+       ($set :a [0] [0 1])
+       ($set :b [1] [1 2])
+       ($set :c [2] [2 3])
+       ($set :d [3] [3 4])
+       ($set :universe [0 1 2 3 4])
+       ($partition :universe [:a :b :c :d])
+       ]))
+    )
 
+  (testing "subset-equal"
+    (is
+     (compile-constraint?
+      '("SETSUBSETEQ ([PropSubsetEq(a, b)])")
+      [
+       ($set :a [0 1 2] [0 1 2 3 4 5])
+       ($set :b [1] [1 2])
+       ($subset-equal :a :b)
+       ]))
+
+    (is
+     (compile-constraint?
+      '("SETSUBSETEQ ([PropSubsetEq(a, b)])")
+      [
+       ($set :a [0 1 2] [0 1 2 3 4 5])
+       ($set :b [1] [1 2])
+       ($subset-equal [:a :b])
+       ]))
+    )
+
+  (testing "sum-elements"
+    (is
+     (compile-constraint?
+      '("SETSUM ([PropSumOfElements(indices, sum)])")
+      [
+       ($set :indices [0 1 2] [0 1 2 3 4 5])
+       ($int :sum 0 1000)
+       ($sum-elements :sum :indices [10 200 3000 40000 50000 600000])
+       ]))
+
+    (is
+     (compile-constraint?
+      '("SETSUM ([PropSumOfElements(indices, sum)])")
+      [
+       ($set :indices [0 1 2] [0 1 2 3 4 5])
+       ($int :sum 0 1000)
+       ($sum-elements :sum :indices [10 200 3000 40000 50000 600000] 1)
+       ]))
+    )
+
+  (testing "symetric"
+    (is
+     (compile-constraint?
+      '("SETSYMMETRIC ([PropSymmetric(a, b, c, d)])")
+      [
+       ($set :a [0] [0 1])
+       ($set :b [1] [1 2])
+       ($set :c [2] [2 3])
+       ($set :d [3] [3 4])
+       ($symetric :a :b :c :d)
+       ]))
+
+    (is
+     (compile-constraint?
+      '("SETSYMMETRIC ([PropSymmetric(a, b, c, d)])")
+      [
+       ($set :a [0] [0 1])
+       ($set :b [1] [1 2])
+       ($set :c [2] [2 3])
+       ($set :d [3] [3 4])
+       ($symetric [:a :b :c :d])
+       ]))
+
+    (is
+     (compile-constraint?
+      '("SETSYMMETRIC ([PropSymmetric(a, b, c, d)])")
+      [
+       ($set :a [0] [0 1])
+       ($set :b [1] [1 2])
+       ($set :c [2] [2 3])
+       ($set :d [3] [3 4])
+       ($symetric [:a :b :c :d] 1)
+       ]))
+    )
+
+  (testing "all-disjoint"
+    (is
+     (compile-constraint?
+      '()
+      [
+       ($set :a [0] [0 1])
+       ($set :b [1] [1 2])
+       ($set :c [2] [2 3])
+       ($set :d [3] [3 4])
+       ($all-disjoint [:a :b :c :d])
+       ]))
+
+    (is
+     (compile-constraint?
+      '()
+      [
+       ($set :a [0] [0 1])
+       ($set :b [1] [1 2])
+       ($set :c [2] [2 3])
+       ($set :d [3] [3 4])
+       ($all-disjoint :a :b :c :d)
+       ]))
+    )
+
+  (testing "disjoint"
+    (is
+     (compile-constraint?
+      '("SETALLDISJOINT ([PropAllDisjoint(a, b)])")
+      [
+       ($set :a [0] [0 1])
+       ($set :b [1] [1 2])
+       ($disjoint [:a :b])
+       ]))
+
+    (is
+     (thrown?
+      AssertionError
+      ($disjoint [:a :b :b])))
+
+    (is
+     (compile-constraint?
+      '("SETALLDISJOINT ([PropAllDisjoint(a, b)])")
+      [
+       ($set :a [0] [0 1])
+       ($set :b [1] [1 2])
+       ($disjoint :a :b)
+       ]))
+    )
+
+  (testing "set-bools-channeling"
+    (is
+     (compile-constraint?
+      '()
+      [($bools :a :b :c :d)
+       ($set :set [] [0 1 2 3])
+       ($set-bools-channeling :set [:a :b :c :d])]))
+
+    (is
+     (compile-constraint?
+      '()
+      [($bools :a :b :c :d)
+       ($set :set [] [0 1 2 3])
+       ($set-bools-channeling :set [:a :b :c :d] 1)]))
+    )
+
+  (testing "sets-ints-channeling"
+    (is
+     (compile-constraint?
+      '()
+      [($bools :a :b :c :d)
+       ($int :i1 [0 3])
+       ($int :i2 [0 3])
+       ($int :i3 [0 3])
+       ($set :s1 [] [0 1 2 3])
+       ($set :s2 [] [0 1 2 3])
+       ($set :s3 [] [0 1 2 3])
+       ($sets-ints-channeling [:s1 :s2 :s3] [:i1 :i2 :i3])]))
+
+    (is
+     (compile-constraint?
+      '()
+      [($bools :a :b :c :d)
+       ($int :i1 [0 3])
+       ($int :i2 [0 3])
+       ($int :i3 [0 3])
+       ($set :s1 [] [0 1 2 3])
+       ($set :s2 [] [0 1 2 3])
+       ($set :s3 [] [0 1 2 3])
+       ($sets-ints-channeling [:s1 :s2 :s3] 1 [:i1 :i2 :i3] 1)]))
+
+    )
   )

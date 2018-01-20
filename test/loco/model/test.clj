@@ -34,6 +34,23 @@
            ))
      ~msg)))
 
+(defmethod assert-expr 'compile-constraint? [msg form]
+  `(let [
+         input# ~(nth form 2)
+         expected# ~(nth form 1)
+         actual# (->> input#
+                      model/compile
+                      compiler/compile
+                      :model
+                      (.getCstrs)
+                      (map (memfn toString)))
+         result# (= expected# actual#)
+         ]
+     (if result#
+       (do-report {:type :pass,:message ~msg,:expected '~form,:actual actual#})
+       (do-report {:type :fail,:message ~msg,:expected '~form,:actual actual#}))
+     result#))
+
 (defmacro vars-assert
   "used for testing compile chain model/compile -> compiler/compile
   tests properties of vars in built Model"

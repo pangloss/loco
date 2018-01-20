@@ -13,6 +13,10 @@
   [result dependency]
   [:constraint [:square [result dependency]]])
 
+;;FIXME: change neg from a var to a view
+;;maybe change ^{:neg dependency} => ^{:view [:neg dependency]}
+;;need to support offset and scale, which include arguments/modifiers
+;;e.g.: ^{:view [:offset dependency :by 5]}
 (defn neg
   "takes a partial constraint and creates a negative constraint from
   it (neg (- :x :b)) also can be used to create a neg var
@@ -24,8 +28,8 @@
   ([dependency]
    [:constraint :partial [:neg dependency]]))
 
-;;TODO: write partial resolver and tests
-(defn scale
+;;TODO: write scale partial resolver and tests
+#_(defn scale
   "(scale :i_scale_2 :i 2) or ($= 4 (scale :i 2))"
   ([label dependency magnitude]
    {:pre [(keyword? label) (keyword? dependency) (integer? magnitude)]}
@@ -34,8 +38,8 @@
    {:pre [(keyword? dependency) (integer? magnitude)]}
    [:constraint :partial [:scale dependency magnitude]]))
 
-;;TODO: write partial resolver and tests
-(defn offset
+;;TODO: write offset partial resolver and tests
+#_(defn offset
   "(offset :i_offset_2 :i 2) or ($= 4 (offset :i 2))"
   ([label dependency magnitude]
    {:pre [(keyword? label) (keyword? dependency) (integer? magnitude)]}

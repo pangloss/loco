@@ -1,40 +1,26 @@
-;;TODO: constraint factory methods
-;; circuit(IntVar[] vars, int offset, CircuitConf conf)
-;; clausesIntChanneling(IntVar var, BoolVar[] eVars, BoolVar[] lVars)
-;; costRegular(IntVar[] vars, IntVar cost, ICostAutomaton costAutomaton)
+;;TODO: implement below constraint factory methods
+;; -------------------- TASK --------------------
 ;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity)
 ;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental)
 ;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)
-;; intValuePrecedeChain(IntVar[] X, int[] V)
-;; intValuePrecedeChain(IntVar[] X, int S, int T)
-;; lexChainLess(IntVar[]... vars)
-;; lexChainLessEq(IntVar[]... vars)
-;; lexLess(IntVar[] vars1, IntVar[] vars2)
-;; lexLessEq(IntVar[] vars1, IntVar[] vars2)
-;; path(IntVar[] vars, IntVar start, IntVar end)
-;; path(IntVar[] vars, IntVar start, IntVar end, int offset)
-;; subPath(IntVar[] vars, IntVar start, IntVar end, int offset, IntVar SIZE)
-;; subCircuit(IntVar[] vars, int offset, IntVar subCircuitLength)
-;; inverseChanneling(IntVar[] vars1, IntVar[] vars2)
-;; inverseChanneling(IntVar[] vars1, IntVar[] vars2, int offset1, int offset2)
-;; keySort(IntVar[][] vars, IntVar[] PERMvars, IntVar[][] SORTEDvars, int K)
-;; mddc(IntVar[] vars, MultivaluedDecisionDiagram MDD)
-;; multiCostRegular(IntVar[] vars, IntVar[] costVars, ICostAutomaton costAutomaton)
+;; -------------------- TUPLE --------------------
 ;; table(IntVar[] vars, Tuples tuples)
 ;; table(IntVar[] vars, Tuples tuples, String algo)
 ;; table(IntVar var1, IntVar var2, Tuples tuples)
 ;; table(IntVar var1, IntVar var2, Tuples tuples, String algo)
-;; tree(IntVar[] succs, IntVar nbTrees)
-;; tree(IntVar[] succs, IntVar nbTrees, int offset)
-;; allDifferent(IntVar[] vars, String CONSISTENCY)
-;; allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)
-
-
+;; -------------------- AUTOMATA --------------------
+;; costRegular(IntVar[] vars, IntVar cost, ICostAutomaton costAutomaton)
+;; multiCostRegular(IntVar[] vars, IntVar[] costVars, ICostAutomaton costAutomaton)
+;; -------------------- MDD --------------------
+;; mddc(IntVar[] vars, MultivaluedDecisionDiagram MDD)
+;; requires building a complex object of ints and tuples
+;;http://www.choco-solver.org/apidocs/org/chocosolver/util/objects/graphs/MultivaluedDecisionDiagram.html
 
 (ns loco.constraints
   (:use loco.utils
         loco.constraints.utils)
   (:require [clojure.core.match :refer [match]]
+            [loco.match :refer [match+]]
             loco.automata
             loco.constraints.arithmetic
             loco.constraints.set
@@ -185,16 +171,8 @@ In other words, if P is true, Q must be true (otherwise the whole
       [[] []])
      second)))
 
-
-
-
-
-
 ;;TODO: organize functions better
 ;;;;; GLOBAL
-
-;; default Constraint
-;;
 
 (defn $distinct
   "Given a bunch of int-vars, ensures that all of them have different
@@ -204,10 +182,19 @@ In other words, if P is true, Q must be true (otherwise the whole
   necessarily disjoint) Note that there cannot be more than one empty
   set."
   {:choco ["allDifferent(IntVar... vars)"
-           "allDifferent(SetVar... sets)"]}
-  [vars]
-  {:pre [(coll? vars)]}
-  [:constraint [:distinct (vec vars)]])
+           "allDifferent(SetVar... sets)"
+           "allDifferent(IntVar[] vars, String CONSISTENCY)"]}
+  [& vars]
+  (match+ (vec vars)
+          [int-vars, consistency]
+          :guard [int-vars sequential?, consistency #{:default :bc :ac}]
+          [:constraint [:distinct (vec int-vars) [:consistency consistency]]]
+
+          [var-list :guard sequential?]
+          [:constraint [:distinct (vec var-list)]]
+
+          [& var-list]
+          [:constraint [:distinct (vec var-list)]]))
 
 (def $all-different $distinct)
 (reset-meta! (var $all-different) (meta (var $distinct)))
@@ -221,19 +208,51 @@ In other words, if P is true, Q must be true (otherwise the whole
   [:constraint [:distinct-except-0 (vec vars)]])
 
 (def $all-different-except-0 $distinct-except-0)
+(reset-meta! (var $all-different-except-0) (meta (var $distinct-except-0)))
+
+;;TODO: implement allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)
+;;TODO: figure out how to convert a function into a Condition object
+;;http://www.choco-solver.org/apidocs/org/chocosolver/solver/constraints/nary/alldifferent/conditions/Condition.html
+;;possibly need to use reify
+#_(defn $distinct-under-condidiont
+  "Creates an allDifferent constraint subject to the given
+  condition. More precisely: IF singleCondition for all X,Y in vars,
+  condition(X) => X != Y ELSE for all X,Y in vars, condition(X) AND
+  condition(Y) => X != Y"
+  {:choco "allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)"}
+  [int-vars condition single-condition?]
+  {:pre [(sequential? int-vars)
+         (boolean? single-condition?)
+         (fn? condition)]}
+  )
 
 (defn $circuit
   "Given a list of int-vars L, and an optional offset number (default
   0), the elements of L define a circuit, where (L[i] = j + offset)
   means that j is the successor of i.  Hint: make the offset 1 when
-  using a 1-based list."
+  using a 1-based list.
+
+
+  Filtering algorithms: (circuit-conf :all, :first, :light, :rd)
+  - subtour elimination : Caseau & Laburthe (ICLP'97)
+  - allDifferent GAC algorithm: Régin (AAAI'94)
+  - dominator-based filtering: Fages & Lorca (CP'11)
+  - Strongly Connected Components based filtering (Cambazard & Bourreau JFPC'06 and Fages and Lorca TechReport'12)
+
+  See Fages PhD Thesis (2014) for more information"
   {:choco ["circuit(IntVar[] vars)"
-           "circuit(IntVar[] vars, int offset)"]}
+           "circuit(IntVar[] vars, int offset)"
+           "circuit(IntVar[] vars, int offset, CircuitConf conf)"]}
   ([vars]
     ($circuit vars 0))
   ([vars offset]
    {:pre [(integer? offset) (coll? vars)]}
-   [:constraint [:circuit [(vec vars) [:offset (preserve-consts offset)]]]]))
+   [:constraint [:circuit [(vec vars) [:offset (preserve-consts offset)]]]])
+  ([vars offset circuit-conf]
+   {:pre [(integer? offset) (coll? vars) (#{:all :first :light :rd} circuit-conf)]}
+   [:constraint [:circuit [(vec vars)
+                           [:offset (preserve-consts offset)]
+                           [:conf circuit-conf]]]]))
 
 (defn $nth
   "partial for $element"
@@ -507,40 +526,246 @@ In other words, if P is true, Q must be true (otherwise the whole
           (integer? offset)
           (<= 0 offset)]}
    [:constraint [:bin-packing
-                 [[:item-bin (vec item-bin)]
-                  [:item-size (preserve-consts (vec item-size))]
-                  [:bin-load (vec bin-load)]
-                  [:offset (preserve-consts offset)]]]]))
+                 [:item-bin (vec item-bin)]
+                 [:item-size (preserve-consts (vec item-size))]
+                 [:bin-load (vec bin-load)]
+                 [:offset (preserve-consts offset)]]]))
 
-
-;;TODO: implement this when converting choco tests
-#_(defn diff-n
+(defn $diff-n
   "Creates a diffN constraint. Constrains each rectangle[i], given by
-  their origins X[i],Y[i] and sizes width[i], height[i], to be non-overlapping."
+  their origins X[i],Y[i] and sizes width[i], height[i], to be non-overlapping.
+
+  there is a good visualization of this at:
+  http://sofdem.github.io/gccat/gccat/Cdiffn.html"
   {:choco "diffN(IntVar[] X, IntVar[] Y, IntVar[] width, IntVar[] height, boolean addCumulativeReasoning)"
    :gccat "http://sofdem.github.io/gccat/gccat/Cdiffn.html"}
-  [x y width height add-cumulative-reasoning?]
-  )
-
+  [xs ys widths heights add-cumulative-reasoning?]
+  {:pre [(every? sequential? [xs ys widths heights]) (boolean? add-cumulative-reasoning?)]}
+  [:constraint [:diff-n
+                [:xs xs]
+                [:ys ys]
+                [:widths widths]
+                [:heights heights]
+                [:add-cumulative-reasoning add-cumulative-reasoning?]]])
 
 (defn $bits-channeling
-  "Creates an channeling constraint between an integer variable and a set of bit variables. Ensures that var = 20*BIT_1 + 21*BIT_2 + ... 2n-1*BIT_n.
+  "Creates an channeling constraint between an integer variable and a set of bit variables.
+  Ensures that var = 20*BIT_1 + 21*BIT_2 + ... 2n-1*BIT_n.
+
   BIT_1 is related to the first bit of OCTET (2^0), BIT_2 is related
   to the first bit of OCTET (2^1), etc.  The upper bound of var is
   given by 2n, where n is the size of the array bits."
   {:choco "bitsIntChanneling(BoolVar[] bits, IntVar var)"}
   [bits int-var]
-  {:pre [(coll? bits)]}
+  {:pre [(sequential? bits)]}
   (-> []
       (into (mapv $bool bits))
-      (into [[:constraint [:bit-channeling [(vec bits) int-var]]]])
+      (into [[:constraint [:bit-channeling [:bool-vars (vec bits)] [:int-var int-var]]]])
       (with-meta {:generated-vars true})))
 
-;;TODO: implement this when converting choco tests
-#_(defn bools-int-channeling
+(defn $bools-int-channeling
   "Creates an channeling constraint between an integer variable and a
   set of boolean variables. Maps the boolean assignments variables
-  bVars with the standard assignment variable var. var = i <->
-  bVars[i-offset] = 1"
+  bVars with the standard assignment variable var.
+  var = i <-> bVars[i-offset] = 1"
   {:choco "boolsIntChanneling(BoolVar[] bVars, IntVar var, int offset)"}
+  ([bool-vars, int-var] ($bools-int-channeling bool-vars int-var 0))
+  ([bool-vars, int-var, offset]
+   {:pre [(integer? offset) (sequential? bool-vars)]}
+   [:constraint
+    [:bools-int-channeling
+     [:bool-vars (vec bool-vars)]
+     [:int-var int-var]
+     [:offset (preserve-consts offset)]]]))
+
+(defn $clauses-int-channeling
+  "Creates an channeling constraint between an integer variable and a
+  set of clauses. Link each value from the domain of var to two
+  boolean variable: one reifies the equality to the i^th value of the
+  variable domain, the other reifies the less-or-equality to the i^th
+  value of the variable domain.
+
+  Contract: eVars.lenght == lVars.length == var.getUB() - var.getLB() + 1
+  Contract: var is not a boolean variable"
+  {:choco "clausesIntChanneling(IntVar var, BoolVar[] eVars, BoolVar[] lVars)"}
+  [int-var e-vars l-vars]
+  {:pre [(every? sequential? [e-vars l-vars]) (= (count e-vars) (count l-vars))]}
+  [:constraint
+   [:clauses-int-channeling
+    [:int-var int-var]
+    [:e-vars (vec e-vars)]
+    [:l-vars (vec l-vars)]]])
+
+(defn $sub-circuit
+  "Creates a subCircuit constraint which ensures that
+  the elements of vars define a single circuit of subcircuitSize nodes where
+  vars[i] = offset+j means that j is the successor of i.
+  and vars[i] = offset+i means that i is not part of the circuit
+  the constraint ensures that |{vars[i] =/= offset+i}| = subCircuitLength
+
+  Filtering algorithms:
+  subtour elimination : Caseau & Laburthe (ICLP'97)
+  allDifferent GAC algorithm: Régin (AAAI'94)
+  dominator-based filtering: Fages & Lorca (CP'11) (adaptive scheme by default, see implementation)"
+  {:choco "subCircuit(IntVar[] vars, int offset, IntVar subCircuitLength)"}
+  ([int-vars sub-circuit-length] ($sub-circuit int-vars sub-circuit-length 0))
+  ([int-vars sub-circuit-length offset]
+   {:pre [(integer? offset) (sequential? int-vars)]}
+   [:constraint
+    [:sub-circuit [(vec int-vars)
+                   [:sub-circuit-length sub-circuit-length]
+                   [:offset (preserve-consts offset)]]]]))
+
+(defn $int-value-precede-chain
+  "Creates an intValuePrecedeChain constraint.
+  Ensure that, for each pair of V[k] and V[l] of values in V,
+  such that k < l, if there exists j such that X[j] = V[l], then,
+  there must exist i < j such that X[i] = V[k].
+
+  Creates an intValuePrecedeChain constraint.
+  Ensure that if there exists j such that X[j] = T, then,
+  there must exist i < j such that X[i] = S."
+  {:choco ["intValuePrecedeChain(IntVar[] X, int[] V)"
+           "intValuePrecedeChain(IntVar[] X, int S, int T)"]}
+  ([xs vs]
+   {:pre [(every? integer? vs) (sequential? xs)]}
+   [:constraint [:int-value-precede-chain [(vec xs) (preserve-consts vs)]]])
+  ([xs s t]
+   {:pre [(integer? s) (integer? t) (sequential? xs)]}
+   [:constraint [:int-value-precede-chain [(vec xs) (preserve-consts s) (preserve-consts t)]]])
   )
+
+(defn $lex-less
+  "Creates a lexLessEq constraint.
+  Ensures that vars1 is lexicographically less or equal than vars2."
+  {:choco "lexLess(IntVar[] vars1, IntVar[] vars2)"}
+  [vars, lex-less-or-equal-vars]
+  {:pre [(sequential? vars) (sequential? lex-less-or-equal-vars)]}
+  [:constraint [:lex-less [(vec vars) :lex-of lex-less-or-equal-vars]]])
+
+(defn $lex-less-equal
+  "Creates a lexLessEq constraint.
+  Ensures that vars1 is lexicographically less or equal than vars2."
+  {:choco "lexLessEq(IntVar[] vars1, IntVar[] vars2)"
+   ;;TODO: create more arglists as ->    :arglists '(["vars <[int-var ...]>", "lex-less-or-equal-vars <[int-var ...]>"])
+   ;;:arglists '(["vars [int-var ...]", "lex-less-or-equal-vars [int-var ...]"])
+   }
+  [vars, lex-less-or-equal-vars]
+  {:pre [(sequential? vars) (sequential? lex-less-or-equal-vars)]}
+  [:constraint [:lex-less-equal [(vec vars) :lex-of lex-less-or-equal-vars]]])
+
+;;TODO: lex-chain-less is sort? make alias if so
+(defn $lex-chain-less
+  "Creates a lexChainLess constraint.
+  For each pair of consecutive vectors varsi and varsi+1 of the vars collection
+  varsi is lexicographically strictly less than than varsi+1"
+  {:choco "lexChainLess(IntVar[]... vars)"}
+  [& vars]
+  (match (vec vars)
+         int-vars :guard vector? [:constraint [:les-chain-less (vec vars)]]
+         [& int-vars] ($lex-chain-less vars))
+
+)
+
+;;TODO: lex-chain-less-equal is sort?
+(defn $lex-chain-less-equal
+  "Creates a lexChainLessEq constraint.
+  For each pair of consecutive vectors varsi and varsi+1 of the vars collection
+  varsi is lexicographically less or equal than than varsi+1"
+  {:choco "lexChainLessEq(IntVar[]... vars)"}
+  [& vars]
+  (match (vec vars)
+         int-vars :guard vector? [:constraint [:lex-chain-less-equal (vec int-vars)]]
+         [& int-vars] ($lex-chain-less-equal vars)))
+
+(defn $path
+  "Creates a path constraint which ensures that
+  the elements of vars define a covering path from start to end
+  where vars[i] = j means that j is the successor of i.
+  Moreover, vars[end] = |vars|
+  Requires : |vars|>0
+
+  Filtering algorithms: see circuit constraint"
+  {:choco ["path(IntVar[] vars, IntVar start, IntVar end)"
+           "path(IntVar[] vars, IntVar start, IntVar end, int offset)"]}
+  ([vars start end] ($path vars start end 0))
+  ([vars start end offset]
+   {:pre [(sequential? vars) (integer? offset) (pos? (count vars))]}
+   [:constraint [:path [(vec vars)
+                        [:start start]
+                        [:end end]
+                        [:offset (preserve-consts offset)]]]]))
+
+(defn $sub-path
+  "Creates a subPath constraint which ensures that
+  the elements of vars define a path of SIZE vertices, leading from start to end
+  where vars[i] = offset+j means that j is the successor of i.
+  where vars[i] = offset+i means that vertex i is excluded from the path.
+  Moreover, vars[end-offset] = |vars|+offset
+  Requires : |vars|>0
+
+  Filtering algorithms: see subCircuit constraint"
+  {:choco "subPath(IntVar[] vars, IntVar start, IntVar end, int offset, IntVar SIZE)"}
+  ([vars start end size] ($sub-path vars start end size 0))
+  ([vars start end size offset]
+   {:pre [(sequential? vars) (integer? offset) (pos? (count vars))]}
+   [:constraint
+    [:sub-path [(vec vars)
+                [:start start]
+                [:end end]
+                [:offset (preserve-consts offset)]
+                [:size size]]]]))
+
+(defn $inverse-channeling
+  "Creates an inverse channeling between vars1 and vars2:
+  vars1[i-offset2] = j <=> vars2[j-offset1] = i Performs AC if domains are enumerated.
+  If not, then it works on bounds without guaranteeing BC
+  *(enumerated domains are strongly recommended)
+
+  Beware you should have |vars1| = |vars2|"
+  {:choco ["inverseChanneling(IntVar[] vars1, IntVar[] vars2)"
+           "inverseChanneling(IntVar[] vars1, IntVar[] vars2, int offset1, int offset2)"]}
+  ([vars1 vars2] ($inverse-channeling vars1 0 vars2 0))
+  ([vars1 offset1 vars2 offset2]
+   {:pre [(= (count vars1) (count vars2))
+          (every? sequential? [vars1 vars2])
+          (every? integer? [offset1 offset2])]}
+   [:constraint [:inverse-channeling
+                 [(vec vars1) [:offset (preserve-consts offset1)]]
+                 [(vec vars2) [:offset (preserve-consts offset2)]]]]))
+
+
+;;TODO: key-sort implementation requires int-var[][]
+#_(defn $key-sort
+  "Creates a keySort constraint which ensures that the variables of
+  SORTEDvars correspond to the variables of vars according to a
+  permutation stored in PERMvars (optional, can be null). The variables
+  of SORTEDvars are also sorted in increasing order wrt to K-size
+  tuples. The sort is stable, that is, ties are broken using the
+  position of the tuple in vars.
+
+
+For example:
+- vars= (<4,2,2>,<2,3,1>,<4,2,1><1,3,0>)
+- SORTEDvars= (<1,3,0>,<2,3,1>,<4,2,2>,<4,2,1>)
+- PERMvars= (2,1,3,0)
+- K = 2"
+  {:choco "keySort(IntVar[][] vars, IntVar[] PERMvars, IntVar[][] SORTEDvars, int K)"}
+  [])
+
+(defn $tree
+  "Creates a tree constraint.
+  Partition succs variables into nbTrees (anti) arborescences
+  succs[i] = j means that j is the successor of i.
+  and succs[i] = i means that i is a root
+  dominator-based filtering: Fages & Lorca (CP'11)
+  However, the filtering over nbTrees is quite light here"
+  {:choco ["tree(IntVar[] succs, IntVar nbTrees)"
+           "tree(IntVar[] succs, IntVar nbTrees, int offset)"]
+   :gccat "http://sofdem.github.io/gccat/gccat/Ctree.html"}
+  ([succs, nb-trees] ($tree succs nb-trees 0))
+  ([succs, nb-trees, offset]
+   {:pre [(integer? offset) (sequential? succs)]}
+   [:constraint [:tree [(vec succs)
+                        [:nb-trees nb-trees]
+                        [:offset (preserve-consts offset)]]]]))

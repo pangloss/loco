@@ -9,7 +9,8 @@
            org.chocosolver.solver.variables.SetVar
            org.chocosolver.solver.variables.BoolVar
            org.chocosolver.solver.variables.IntVar
-           org.chocosolver.solver.constraints.Constraint))
+           org.chocosolver.solver.constraints.Constraint
+           org.chocosolver.solver.constraints.nary.circuit.CircuitConf))
 
 (defn- lookup-var [vars-index name]
   (if-let [var (get vars-index name)]
@@ -107,6 +108,12 @@
         lookup-set-var? (c set-var? lookup-var-unchecked)
         lookup-int-var? (c int-var? lookup-var-unchecked)
         lookup-bool-var? (c bool-var? lookup-var-unchecked)
+        all-lookup-int-vars? (p every? lookup-int-var?)
+        all-lookup-set-vars? (p every? lookup-set-var?)
+        all-lookup-bool-vars? (p every? lookup-bool-var?)
+        all-int-vars? (p every? int-var?)
+        all-set-vars? (p every? set-var?)
+        all-bool-vars? (p every? bool-var?)
         ]
     (->
      statement
@@ -231,21 +238,40 @@
                  offset
                  (lookup-var result)))
 
-      ;;TODO: let user choose consistency ("DEFAULT" "BC" "AC")
+      [:distinct vars [:consistency consistency]]
+      :guard [vars all-lookup-int-vars?, consistency #{:default :bc :ac}]
+      (.allDifferent model
+                     (->> vars (map lookup-var) (into-array IntVar))
+                     ({:default "DEFAULT" :bc "BC" :ac "AC"} consistency))
+
       [:distinct var-names]
       (match (mapv lookup-var var-names)
-             (vars :guard (p every? int-var?))
+             (vars :guard all-int-vars?)
              (.allDifferent model (into-array IntVar vars) "DEFAULT")
 
-             (vars :guard (p every? set-var?))
+             (vars :guard all-set-vars?)
              ;;set-version doesn't have consistency argument
              (.allDifferent model (into-array SetVar vars)))
 
       [:distinct-except-0 vars]
       (.allDifferentExcept0 model (->> vars (map lookup-var) (into-array IntVar)))
 
-      [:circuit [vars [:offset offset]]]
-      (.circuit model (->> vars (map lookup-var) (into-array IntVar)) offset)
+      [:circuit [vars & more]] :guard [vars all-lookup-int-vars?]
+      (match+ (vec more)
+              [[:offset offset]]
+              :guard [offset integer?]
+              (.circuit model (->> vars (map lookup-var) (into-array IntVar)) offset)
+
+              [[:offset offset] [:conf conf]]
+              :guard [offset integer?, conf #{:all :first :light :rd}]
+              (.circuit model
+                        (->> vars (map lookup-var) (into-array IntVar))
+                        offset
+                        ({:all CircuitConf/ALL
+                           :first CircuitConf/FIRST
+                           :light CircuitConf/LIGHT
+                           :rd CircuitConf/RD
+                          } conf)))
 
       [:cardinality [vars [values occurrences] [:closed closed?]]]
       (.globalCardinality model
@@ -328,21 +354,122 @@
                       strong)
 
       [:bin-packing
-       [[:item-bin item-bin]
-        [:item-size item-size]
-        [:bin-load bin-load]
-        [:offset offset]]]
+       [:item-bin item-bin]
+       [:item-size item-size]
+       [:bin-load bin-load]
+       [:offset offset]]
       (.binPacking model
                    (->> item-bin (map lookup-var) (into-array IntVar))
                    (->> item-size int-array)
                    (->> bin-load (map lookup-var) (into-array IntVar))
                    offset)
 
-      [:bit-channeling [bits int-var]]
+      [:bit-channeling [:bool-vars bits] [:int-var int-var]]
       (.bitsIntChanneling model
                           (->> bits (map lookup-var) (into-array BoolVar))
                           (lookup-var int-var))
 
+      [:diff-n
+       [:xs xs]
+       [:ys ys]
+       [:widths widths]
+       [:heights heights]
+       [:add-cumulative-reasoning add-cumulative-reasoning?]]
+      :guard [[xs ys widths heights] all-lookup-int-vars?
+              add-cumulative-reasoning? boolean?]
+      (.diffN model
+              (->> xs (map lookup-var) (into-array IntVar))
+              (->> ys (map lookup-var) (into-array IntVar))
+              (->> widths (map lookup-var) (into-array IntVar))
+              (->> heights (map lookup-var) (into-array IntVar))
+              add-cumulative-reasoning?)
+
+      [:bools-int-channeling [:bool-vars bools] [:int-var int-var] [:offset offset]]
+      :guard [bools all-lookup-bool-vars?
+              int-var lookup-int-var?
+              offset integer?]
+      (.boolsIntChanneling model
+                           (->> bools (map lookup-var) (into-array BoolVar))
+                           (lookup-var int-var)
+                           offset)
+
+      ;;TODO: do the int domain validation in the model/compile step
+      ;;the distance of the LB and UB of int-var needs to be equal to (count e-vars)
+      [:clauses-int-channeling [:int-var int-var] [:e-vars e-vars] [:l-vars l-vars]]
+      :guard [[e-vars l-vars] all-lookup-bool-vars?, int-var lookup-int-var?]
+      (.clausesIntChanneling model
+                             (lookup-var int-var)
+                             (->> e-vars (map lookup-var) (into-array BoolVar))
+                             (->> l-vars (map lookup-var) (into-array BoolVar)))
+
+      [:sub-circuit [vars
+                     [:sub-circuit-length sub-circuit-length]
+                     [:offset offset]]]
+      :guard [offset integer?, sub-circuit-length lookup-int-var?, vars all-lookup-int-vars?]
+      (.subCircuit model
+                   (->> vars (map lookup-var) (into-array IntVar))
+                   offset
+                   (lookup-var sub-circuit-length))
+
+      [:int-value-precede-chain [xs vs]]
+      :guard [xs all-lookup-int-vars?, vs (p every? integer?)]
+      (.intValuePrecedeChain model
+                             (->> xs (map lookup-var) (into-array IntVar))
+                             (int-array vs))
+
+      [:int-value-precede-chain [xs s t]]
+      :guard [[s t] integer?, xs all-lookup-int-vars?]
+      (.intValuePrecedeChain model (->> xs (map lookup-var) (into-array IntVar)) s t)
+
+      [:lex-chain-less vars] :guard [vars all-lookup-int-vars?]
+      (.lexChainLess model (->> vars (map lookup-var) (into-array IntVar)))
+
+      [:lex-chain-less-equal vars] :guard [vars all-lookup-int-vars?]
+      `(.lexChainLessEq ~model ~@(->> vars (map lookup-var) (into-array IntVar)))
+
+      [:lex-less [vars :lex-of lex-less-or-equal-vars]]
+      :guard [[vars lex-less-or-equal] all-lookup-int-vars?]
+      (.lexLess model
+                (->> vars (map lookup-var) (into-array IntVar))
+                (->> lex-less-or-equal-vars (map lookup-var) (into-array IntVar)))
+
+      [:lex-less-equal [vars :lex-of lex-less-or-equal-vars]]
+      :guard [[vars lex-less-or-equal] all-lookup-int-vars?]
+      (.lexLessEq model
+                  (->> vars (map lookup-var) (into-array IntVar))
+                  (->> lex-less-or-equal-vars (map lookup-var) (into-array IntVar)))
+
+      [:path [vars [:start start] [:end end] [:offset offset]]]
+      :guard [vars all-lookup-int-vars?, [start end] lookup-int-var?, offset integer?]
+      (.path model
+             (->> vars (map lookup-var) (into-array IntVar))
+             (lookup-var start)
+             (lookup-var end)
+             offset)
+
+      [:sub-path [vars [:start start] [:end end] [:offset offset] [:size size]]]
+      :guard [vars all-lookup-int-vars?, [start end size] lookup-int-var?, offset integer?]
+      (.subPath model
+                (->> vars (map lookup-var) (into-array IntVar))
+                (lookup-var start)
+                (lookup-var end)
+                offset
+                (lookup-var size))
+
+      [:inverse-channeling [vars1 [:offset offset1]] [vars2 [:offset offset2]]]
+      :guard [[vars1 vars2] all-lookup-int-vars?, [offset1 offset2] integer?]
+      (.inverseChanneling model
+                          (->> vars1 (map lookup-var) (into-array IntVar))
+                          (->> vars2 (map lookup-var) (into-array IntVar))
+                          offset1 offset2)
+
+      [:tree [succs [:nb-trees nb-trees] [:offset offset]]]
+      :guard [succs all-lookup-int-vars?, offset integer?, nb-trees lookup-int-var?]
+      (.tree model (->> succs (map lookup-var) (into-array IntVar))
+             (lookup-var nb-trees)
+             offset)
+
+      ;; -------------------- LOGIC --------------------
       ;; handle boolean lists
       [:and (bools :guard (p every? (c (p instance? BoolVar) lookup-var-unchecked)))]
       (.and model (->> bools (map lookup-var) (into-array BoolVar)))

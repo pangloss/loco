@@ -35,7 +35,8 @@
 
   (is (thrown?
        AssertionError
-       ($set :a [0 3] [3 4 5])))
+       ($set :a [0 3] [3 4 5]))
+      "should throw if ub doesn't contatin all elements of lb")
 
 )
 

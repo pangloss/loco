@@ -2,6 +2,7 @@
   (:use loco.utils
         loco.constraints.utils)
   (:require [clojure.core.match :refer [match]]
+            [loco.match :refer [match+]]
             [defun.core :refer [defun]]
             loco.automata
             loco.constraints.arithmetic
@@ -44,8 +45,7 @@
                              :offset (preserve-consts offset-set)]]]]))
 
 (defn nb-empty
-  "Creates a constraint counting the number of empty sets sets |{s in sets where |s|=0}| = nbEmpty
-  Creates a constraint counting the number of empty sets sets |{s in sets where |s|=0}| = nbEmpty"
+  "Creates a constraint counting the number of empty sets sets |{s in sets where |s|=0}| = nbEmpty"
   {:choco ["nbEmpty(SetVar[] sets, int nbEmpty)"
            "nbEmpty(SetVar[] sets, IntVar nbEmpty)"]}
   [num-empty-sets collection]
@@ -81,51 +81,62 @@
   "Creates a constraint establishing that sets[i] is a subset of sets[j] if i"
   {:choco "subsetEq(SetVar... sets)"}
   [& sets]
-  [:constraint [:subset-eq [(vec sets)]]])
+  (match (vec sets)
+         [set-list :guard vector?] [:constraint [:subset-eq (vec set-list)]]
+         set-list (subset-equal set-list)))
 
+;;TODO: can do partial for sum-elements
 (defn sum-elements
-  "
-  Creates a constraint summing weights given by a set of indices:
+  "Creates a constraint summing weights given by a set of indices:
   sum{weights[i-offset] | i in indices} = sum Also ensures that
   elements in indices belong to [offset, offset+weights.length-1]
 
   Creates a constraint summing weights given by a set of indices:
   sum{weights[i] | i in indices} = sum Also ensures that elements in
-  indices belong to [0, weights.length-1]
-  "
+  indices belong to [0, weights.length-1]"
   {:choco ["sumElements(SetVar indices, int[] weights, IntVar sum)"
            "sumElements(SetVar indices, int[] weights, int offset, IntVar sum)"]}
-  ([result-var indices-set weights] (sum-elements result-var indices-set weights 0))
-  ([result-var indices-set weights offset]
+  ([sum-var indices-set weights] (sum-elements sum-var indices-set weights 0))
+  ([sum-var indices-set weights offset]
    {:pre [(sequential? weights) (every? integer? weights) (integer? offset)]}
-   [:constraints [:sum-elements [result-var
-                                 [:indices indices-set]
-                                 [:weights (preserve-consts (vec weights))]
-                                 [:offset (preserve-consts offset)]]]]))
+   [:constraint [:sum-elements
+                 [sum-var
+                  [:indices indices-set]
+                  [:weights (preserve-consts (vec weights))]
+                  [:offset (preserve-consts offset)]]]]))
 
-
-(defun symetric
-  "
-  Creates a constraint stating that sets are symmetric sets: x in sets[y] <=> y in sets[x]
-  Creates a constraint stating that sets are symmetric sets: x in sets[y-offset] <=> y in sets[x-offset]
-  "
+(defn symetric
+  "Creates a constraint stating that sets are symmetric sets: x in sets[y] <=> y in sets[x]
+  Creates a constraint stating that sets are symmetric sets: x in sets[y-offset] <=> y in sets[x-offset]"
   {:choco ["symmetric(SetVar... sets)"
-           "symmetric(SetVar[] sets, int offset)"]}
-  ([(sets :guard sequential?) (offset :guard integer?)]
-   [:constraint [:symetric [(vec sets) [:offset (preserve-consts offset)]]]])
-  ([& sets] (symetric sets 0)))
+           "symmetric(SetVar[] sets, int offset)"]
+   :arglists '([sets]
+               [sets offset]
+               [& sets])}
+  [& sets]
+  (match+ (vec sets)
+          [set-list offset] :guard [set-list sequential? offset integer?]
+          [:constraint [:symetric [(vec set-list) [:offset (preserve-consts offset)]]]]
+
+          [set-list :guard sequential?] (symetric set-list 0)
+          set-list (symetric set-list 0)))
 
 (defn all-disjoint
   "Creates a constraint stating that the intersection of sets should be empty Note that there can be multiple empty sets"
   {:choco "allDisjoint(SetVar... sets)"}
   [& sets]
-  [:constraints [:all-disjoint (vec sets)]])
+  (match (vec sets)
+         [set-list :guard sequential?] [:constraints [:all-disjoint (vec set-list)]]
+         set-list (all-disjoint set-list)))
 
 (defn disjoint
   "Creates a constraint stating that the intersection of set1 and set2 should be empty Note that they can be both empty"
   {:choco "disjoint(SetVar set1, SetVar set2)"}
-  [set1 set2]
-  [:constraint [:disjoint [set1 set2]]])
+  ([[set1 set2 :as set-pair]]
+   {:pre [(= 2 (count set-pair))]}
+   (disjoint set1 set2))
+  ([set1 set2]
+   [:constraint [:disjoint [set1 set2]]]))
 
 (defn set-bools-channeling
   "Creates a constraint channeling a set variable with boolean variables :
@@ -138,9 +149,10 @@
   ([set-var bools] (set-bools-channeling set-var bools 0))
   ([set-var bools offset]
    {:pre [(integer? offset) (sequential? bools)]}
-   [:constraints [:set-bools-channeling [set-var
-                                         [:channel (vec bools)]
-                                         [:offset (preserve-consts offset)]]]]))
+   [:constraints [:set-bools-channeling
+                  [set-var
+                   [:channel (vec bools)]
+                   [:offset (preserve-consts offset)]]]]))
 
 (defn sets-ints-channeling
   "Creates a constraint channeling set variables and integer variables :
