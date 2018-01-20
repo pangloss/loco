@@ -1,35 +1,37 @@
 (ns loco.vars
+  (:refer-clojure :exclude [set])
   (:require [clojure.core.match :refer [match]]
-            [clojure.set :as set]))
+            [loco.match :refer [match+]]
+            [clojure.set :as set])
+  (:import org.chocosolver.solver.variables.IntVar))
 
-;;TODO: var methods:
-;;boolVar, boolVar, boolVar, boolVar,
+
+;;TODO: var methods left to be implemented:
+;;taskVar, taskVar, taskVar,
+;;realVar, realVar, realVar, realVar, realVar,
 ;;boolVarArray, boolVarArray,
 ;;boolVarMatrix, boolVarMatrix,
 ;;checkIntDomainRange, checkRealDomainRange,
 ;;generateName, generateName,
-;;intVar, intVar, intVar, intVar, intVar, intVar, intVar, intVar,
 ;;intVarArray, intVarArray, intVarArray, intVarArray, intVarArray, intVarArray,
 ;;intVarMatrix, intVarMatrix, intVarMatrix, intVarMatrix, intVarMatrix, intVarMatrix,
-;;realVar, realVar, realVar, realVar, realVar,
 ;;realVarArray, realVarArray, realVarMatrix, realVarMatrix,
-;;setVar, setVar, setVar, setVar,
 ;;setVarArray, setVarArray,
 ;;setVarMatrix, setVarMatrix,
-;;taskVar, taskVar, taskVar,
 ;;taskVarArray,
 ;;taskVarMatrix,
 ;;toBoolVar
 
 ;; -------------------- Sets --------------------
 
-;; default SetVar[] 	setVarArray(int size, int[] lb, int[] ub)
+;; yet to be implemented
+;; default SetVar[] setVarArray(int size, int[] lb, int[] ub)
 ;; Creates an array of size set variables, taking their domain in [lb, ub]
-;; default SetVar[] 	setVarArray(String name, int size, int[] lb, int[] ub)
+;; default SetVar[] setVarArray(String name, int size, int[] lb, int[] ub)
 ;; Creates an array of size set variables, taking their domain in [lb, ub]
-;; default SetVar[][] 	setVarMatrix(int dim1, int dim2, int[] lb, int[] ub)
+;; default SetVar[][] setVarMatrix(int dim1, int dim2, int[] lb, int[] ub)
 ;; Creates a matrix of dim1*dim2 set variables, taking their domain in [lb, ub]
-;; default SetVar[][] 	setVarMatrix(String name, int dim1, int dim2, int[] lb, int[] ub)
+;; default SetVar[][] setVarMatrix(String name, int dim1, int dim2, int[] lb, int[] ub)
 ;; Creates a matrix of dim1*dim2 set variables, taking their domain in [lb, ub]
 
 (defn set
@@ -58,18 +60,28 @@
 
 (def set- (comp #(assoc % 2 :hidden) (partial set)))
 (reset-meta! (var set-) (meta (var set)))
+
 ;; -------------------- Utils --------------------
 
 (defn- hidden-name? [keyword-name]
-  (.startsWith (name keyword-name) "_"))
+  (when (keyword? keyword-name)
+    (.startsWith (name keyword-name) "_")))
 
 (defn- hidden-conversion
-  "this is for backwards compatibility"
+  "converts a var, based on it's name, to be hidden. this is for backwards compatibility
+  to be converted, the name should have an underscore at the beginning
+
+  e.g. [:var :_var-name :public [:int 0 2]]
+  e.g. [:var [:_var-name 1] :public [:int 0 2]]"
   [var]
-  (match var
-         [_  [(name :guard #(and (keyword? %) (hidden-name? %))) & _] & _] (assoc var 2 :hidden)
-         [_  (name :guard #(and (keyword? %) (hidden-name? %))) & _] (assoc var 2 :hidden)
-         :else var))
+  (match+ var
+          [_  [var-name & _] & _] :guard [var-name hidden-name?]
+          (assoc var 2 :hidden)
+
+          [_  var-name & _] :guard [var-name hidden-name?]
+          (assoc var 2 :hidden)
+
+          :else var))
 
 ;; -------------------- Constants --------------------
 
@@ -84,9 +96,11 @@
 
 ;; -------------------- booleans --------------------
 
+;;TODO: implement const bool?  	boolVar(String name, boolean value)
 (defn bool
   "Declares that a variable must be a boolean (true/false or [0 1])
   some constraints have optimizations for booleans/boolean-lists (e.g. Model.sum|and|or)"
+  {:choco "boolVar(String name)"}
   [var-name]
   (->> [:var var-name :public [:bool 0 1]]
        hidden-conversion))
@@ -110,6 +124,13 @@
    (in :x 1 5)
    (in :x [1 2 3 4 5])
    (in :x 1 5 :bounded)"
+  {:choco ["intVar(String name, int value)"
+           "intVar(String name, int[] values)"
+           "intVar(String name, int lb, int ub)"
+           "intVar(String name, int lb, int ub, boolean boundedDomain)"]}
+  ([var-name]
+   (int var-name IntVar/MIN_INT_BOUND IntVar/MAX_INT_BOUND))
+
   ([var-name lb ub bounded?]
    {:pre [(integer? lb) (integer? ub) (or (boolean? bounded?) (= bounded? :bounded))]}
    (->>

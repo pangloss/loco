@@ -28,6 +28,10 @@
 
   (testing "intVars"
     (vars-assert
+     '(["min-max" -21474836 21474836 false "min-max = [-21474836,21474836]"])
+     [($in :min-max)])
+
+    (vars-assert
      '(["7" 7 7 true "7 = 7"])
      [($in :7 7 7)])
 
