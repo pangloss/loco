@@ -12,6 +12,7 @@
    org.chocosolver.solver.ParallelPortfolio
    org.chocosolver.solver.variables.IntVar
    org.chocosolver.solver.variables.SetVar
+   org.chocosolver.solver.variables.Task
    ))
 
 (defn- problem->Model
@@ -21,7 +22,7 @@
   (let [
         problem-ast (model/compile problem-from-dsl)
         ]
-    ;; FIXME: things changed in 4.0.0
+    ;; FIXME: setting strategy for model/solver changed since 4.0.0. look at below link
     ;; http://www.choco-solver.org/apidocs/index.html
     ;; org.chocosolver.solver.search.strategy.Search
     ;; minDomLBSearch
@@ -79,6 +80,12 @@
                  (assoc acc
                         (var-key-name-fn var-name)
                         (cond
+                          (instance? Task var)
+                          {
+                           :start    (->> var .getStart (.getIntVal solution))
+                           :duration (->> var .getDuration (.getIntVal solution))
+                           :end      (->> var .getEnd (.getIntVal solution))
+                           }
                           (instance? IntVar var) (.getIntVal solution var)
                           (instance? SetVar var) (set (.getSetVal solution var)))
                         ))
@@ -190,7 +197,6 @@
                 vars-index
                 var-name-mapping]
          } (problem->Model problem)
-        ;;solver (.getSolver model)
         var-key-name-fn (if (empty? var-name-mapping)
                           identity
                           (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
@@ -209,8 +215,6 @@
         models (repeatedly n #(->> problem problem->Model))
         portfolio (parallel-portfolio models)
         ]
-    ;;(println 'models models)
-
     (portfolio-seq portfolio models)))
 
 

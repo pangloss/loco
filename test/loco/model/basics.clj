@@ -31,6 +31,14 @@
 
 (deftest basics-test
   (compiled-assert
+   [[:var :my-task :public [:task [1 2] [2 3] [3 4]]]]
+   [($task :my-task [1 2] [2 3] [3 4])])
+
+  (compiled-assert
+   [[:var :my-task :public [:task :start :duration :end]]]
+   [($task :my-task :start :duration :end)])
+
+  (compiled-assert
    [[:var :a :public [:const 1]]]
    [($in :a [1])])
 

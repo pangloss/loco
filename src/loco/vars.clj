@@ -1,5 +1,5 @@
 (ns loco.vars
-  (:refer-clojure :exclude [set])
+  (:refer-clojure :exclude [set int])
   (:require [clojure.core.match :refer [match]]
             [loco.match :refer [match+]]
             [clojure.set :as set])
@@ -7,7 +7,7 @@
 
 
 ;;TODO: var methods left to be implemented:
-;;taskVar, taskVar, taskVar,
+
 ;;realVar, realVar, realVar, realVar, realVar,
 ;;boolVarArray, boolVarArray,
 ;;boolVarMatrix, boolVarMatrix,
@@ -18,8 +18,6 @@
 ;;realVarArray, realVarArray, realVarMatrix, realVarMatrix,
 ;;setVarArray, setVarArray,
 ;;setVarMatrix, setVarMatrix,
-;;taskVarArray,
-;;taskVarMatrix,
 ;;toBoolVar
 
 ;; -------------------- Sets --------------------
@@ -34,6 +32,9 @@
 ;; default SetVar[][] setVarMatrix(String name, int dim1, int dim2, int[] lb, int[] ub)
 ;; Creates a matrix of dim1*dim2 set variables, taking their domain in [lb, ub]
 
+(defn- upper-bound-contains-lower-bound? [lb ub]
+  (every? (clojure.core/set ub) (clojure.core/set lb)))
+
 (defn set
   "Creates a set variable taking its domain in [lb, ub], For
    instance [#{0,3}, #{-2,0,2,3}] means the variable must include both
@@ -46,7 +47,7 @@
    ;;TODO: possible that lb should be subset of ub
    {:pre [(or (set? lb) (sequential? lb)) (or (set? ub) (sequential? ub))
           ;;all elements from lb must be in ub
-          (every? (clojure.core/set ub) (clojure.core/set lb))
+          (upper-bound-contains-lower-bound? lb ub)
           (every? integer? lb)
           (every? integer? ub)]}
 
@@ -167,3 +168,14 @@
 (reset-meta! (var in) (meta (var int)))
 (reset-meta! (var in-) (meta (var int)))
 (reset-meta! (var int-) (meta (var int)))
+
+;; -------------------- Tasks -------------------
+;;taskVarArray,
+;;taskVarMatrix,
+
+(defn task
+  "Container representing a task: It ensures that: start + duration = end"
+  {:choco "Task(IntVar s, IntVar d, IntVar e)"}
+  [var-name start duration end]
+  {:pre [(keyword? var-name)]} ;;not supporting crazy var names yet
+  [:var var-name :public [:task start duration end]])

@@ -68,6 +68,36 @@
      [($in :i 0 5)
       ($neg :-i :i)
       ]))
+
+  (testing "task"
+    (vars-string-assert
+     '("a = {1..2}"
+       "b = {2..3}"
+       "c = {3..4}"
+       "Task[start=a = {1..2}, duration=b = {2..3}, end=c = {3..4}]")
+     [($int :a [1 2])
+      ($int :b [2 3])
+      ($int :c [3 4])
+      ($task :my-task :a :b :c)])
+
+    (vars-string-assert
+     '("a = 1"
+       "b = 3"
+       "c = 4"
+       "Task[start=a = 1, duration=b = 3, end=c = 4]")
+     [($int :a [1 2])
+      ($int :b [3 5 8 11])
+      ($int :c [3 4])
+      ($task :my-task :a :b :c)])
+
+    (vars-string-assert
+     '("Task[start=IV_1 = {1..2}, duration=IV_2 = {2..3}, end=IV_3 = {3..4}]")
+     [($task :my-task [1 2] [2 3] [3 4])])
+
+    (vars-string-assert
+     '("Task[start=IV_1 = 1, duration=IV_2 = 3, end=IV_3 = 4]")
+     [($task :my-task [1 2] [[3 5 8]] [3 4])])
+    )
   )
 
 (deftest compiling-constraints-test
