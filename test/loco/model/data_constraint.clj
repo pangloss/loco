@@ -127,7 +127,9 @@
     [:var :b2 :public [:bool 0 1]]
     [:var :b3 :public [:bool 0 1]]
     [:var :b4 :public [:bool 0 1]]
-    [:constraint [:bit-channeling [[:b1 :b2 :b3 :b4] :int-var]]]]
+    [:constraint [:bit-channeling
+                  [:bool-vars [:b1 :b2 :b3 :b4]]
+                  [:int-var :int-var]]]]
 
    [($in :int-var 0 16)
     ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]
@@ -139,7 +141,9 @@
     [:var :b2 :public [:bool 0 1]]
     [:var :b3 :public [:bool 0 1]]
     [:var :b4 :public [:bool 0 1]]
-    [:constraint [:bit-channeling [[:b1 :b2 :b3 :b4] :int-var]]]]
+    [:constraint [:bit-channeling
+                  [:bool-vars [:b1 :b2 :b3 :b4]]
+                  [:int-var :int-var]]]]
 
    [($in :int-var 0 16)
     ($bool- :b1)
