@@ -1,4 +1,5 @@
 (ns loco.compiler
+  (:refer-clojure :exclude [compile])
   (:use loco.constraints
         loco.utils)
   (:require

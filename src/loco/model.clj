@@ -1,4 +1,5 @@
 (ns loco.model
+  (:refer-clojure :exclude [compile var?])
   (:use loco.constraints
         loco.utils)
   (:require

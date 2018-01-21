@@ -1,4 +1,5 @@
 (ns loco.constraints.set
+  (:refer-clojure :exclude [not-empty partition])
   (:use loco.utils
         loco.constraints.utils)
   (:require [clojure.core.match :refer [match]]
