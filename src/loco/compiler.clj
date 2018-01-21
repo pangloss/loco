@@ -669,13 +669,13 @@
   ([ast] (compile (Model.) ast))
   ([model ast]
    (let [
-         uncompiled-vars (->> ast (filter model/var?))
+         uncompiled-vars        (->> ast (filter model/var?))
          uncompiled-constraints (->> ast (filter model/constraint?))
-         uncompiled-reifies (->> ast (filter model/reify?))
-         [vars-index vars _] (compile-vars model uncompiled-vars)
-         public-var-names (->> uncompiled-vars (filter model/public-var?) (map second))
-         public-vars-index (select-keys vars-index public-var-names)
-         _reifies (compile-reifies model vars-index uncompiled-reifies)
+         uncompiled-reifies     (->> ast (filter model/reify?))
+         [vars-index vars _]    (compile-vars model uncompiled-vars)
+         public-var-names       (->> uncompiled-vars (filter model/public-var?) (map second))
+         public-vars-index      (select-keys vars-index public-var-names)
+         _reifies               (compile-reifies model vars-index uncompiled-reifies)
          constraints (->>
                       (compile-constraints model vars-index uncompiled-constraints)
                       ;;the conditional constraints return void, and are posted automatically
