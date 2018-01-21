@@ -767,6 +767,41 @@ For example:
                         [:offset (preserve-consts offset)]]]]))
 
 ;; -------------------- TASK --------------------
-;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity)
-;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental)
-;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)
+
+
+(defn $cumulative
+  "Creates a cumulative constraint: Enforces that at each point in
+  time, the cumulated height of the set of tasks that overlap that
+  point does not exceed a given limit. Task duration and height should
+  be >= 0 Discards tasks whose duration or height is equal to zero
+
+  Cumulative Filters:
+  - DEFAULT Combines above filters as a black-box not idempotent
+  - DISJUNCTIVE_TASK_INTERVAL energetic reasoning to filter disjunctive constraint Only propagated on variable subsets of size < 30 not idempotent not enough to ensure correctness (only an additional filtering)
+  - HEIGHTS filters height variables only (sweep-based algorithm) idempotent (on the given set of variables only)
+  - NRJ energetic reasoning to filter not idempotent not enough to ensure correctness (only an additional filtering)
+  - SWEEP time-table algorithm based on a sweep line idempotent (on the given set of variables only)
+  - SWEEP_HEI_SORT time-table algorithm based on a sweep line idempotent (on the given set of variables only)
+  - TIME time-table algorithm based on each point in time not idempotent
+  "
+  {:choco
+   ["cumulative(Task[] tasks, IntVar[] heights, IntVar capacity)"
+    "cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental)"
+    "cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)"]}
+  ([tasks heights capacity]
+   ($cumulative tasks heights capacity false))
+  ([tasks heights capacity incremental?]
+   ($cumulative tasks heights capacity incremental? [:default]))
+  ([tasks heights capacity incremental? filters]
+   {:pre
+    [(sequential? filters)
+     (every?
+      #{:default :disjunctive-task-interval :heights :nrj :sweep :sweep-hei-sort :time} filters)
+     (sequential? tasks)
+     (sequential? heights)
+     (boolean? incremental?)]}
+   [:constraint [:cumulative [(vec tasks)
+                              [:heights (vec heights)]
+                              [:capacity capacity]
+                              [:incremental incremental?]
+                              [:filters (vec filters)]]]]))

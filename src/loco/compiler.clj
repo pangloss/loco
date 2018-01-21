@@ -12,7 +12,9 @@
            org.chocosolver.solver.variables.IntVar
            org.chocosolver.solver.variables.Task
            org.chocosolver.solver.constraints.Constraint
-           org.chocosolver.solver.constraints.nary.circuit.CircuitConf))
+           org.chocosolver.solver.constraints.nary.circuit.CircuitConf
+           org.chocosolver.solver.constraints.nary.cumulative.Cumulative$Filter
+           ))
 
 (defn- lookup-var [vars-index name]
   (if-let [var (get vars-index name)]
@@ -136,12 +138,15 @@
         int-var? (p instance? IntVar)
         set-var? (p instance? SetVar)
         bool-var? (p instance? BoolVar)
+        task-var? (p instance? Task)
         lookup-set-var? (c set-var? lookup-var-unchecked)
         lookup-int-var? (c int-var? lookup-var-unchecked)
         lookup-bool-var? (c bool-var? lookup-var-unchecked)
+        lookup-task-var? (c task-var? lookup-var-unchecked)
         all-lookup-int-vars? (p every? lookup-int-var?)
         all-lookup-set-vars? (p every? lookup-set-var?)
         all-lookup-bool-vars? (p every? lookup-bool-var?)
+        all-lookup-task-vars? (p every? lookup-task-var?)
         all-int-vars? (p every? int-var?)
         all-set-vars? (p every? set-var?)
         all-bool-vars? (p every? bool-var?)
@@ -499,6 +504,32 @@
       (.tree model (->> succs (map lookup-var) (into-array IntVar))
              (lookup-var nb-trees)
              offset)
+
+      [:cumulative [tasks
+                    [:heights heights]
+                    [:capacity capacity]
+                    [:incremental incremental?]
+                    [:filters filters]]]
+      :guard [filters [sequential? (p every? #{:default :disjunctive-task-interval
+                                               :heights :nrj :sweep :sweep-hei-sort :time})]
+              incremental? boolean?
+              heights all-lookup-int-vars?
+              tasks all-lookup-task-vars?
+              capacity lookup-int-var?]
+      (.cumulative model
+                   (->> tasks (map lookup-var) (into-array Task))
+                   (->> heights (map lookup-var) (into-array IntVar))
+                   (lookup-var capacity)
+                   incremental?
+                   (->> filters
+                        (map {:default Cumulative$Filter/DEFAULT
+                              :disjunctive-task-interval Cumulative$Filter/DISJUNCTIVE_TASK_INTERVAL
+                              :heights Cumulative$Filter/HEIGHTS
+                              :nrj Cumulative$Filter/NRJ
+                              :sweep Cumulative$Filter/SWEEP
+                              :sweep-hei-sort Cumulative$Filter/SWEEP_HEI_SORT
+                              :time Cumulative$Filter/TIME})
+                        (into-array Cumulative$Filter)))
 
       ;; -------------------- LOGIC --------------------
       ;; handle boolean lists

@@ -867,6 +867,26 @@
        ($int :nb-trees 0 100)
        ($tree [:a :b :c :d] :nb-trees 1)]))
     )
+
+  (testing "cumulative"
+    (is
+     (compile-constraint?
+      '("CUMULATIVE ([PropCumulative([cste -- 0 = 0,cste -- 1 = 1,cste -- 1 = 1,1 = 1],capacity = {0..10}), PropCumulative([cste -- 0 = 0,cste -- 1 = 1,cste -- 1 = 1,1 = 1],capacity = {0..10})])")
+      [($task :task1 [0] [1] [1])
+       ($int :capacity 0 10)
+       ($cumulative [:task1] [1] :capacity)
+       ]
+      ))
+
+    (is
+     (compile-constraint?
+      '("CUMULATIVE ([PropGraphCumulative([cste -- 0 = 0,cste -- 1 = 1,cste -- 1 = 1,1 = 1],capacity = {0..10}), PropGraphCumulative([cste -- 0 = 0,cste -- 1 = 1,cste -- 1 = 1,1 = 1],capacity = {0..10})])")
+      [($task :task1 [0] [1] [1])
+       ($int :capacity 0 10)
+       ($cumulative [:task1] [1] :capacity true [:time :nrj :sweep])
+       ]
+      ))
+    )
   )
 
 (deftest logic-compile-test
@@ -940,7 +960,7 @@
       ($if :if ($true) ($false))])
     )
 
-  #_(testing "cond"
+  (testing "cond"
     (constraints-assert
      '()
      [($cond
