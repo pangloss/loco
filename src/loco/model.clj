@@ -185,7 +185,7 @@
                           (swap! acc conj [:var var-name :hidden [:const const]])
                           var-name)
 
-                        [(form :guard coll?) {:preserve-consts true}]
+                        [(form :guard sequential?) {:preserve-consts true}]
                         (->> form (map #(if (number? %)
                                           (with-meta [%] {:preserve-const true})
                                           %))

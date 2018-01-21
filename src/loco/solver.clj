@@ -18,7 +18,7 @@
 (defn- problem->Model
   "creates a model from declarations from loco.constraints namespace. e.g. ($in...)"
   [problem-from-dsl]
-  {:pre [(coll? problem-from-dsl)]}
+  {:pre [(sequential? problem-from-dsl)]}
   (let [
         problem-ast (model/compile problem-from-dsl)
         ]

@@ -1,8 +1,4 @@
 ;;TODO: implement below constraint factory methods
-;; -------------------- TASK --------------------
-;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity)
-;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental)
-;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)
 ;; -------------------- TUPLE --------------------
 ;; table(IntVar[] vars, Tuples tuples)
 ;; table(IntVar[] vars, Tuples tuples, String algo)
@@ -66,7 +62,7 @@
   {:choco ["and(BoolVar... bools)"
            "and(Constraint... cstrs)"]}
   [& constraints-or-bools]
-  {:pre [(coll? constraints-or-bools) (not (empty? constraints-or-bools))]}
+  {:pre [(sequential? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:and (vec constraints-or-bools)]])
 
 ;;TODO: there is also a boolean list form that can be useful to implement
@@ -76,7 +72,7 @@
   {:choco ["or(BoolVar... bools)"
            "or(Constraint... cstrs)"]}
   [& constraints-or-bools]
-  {:pre [(coll? constraints-or-bools) (not (empty? constraints-or-bools))]}
+  {:pre [(sequential? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:or (vec constraints-or-bools)]])
 
 (defn $not
@@ -127,20 +123,22 @@ In other words, if P is true, Q must be true (otherwise the whole
   previous clauses are false.
 
   uses *cond-name-gen* dynamic function to generate names for the reify variables
+
+  roughly translates to the below code:
+  partition clauses by 2
+  for each pair, produce:
+  --------------------------
+  ($reify :if_cond_1 ($false))
+  ($reify :if_1 ($and :if_cond_1 ... :not_if_bool_0 ... :not_if_bool_n))
+  ($reify :not_if_1 ($not ($false)))
+
+  ($if :if_1
+       ($true)
+       ($and :not_if_1))
+  ---------------------------
   "
   [& clauses]
   {:pre [(even? (count clauses))]}
-  ;;partition clauses by 2
-  ;;for each pair, produce:
-  ;; --------------------------
-  ;; ($reify :if_cond_1 ($false))
-  ;; ($reify :if_1 ($and :if_cond_1 ... :not_if_bool_0 ... :not_if_bool_n))
-  ;; ($reify :not_if_1 ($not ($false)))
-
-  ;; ($if :if_1
-  ;;      ($true)
-  ;;      ($and :not_if_1))
-  ;;---------------------------
   (let [global-name (*cond-name-gen* "_")
         last-index (dec (count (partition 2 clauses)))]
     (->>
@@ -149,9 +147,9 @@ In other words, if P is true, Q must be true (otherwise the whole
      (reduce
       (fn [acc [idx [clause action]]]
         (let [[previous-not-clauses statements] acc
-              if-cond-bool      (keyword (str global-name '_if_cond_ idx))
+              if-cond-bool (keyword (str global-name '_if_cond_ idx))
               if-bool (keyword (str global-name '_if_ idx))
-              not-if-bool  (keyword (str global-name '_not_if_ idx))
+              not-if-bool (keyword (str global-name '_not_if_ idx))
 
               new-statements
               (if (= clause :else)
@@ -204,7 +202,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   to 0. There can be multiple variables equal to 0."
   {:choco "allDifferentExcept0(IntVar[] vars)"}
   [vars]
-  {:pre [(coll? vars)]}
+  {:pre [(sequential? vars)]}
   [:constraint [:distinct-except-0 (vec vars)]])
 
 (def $all-different-except-0 $distinct-except-0)
@@ -246,10 +244,10 @@ In other words, if P is true, Q must be true (otherwise the whole
   ([vars]
     ($circuit vars 0))
   ([vars offset]
-   {:pre [(integer? offset) (coll? vars)]}
+   {:pre [(integer? offset) (sequential? vars)]}
    [:constraint [:circuit [(vec vars) [:offset (preserve-consts offset)]]]])
   ([vars offset circuit-conf]
-   {:pre [(integer? offset) (coll? vars) (#{:all :first :light :rd} circuit-conf)]}
+   {:pre [(integer? offset) (sequential? vars) (#{:all :first :light :rd} circuit-conf)]}
    [:constraint [:circuit [(vec vars)
                            [:offset (preserve-consts offset)]
                            [:conf circuit-conf]]]]))
@@ -261,7 +259,7 @@ In other words, if P is true, Q must be true (otherwise the whole
    ($nth vars index 0))
 
   ([vars index offset]
-   {:pre [(integer? offset) (coll? vars)]}
+   {:pre [(integer? offset) (sequential? vars)]}
    (let [table (if (every? integer? vars)
                  (preserve-consts (vec vars))
                  vars)]
@@ -290,7 +288,7 @@ In other words, if P is true, Q must be true (otherwise the whole
    ($element value var-list index 0))
 
   ([value var-list index offset]
-   {:pre [(integer? offset) (coll? var-list)]}
+   {:pre [(integer? offset) (sequential? var-list)]}
    (let [table (if (every? integer? var-list)
                  (preserve-consts var-list)
                  var-list)]
@@ -309,7 +307,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   input string accepted by the automaton."
   {:choco "regular(IntVar[] vars, IAutomaton automaton)"}
   [^FiniteAutomaton automaton vars]
-  {:pre [(coll? vars)]}
+  {:pre [(sequential? vars)]}
   [:constraint [:regular [(vec vars) [:automation automaton]]]])
 
 (defn $cardinality
@@ -328,10 +326,9 @@ In other words, if P is true, Q must be true (otherwise the whole
   ([variables frequencies closed?]
    {:pre [
           (map? frequencies)
-          (coll? variables)
+          (sequential? variables)
           (or (= closed? :closed) (boolean? closed?))
           (every? integer? (keys frequencies))
-          ;;(every? keyword? (vals frequencies))
           (distinct? (keys frequencies))
           (distinct? (vals frequencies))
           ]
@@ -361,8 +358,8 @@ In other words, if P is true, Q must be true (otherwise the whole
   {:pre [
          (every? integer? weight)
          (every? integer? energy)
-         (coll? occurrences)   ;;(every? keyword? occurrences)
-         (every? (p <= 0) weight) ;;all items in weight or energy must be above 1
+         (sequential? occurrences)
+         (every? (p <= 0) weight)
          (every? (p <= 0) energy)
          ]}
   [:constraint
@@ -380,7 +377,7 @@ In other words, if P is true, Q must be true (otherwise the whole
    Creates a member constraint. Ensures var takes its values in table
    Creates a member constraint stating that the constant cst is in set
    Creates a member constraint stating that the value of intVar is in set
-  Creates a member constraint stating that set belongs to sets"
+   Creates a member constraint stating that set belongs to sets"
   {:choco ["member(IntVar var, int[] table)"
            "member(IntVar var, int lb, int ub)"
            "member(int cst, SetVar set)"
@@ -431,7 +428,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   N = nValues to hold."
   {:choco "nValues(IntVar[] vars, IntVar nValues)"}
   [vars n-values]
-  {:pre [(coll? vars)]}
+  {:pre [(sequential? vars)]}
   [:constraint [:n-values [(vec vars) n-values]]])
 
 (defn $sort
@@ -445,9 +442,8 @@ In other words, if P is true, Q must be true (otherwise the whole
   - Y= (1,2,3,4)"
   {:choco "sort(IntVar[] vars, IntVar[] sortedVars)"}
   [vars sorted-vars]
-  {:pre [(coll? vars) (coll? sorted-vars)]}
+  {:pre [(sequential? vars) (sequential? sorted-vars)]}
   [:constraint [:sort [(vec vars) (vec sorted-vars)]]])
-
 
 (defn $count
   "Creates a count constraint. Let N be the number of variables of the
@@ -456,7 +452,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   {:choco ["count(int value, IntVar[] vars, IntVar limit) "
            "count(IntVar value, IntVar[] vars, IntVar limit)"]}
   [value vars limit]
-  {:pre [(coll? vars)]}
+  {:pre [(sequential? vars)]}
   [:constraint [:count [(vec vars) [:value (preserve-consts value)] [:limit limit]]]])
 
 (defn $among
@@ -465,7 +461,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   {:choco "among(IntVar nbVar, IntVar[] vars, int[] values)"
    :gccat "http://www.emn.fr/x-info/sdemasse/gccat/Camong.html"}
   [nb-var vars values]
-  {:pre [(coll? vars) (coll? values) (every? integer? values)]}
+  {:pre [(sequential? vars) (sequential? values) (every? integer? values)]}
   [:constraint [:among [(vec vars) [:nb-var nb-var] [:values (preserve-consts (vec values))]]]])
 
 (defn $at-least-n-values
@@ -475,7 +471,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   {:choco "atLeastNValues(IntVar[] vars, IntVar nValues, boolean AC)"}
   ([vars n-values] ($at-least-n-values vars n-values false))
   ([vars n-values ac]
-   {:pre [(coll? vars) (boolean? ac)]}
+   {:pre [(sequential? vars) (boolean? ac)]}
    [:constraint [:at-least-n-values [(vec vars) [:n-values n-values] [:ac ac]]]]))
 
 (defn $at-most-n-values
@@ -485,7 +481,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   {:choco "atMostNValues(IntVar[] vars, IntVar nValues, boolean STRONG)"}
   ([vars n-values] ($at-most-n-values vars n-values false))
   ([vars n-values strong]
-   {:pre [(coll? vars) (boolean? strong)]}
+   {:pre [(sequential? vars) (boolean? strong)]}
    [:constraint [:at-most-n-values [(vec vars) [:n-values n-values] [:strong strong]]]]))
 
 (defn $bin-packing
@@ -515,14 +511,14 @@ In other words, if P is true, Q must be true (otherwise the whole
    ($bin-packing (keys item-map) (vals item-map) bin-load))
   ([item-bin, item-size, bin-load] ($bin-packing item-bin item-size bin-load 0))
   ([item-bin, item-size, bin-load, offset]
-   {:pre [(coll? item-bin)
+   {:pre [(sequential? item-bin)
           (< 0 (count item-bin))
           (distinct? item-bin)
-          (coll? item-size)
+          (sequential? item-size)
           (every? integer? item-size)
           (every? pos? item-size)
           (= (count item-size) (count item-bin))
-          (coll? bin-load)
+          (sequential? bin-load)
           (integer? offset)
           (<= 0 offset)]}
    [:constraint [:bin-packing
@@ -769,3 +765,8 @@ For example:
    [:constraint [:tree [(vec succs)
                         [:nb-trees nb-trees]
                         [:offset (preserve-consts offset)]]]]))
+
+;; -------------------- TASK --------------------
+;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity)
+;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental)
+;; cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)
