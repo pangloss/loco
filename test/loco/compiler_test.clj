@@ -98,6 +98,16 @@
      '("Task[start=IV_1 = 1, duration=IV_2 = 3, end=IV_3 = 4]")
      [($task :my-task [1 2] [[3 5 8]] [3 4])])
     )
+
+  (testing "tuples"
+    (vars-string-assert
+     '("Allowed tuples: {[1, 2][0, 3]}")
+     [($tuples :tuple [[1 2] [0 3]])])
+
+    (vars-string-assert
+     '("Fordidden tuples: {[1, 2][0, 3]}")
+     [($tuples :tuple [[1 2] [0 3]] false)])
+    )
   )
 
 (deftest compiling-constraints-test

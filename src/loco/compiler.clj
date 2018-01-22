@@ -11,6 +11,7 @@
            org.chocosolver.solver.variables.BoolVar
            org.chocosolver.solver.variables.IntVar
            org.chocosolver.solver.variables.Task
+           org.chocosolver.solver.constraints.extension.Tuples
            org.chocosolver.solver.constraints.Constraint
            org.chocosolver.solver.constraints.nary.circuit.CircuitConf
            org.chocosolver.solver.constraints.nary.cumulative.Cumulative$Filter
@@ -91,6 +92,11 @@
                       (apply anon-int-var model end)))]
                (.ensureBoundConsistency task)
                task)
+
+             [[:var var-name _ [:tuples feasible? ints-lists]] _]
+             :guard [feasible? boolean?, ints-lists [sequential? (p every? (p every? int?))]]
+             (Tuples. (->> ints-lists (map int-array) into-array) feasible?)
+
              )]
     [(-> vars-index
          (with-meta {:ast-statement statement})

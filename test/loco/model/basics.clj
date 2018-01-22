@@ -31,6 +31,10 @@
 
 (deftest basics-test
   (compiled-assert
+   [[:var :my-tuples :hidden [:tuples true [[1 2] [2 3] [3 4]]]]]
+   [($tuples :my-tuples [[1 2] [2 3] [3 4]])])
+
+  (compiled-assert
    [[:var :my-task :public [:task [1 2] [2 3] [3 4]]]]
    [($task :my-task [1 2] [2 3] [3 4])])
 
