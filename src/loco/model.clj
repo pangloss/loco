@@ -542,7 +542,7 @@
     (assert false remaining-partials)
     true))
 
-(defn- only-constraints-and-vars-and-reifies-present [ast]
+(defn- only-constraints-and-vars-and-reifies-present? [ast]
   (->> ast
        (every? (comp #{:constraint :var :reify} first))))
 
@@ -558,7 +558,7 @@
    (remove (p apply =))
    (into {})))
 
-(defn reverse-map [map]
+(defn- reverse-map [map]
   (reduce (fn [acc [key val]]
             (assoc acc val key)) {} map))
 
@@ -569,18 +569,22 @@
   [problem]
   {:pre [(all-partials-transformed? problem)]
    :post [
-          (only-constraints-and-vars-and-reifies-present %)
-          (all-var-names-are-unique? %)
+          (p only-constraints-and-vars-and-reifies-present?)
+          (p all-var-names-are-unique?)
           ]}
   (let [unnest-generated-vars #(if (:generated-vars (meta %))
                                  %
                                  [%])
         flattened-problem (mapcat unnest-generated-vars problem)
         var-name-obj-to-str-mapping (create-variable-name-replacement-map flattened-problem)
-        ast (->> flattened-problem
+        proto-ast (->> flattened-problem
                  (walk/prewalk-replace var-name-obj-to-str-mapping)
-                 to-ast
-                 domain-transform)
+                 to-ast)
+        ast (->> proto-ast domain-transform)
         ]
+
+    ;;TODO: test malformed problems
+    (assert only-constraints-and-vars-and-reifies-present? flattened-problem)
+    (assert only-constraints-and-vars-and-reifies-present? proto-ast)
     (-> ast
         (with-meta {:var-name-mapping (reverse-map var-name-obj-to-str-mapping)}))))

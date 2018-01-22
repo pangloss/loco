@@ -655,24 +655,34 @@ In other words, if P is true, Q must be true (otherwise the whole
   "Creates a lexChainLess constraint.
   For each pair of consecutive vectors varsi and varsi+1 of the vars collection
   varsi is lexicographically strictly less than than varsi+1"
-  {:choco "lexChainLess(IntVar[]... vars)"}
-  [& vars]
-  (match (vec vars)
-         int-vars :guard vector? [:constraint [:les-chain-less (vec vars)]]
-         [& int-vars] ($lex-chain-less vars))
+  {:choco "lexChainLess(IntVar[]... vars)"
+   :arglists '([int-var-vectors] [int-var-vector...])}
+  [& more]
+  (match+
+   (vec more)
+   [int-vars-vectors]
+   :guard [int-vars-vectors [sequential? (p every? sequential?)]]
+   [:constraint [:lex-chain-less (mapv vec int-vars-vectors)]]
 
-)
+   int-vars-vectors
+   [:constraint [:lex-chain-less (mapv vec int-vars-vectors)]]))
 
 ;;TODO: lex-chain-less-equal is sort?
 (defn $lex-chain-less-equal
   "Creates a lexChainLessEq constraint.
   For each pair of consecutive vectors varsi and varsi+1 of the vars collection
   varsi is lexicographically less or equal than than varsi+1"
-  {:choco "lexChainLessEq(IntVar[]... vars)"}
-  [& vars]
-  (match (vec vars)
-         int-vars :guard vector? [:constraint [:lex-chain-less-equal (vec int-vars)]]
-         [& int-vars] ($lex-chain-less-equal vars)))
+  {:choco "lexChainLessEq(IntVar[]... vars)"
+   :arglists '([int-var-vectors] [int-var-vector...])}
+  [& more]
+  (match+
+   (vec more)
+   [int-vars-vectors]
+   :guard [int-vars-vectors [sequential? (p every? sequential?)]]
+   [:constraint [:lex-chain-less-equal (mapv vec int-vars-vectors)]]
+
+   int-vars-vectors
+   [:constraint [:lex-chain-less-equal (mapv vec int-vars-vectors)]]))
 
 (defn $path
   "Creates a path constraint which ensures that

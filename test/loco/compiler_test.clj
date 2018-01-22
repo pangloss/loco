@@ -748,29 +748,42 @@
   (testing "lex-chain-less"
     (is
      (compile-constraint?
-      '()
+      '("LEXCHAIN ([PropLexChain(a, b, c, ..., d)])")
       [($int :a 0 3)
        ($int :b 0 3)
        ($int :c 0 3)
-       ($lex-chain-less [:a :b :c])]))
+       ($int :d 0 3)
+       ($lex-chain-less [:a :b :c] [:b :c :d])]))
+
+    (is
+     (compile-constraint?
+      '("LEXCHAIN ([PropLexChain(a, b, c, ..., d)])")
+      [($int :a 0 3)
+       ($int :b 0 3)
+       ($int :c 0 3)
+       ($int :d 0 3)
+       ($lex-chain-less [[:a :b :c] [:b :c :d]])]))
     )
 
   (testing "lex-chain-less-equal"
     (is
      (compile-constraint?
-      '()
+      '("LEXCHAIN ([PropLexChain(a, b, c, ..., d)])")
       [($int :a 0 3)
        ($int :b 0 3)
        ($int :c 0 3)
-       ($lex-chain-less-equal [:a :b :c])]))
+       ($int :d 0 3)
+       ($lex-chain-less-equal [:a :b :c] [:b :c :d])]))
 
     (is
      (compile-constraint?
-      '()
+      '("LEXCHAIN ([PropLexChain(a, b, c, ..., d)])")
       [($int :a 0 3)
        ($int :b 0 3)
        ($int :c 0 3)
-       ($lex-chain-less-equal :a :b :c)]))
+       ($int :d 0 3)
+       ($lex-chain-less-equal [[:a :b :c] [:b :c :d]])]))
+
     )
 
   (testing "path"
@@ -1169,7 +1182,7 @@
   (testing "all-disjoint"
     (is
      (compile-constraint?
-      '()
+      '("SETALLDISJOINT ([PropAllDisjoint(a, b, c, d)])")
       [
        ($set :a [0] [0 1])
        ($set :b [1] [1 2])
@@ -1180,7 +1193,7 @@
 
     (is
      (compile-constraint?
-      '()
+      '("SETALLDISJOINT ([PropAllDisjoint(a, b, c, d)])")
       [
        ($set :a [0] [0 1])
        ($set :b [1] [1 2])
@@ -1218,14 +1231,14 @@
   (testing "set-bools-channeling"
     (is
      (compile-constraint?
-      '()
+      '("SETBOOLCHANNELING ([PropBoolChannel(a, b, c, ..., set)])")
       [($bools :a :b :c :d)
        ($set :set [] [0 1 2 3])
        ($set-bools-channeling :set [:a :b :c :d])]))
 
     (is
      (compile-constraint?
-      '()
+      ' ("SETBOOLCHANNELING ([PropBoolChannel(a, b, c, ..., set)])")
       [($bools :a :b :c :d)
        ($set :set [] [0 1 2 3])
        ($set-bools-channeling :set [:a :b :c :d] 1)]))
@@ -1234,9 +1247,8 @@
   (testing "sets-ints-channeling"
     (is
      (compile-constraint?
-      '()
-      [($bools :a :b :c :d)
-       ($int :i1 [0 3])
+      '("SETINTCHANNELING ([PropIntChannel(s1, s2, s3, ..., i3), PropIntChannel(s1, s2, s3, ..., i3), PropAllDisjoint(s1, s2, s3)])")
+      [($int :i1 [0 3])
        ($int :i2 [0 3])
        ($int :i3 [0 3])
        ($set :s1 [] [0 1 2 3])
@@ -1246,9 +1258,8 @@
 
     (is
      (compile-constraint?
-      '()
-      [($bools :a :b :c :d)
-       ($int :i1 [0 3])
+      '("SETINTCHANNELING ([PropIntChannel(s1, s2, s3, ..., i3), PropIntChannel(s1, s2, s3, ..., i3), PropAllDisjoint(s1, s2, s3)])")
+      [($int :i1 [0 3])
        ($int :i2 [0 3])
        ($int :i3 [0 3])
        ($set :s1 [] [0 1 2 3])

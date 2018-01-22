@@ -1,5 +1,5 @@
 (ns loco.compiler
-  (:refer-clojure :exclude [compile])
+  (:refer-clojure :exclude [compile ints])
   (:use loco.constraints
         loco.utils)
   (:require
@@ -457,11 +457,23 @@
       :guard [[s t] integer?, xs all-lookup-int-vars?]
       (.intValuePrecedeChain model (->> xs (map lookup-var) (into-array IntVar)) s t)
 
-      [:lex-chain-less vars] :guard [vars all-lookup-int-vars?]
-      (.lexChainLess model (->> vars (map lookup-var) (into-array IntVar)))
+      [:lex-chain-less vars-vectors]
+      :guard [vars-vectors [sequential? (p every? all-lookup-int-vars?)]]
+      (.lexChainLess model
+                     (->> vars-vectors
+                          (map (c
+                                (p into-array IntVar)
+                                (p map lookup-var)))
+                          into-array))
 
-      [:lex-chain-less-equal vars] :guard [vars all-lookup-int-vars?]
-      `(.lexChainLessEq ~model ~@(->> vars (map lookup-var) (into-array IntVar)))
+      [:lex-chain-less-equal vars-vectors]
+      :guard [vars-vectors [sequential? (p every? all-lookup-int-vars?)]]
+      (.lexChainLessEq model
+                       (->> vars-vectors
+                            (map (c
+                                  (p into-array IntVar)
+                                  (p map lookup-var)))
+                            into-array))
 
       [:lex-less [vars :lex-of lex-less-or-equal-vars]]
       :guard [[vars lex-less-or-equal] all-lookup-int-vars?]
@@ -648,13 +660,15 @@
                            (lookup-var set-var)
                            offset)
 
-      [:sets-ints-channeling [[:ints ints :offset offset-ints]
-                              [:sets sets :offset offset-set]]]
-      :guard [[ints sets] [sequential? (p every? lookup-set-var?)]
+      ;;[:sets-ints-channeling [:ints [:s1 :s2 :s3] :offset 1] [:sets [:i1 :i2 :i3] :offset 1]]
+
+      [:sets-ints-channeling [:sets sets :offset offset-set] [:ints ints :offset offset-ints]]
+      :guard [ints [sequential? all-lookup-int-vars?]
+              sets [sequential? all-lookup-set-vars?]
               [offset-set offset-inverse-set] integer?]
       (.setsIntsChanneling model
-                           (into-array SetVar (map lookup-var sets))
-                           (into-array IntVar (map lookup-var ints))
+                           (->> sets (map lookup-var) (into-array SetVar))
+                           (->> ints (map lookup-var) (into-array IntVar))
                            offset-set
                            offset-ints)
 

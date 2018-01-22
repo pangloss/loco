@@ -40,10 +40,10 @@
           (integer? offset-set)
           (sequential? inverse-sets)
           (sequential? sets)]}
-   [:constraints [:inverse [[:inverse-sets (vec inverse-sets)
-                             :offset (preserve-consts offset-invsere-set)]
-                            [:sets (vec sets)
-                             :offset (preserve-consts offset-set)]]]]))
+   [:constraint [:inverse [[:inverse-sets (vec inverse-sets)
+                            :offset (preserve-consts offset-invsere-set)]
+                           [:sets (vec sets)
+                            :offset (preserve-consts offset-set)]]]]))
 
 (defn nb-empty
   "Creates a constraint counting the number of empty sets sets |{s in sets where |s|=0}| = nbEmpty"
@@ -127,7 +127,7 @@
   {:choco "allDisjoint(SetVar... sets)"}
   [& sets]
   (match (vec sets)
-         [set-list :guard sequential?] [:constraints [:all-disjoint (vec set-list)]]
+         [set-list :guard sequential?] [:constraint [:all-disjoint (vec set-list)]]
          set-list (all-disjoint set-list)))
 
 (defn disjoint
@@ -150,10 +150,10 @@
   ([set-var bools] (set-bools-channeling set-var bools 0))
   ([set-var bools offset]
    {:pre [(integer? offset) (sequential? bools)]}
-   [:constraints [:set-bools-channeling
-                  [set-var
-                   [:channel (vec bools)]
-                   [:offset (preserve-consts offset)]]]]))
+   [:constraint [:set-bools-channeling
+                 [set-var
+                  [:channel (vec bools)]
+                  [:offset (preserve-consts offset)]]]]))
 
 (defn sets-ints-channeling
   "Creates a constraint channeling set variables and integer variables :
@@ -163,9 +163,9 @@
   x in sets[y-offset1] <=> ints[x-offset2] = y"
   {:choco ["setsIntsChanneling(SetVar[] sets, IntVar[] ints)"
            "setsIntsChanneling(SetVar[] sets, IntVar[] ints, int offset1, int offset2)"]}
-  ([ints sets] (sets-ints-channeling ints 0 sets 0))
-  ([ints offset-int sets offset-set]
+  ([sets ints] (sets-ints-channeling sets 0 ints 0))
+  ([sets offset-set ints offset-int]
    {:pre [(integer? offset-int) (integer? offset-set) (sequential? ints) (sequential? sets)]}
-   [:constraints [:sets-ints-channeling
-                  [[:ints (vec ints) :offset (preserve-consts offset-int)]
-                   [:sets (vec sets) :offset (preserve-consts offset-set)]]]]))
+   [:constraint [:sets-ints-channeling
+                 [:sets (vec sets) :offset (preserve-consts offset-set)]
+                 [:ints (vec ints) :offset (preserve-consts offset-int)]]]))
