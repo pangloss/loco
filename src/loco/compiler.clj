@@ -145,10 +145,12 @@
         set-var? (p instance? SetVar)
         bool-var? (p instance? BoolVar)
         task-var? (p instance? Task)
+        tuples-var? (p instance? Tuples)
         lookup-set-var? (c set-var? lookup-var-unchecked)
         lookup-int-var? (c int-var? lookup-var-unchecked)
         lookup-bool-var? (c bool-var? lookup-var-unchecked)
         lookup-task-var? (c task-var? lookup-var-unchecked)
+        lookup-tuples-var? (c tuples-var? lookup-var-unchecked)
         all-lookup-int-vars? (p every? lookup-int-var?)
         all-lookup-set-vars? (p every? lookup-set-var?)
         all-lookup-bool-vars? (p every? lookup-bool-var?)
@@ -548,6 +550,31 @@
                               :sweep-hei-sort Cumulative$Filter/SWEEP_HEI_SORT
                               :time Cumulative$Filter/TIME})
                         (into-array Cumulative$Filter)))
+
+      [:table [:vars vars] [:tuples tuples]]
+      :guard [tuples lookup-tuples-var?,
+              vars all-lookup-int-vars?]
+      (.table model (->> vars (map lookup-var) (into-array IntVar)) (lookup-var tuples))
+
+      [:table [:vars vars] [:tuples tuples] [:algo algo]]
+      :guard [tuples lookup-tuples-var?,
+              vars all-lookup-int-vars?,
+              algo #{:CT+ :GAC2001 :GAC2001+ :GAC3rm :GAC3rm+ :GACSTR+ :STR2+ :FC :MDD+}]
+      (.table model
+              (->> vars (map lookup-var) (into-array IntVar))
+              (lookup-var tuples)
+              (name algo))
+
+      [:table [:pair var1 var2] [:tuples tuples]]
+      :guard [tuples lookup-tuples-var?,
+              [var1 var2] lookup-int-var?]
+      (.table model (lookup-var var1) (lookup-var var2) (lookup-var tuples))
+
+      [:table [:pair var1 var2] [:tuples tuples] [:algo algo]]
+      :guard [tuples lookup-tuples-var?,
+              algo #{:AC2001 :AC3 :AC3rm :AC3bit+rm :FC}
+              [var1 var2] lookup-int-var?]
+      (.table model (lookup-var var1) (lookup-var var2) (lookup-var tuples) (name algo))
 
       ;; -------------------- LOGIC --------------------
       ;; handle boolean lists

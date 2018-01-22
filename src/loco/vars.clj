@@ -23,13 +23,39 @@
 
 ;; -------------------- Tuples --------------------
 (defn tuples
-  "Create a list of tuples which represents all allowed tuples if
+  "tuples act like a mask to be used with the table constraint.
+  tuples can define the explicit arbitrary values a collection of
+  variables can assume.
+  tuples can define the explicit arbitrary
+  values a collection of variables can not assume.
+
+  e.g. ($tuples [[1][2][3][4][5][6][7][8][9][0]])
+  a mask for 1 variable that enforces it must be one of 0-9.
+  when used with $table is equivalent to ($int 0 9)
+
+  e.g. ($tuples [[1][2][3][4][5][6][7][8][9][0]] false)
+  a mask for 1 variable that enforces it must not be one of 0-9.
+  when used with $table is equivalent to ($not ($int 0 9))
+
+  useful when you know the permutations the variables can take on
+  ahead of time, or require optimizations, or when you don't want to
+  declare the domain of your vars ahead of time, and use a table
+  instead.
+
+  Choco:
+  Create a list of tuples which represents all allowed tuples if
   feasible=true or a set of forbidden tuples if feasible=false."
   {:choco "Tuples(int[][] values, boolean feasible)"}
   ([var-name ints-lists] (tuples var-name ints-lists true))
   ([var-name ints-lists feasible?]
-   {:pre [(sequential? ints-lists) (every? (p every? int?) ints-lists) (boolean? feasible?)]}
-   [:var var-name :hidden [:tuples feasible? (mapv vec ints-lists)]]))
+   {:pre [(sequential? ints-lists)
+          (every? (p every? int?) ints-lists)
+          (apply = (map count ints-lists))
+          (boolean? feasible?)
+          (keyword? var-name) ;;not supporting crazy var names yet
+          ]}
+   [:var var-name :hidden [:tuples feasible? (mapv vec ints-lists)]]
+   ))
 
 ;; -------------------- Sets --------------------
 

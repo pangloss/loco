@@ -1,9 +1,4 @@
 ;;TODO: implement below constraint factory methods
-;; -------------------- TUPLE --------------------
-;; table(IntVar[] vars, Tuples tuples)
-;; table(IntVar[] vars, Tuples tuples, String algo)
-;; table(IntVar var1, IntVar var2, Tuples tuples)
-;; table(IntVar var1, IntVar var2, Tuples tuples, String algo)
 ;; -------------------- AUTOMATA --------------------
 ;; costRegular(IntVar[] vars, IntVar cost, ICostAutomaton costAutomaton)
 ;; multiCostRegular(IntVar[] vars, IntVar[] costVars, ICostAutomaton costAutomaton)
@@ -815,3 +810,70 @@ For example:
                               [:capacity capacity]
                               [:incremental incremental?]
                               [:filters (vec filters)]]]]))
+
+;; -------------------- TUPLE --------------------
+
+(defn $table
+  "
+  ;; table(IntVar[] vars, Tuples tuples)
+  ;; table(IntVar[] vars, Tuples tuples, String algo)
+
+  Creates a table constraint specifying that the sequence of variables
+  vars must belong to the list of tuples (or must NOT belong in case
+  of infeasible tuples) Default configuration with GACSTR+ algorithm
+  for feasible tuples and GAC3rm otherwise
+
+  Creates a table constraint, with the specified algorithm defined algo
+
+  - CT+: Compact-Table algorithm (AC),
+  - GAC2001: Arc Consistency version 2001 for tuples,
+  - GAC2001+: Arc Consistency version 2001 for allowed tuples,
+  - GAC3rm: Arc Consistency version AC3 rm for tuples,
+  - GAC3rm+ (default): Arc Consistency version 3rm for allowed tuples,
+  - GACSTR+: Arc Consistency version STR for allowed tuples,
+  - STR2+: Arc Consistency version STR2 for allowed tuples,
+  - FC: Forward Checking.
+  - MDD+: uses a multi-valued decision diagram for allowed tuples (see mddc constraint),
+
+  ----------------------------------------
+
+  ;; table(IntVar var1, IntVar var2, Tuples tuples)
+  ;; table(IntVar var1, IntVar var2, Tuples tuples, String algo)
+
+  Creates a table constraint over a couple of variables var1 and var2:
+  - AC2001: table constraint which applies the AC2001 algorithm,
+  - AC3: table constraint which applies the AC3 algorithm,
+  - AC3rm: table constraint which applies the AC3 rm algorithm,
+  - AC3bit+rm (default): table constraint which applies the AC3 bit+rm algorithm,
+  - FC: table constraint which applies forward checking algorithm."
+
+  {:choco ["table(IntVar[] vars, Tuples tuples)"
+           "table(IntVar[] vars, Tuples tuples, String algo)"
+           "table(IntVar var1, IntVar var2, Tuples tuples)"
+           "table(IntVar var1, IntVar var2, Tuples tuples, String algo)"
+           ]
+   :arglists '([int-vars tuples]
+               [int-vars tuples algo]
+               [int-var1 int-var2 tuples]
+               [int-var1 int-var2 tuples algo])
+   }
+  [& more]
+  (match+
+   (vec more)
+   [int-vars tuples] :guard [int-vars sequential?]
+   [:constraint [:table [:vars (vec int-vars)] [:tuples tuples]]]
+
+   [int-vars tuples algo]
+   :guard [int-vars sequential?
+           algo #{:CT+ :GAC2001 :GAC2001+ :GAC3rm :GAC3rm+ :GACSTR+ :STR2+ :FC :MDD+}]
+   [:constraint [:table [:vars (vec int-vars)] [:tuples tuples] [:algo algo]]]
+
+   [int-var1 int-var2 tuples] :guard [[int-var1 int-var2] keyword?]
+   [:constraint [:table [:pair int-var1 int-var2] [:tuples tuples]]]
+
+   [int-var1 int-var2 tuples algo]
+   :guard [[int-var1 int-var2] keyword?
+           algo #{:AC2001 :AC3 :AC3rm :AC3bit+rm :FC}]
+   [:constraint [:table [:pair int-var1 int-var2] [:tuples tuples] [:algo algo]]]
+   )
+  )

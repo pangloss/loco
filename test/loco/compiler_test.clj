@@ -910,6 +910,55 @@
        ]
       ))
     )
+
+  (testing "table"
+    (is
+     (compile-constraint?
+      '("TABLE ([CSPLarge({a = {0..20}, })])")
+      [($int :a 0 20)
+       ($tuples :mask-0-9 [[1][2][3][4][5][6][7][8][9][0]])
+       ($table [:a] :mask-0-9)
+       ]
+      ))
+
+    (is
+     (compile-constraint?
+      '("TABLE ([CSPLarge({a = {0..20}, })])")
+      [($int :a 0 20)
+       ($tuples :mask-0-9 [[1][2][3][4][5][6][7][8][9][0]] false)
+       ($table [:a] :mask-0-9)
+       ]
+      ))
+
+    (is
+     (compile-constraint?
+      '("TABLE ([PropCompactTable(a)])")
+      [($int :a 0 20)
+       ($tuples :mask-0-9 [[1][2][3][4][5][6][7][8][9][0]])
+       ($table [:a] :mask-0-9 :CT+)
+       ]
+      ))
+
+    (is
+     (compile-constraint?
+      '("TABLE ([PropBinAC3bitrm(a, b)])")
+      [($int :a 0 20)
+       ($int :b 0 20)
+       ($tuples :mask [[1 9][2 8][3 7][4 6][5 5][6 4][7 3][8 2][9 1][0 0]])
+       ($table :a :b :mask)
+       ]
+      ))
+
+    (is
+     (compile-constraint?
+      '("TABLE ([PropBinAC3rm(a, b)])")
+      [($int :a 0 20)
+       ($int :b 0 20)
+       ($tuples :mask [[1 9][2 8][3 7][4 6][5 5][6 4][7 3][8 2][9 1][0 0]])
+       ($table :a :b :mask :AC3rm)
+       ]
+      ))
+    )
   )
 
 (deftest logic-compile-test
