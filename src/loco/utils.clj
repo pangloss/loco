@@ -54,3 +54,14 @@
    coll
    (map (juxt f identity))
    (into {})))
+
+(defn reverse-map [map]
+  (reduce (fn [acc [key val]]
+            (assoc acc val key)) {} map))
+
+(defn split [pred coll]
+  [
+   (filter pred coll)
+   (remove pred coll)
+   ]
+  )

@@ -104,18 +104,6 @@
      (conj vars var)
      model]))
 
-;;TODO: refactor these boolean optimizations, they are all the same
-(defn- sum-constraint
-  "this handles the IntVar and BoolVar arguments method dispatching for Model.sum"
-  [model sum-vars op eq-var]
-  (if-let [homogeneous? (->> sum-vars (map class) (apply =))]
-    (.sum model (into-array sum-vars) (name op) eq-var)
-    (let [casted-to-intvars (map #(cast IntVar %) sum-vars)]
-      (.sum model
-            (into-array IntVar casted-to-intvars)
-            (name op)
-            eq-var))))
-
 (defn- min-constraint
   "this handles the IntVar and BoolVar arguments method dispatching for Model.min"
   [model eq-var min-vars]
@@ -159,18 +147,12 @@
         all-set-vars? (p every? set-var?)
         all-bool-vars? (p every? bool-var?)
         ]
-    (->
-     statement
-     (match [:constraint constraint] constraint)
+    (match
+     [statement (meta statement)]
+     [[:constraint constraint] {:compiler compiler}] (compiler model vars-index constraint)
+     [[:constraint ?constraint] _]
      (match+
-      [:sum [(set-var :guard lookup-set-var?) := eq-var]]
-      (.sum model (lookup-var set-var) (lookup-var eq-var))
-
-      [:sum [eq-var := (set-var :guard lookup-set-var?)]]
-      (.sum model (lookup-var set-var) (lookup-var eq-var))
-
-      [:sum [eq-var op (sum-vars :guard vector?)]]
-      (sum-constraint model (map lookup-var sum-vars) (name op) (lookup-var eq-var))
+      ?constraint
 
       [:arithm [comp-var comp-op var1 op var2]]
       (.arithm model

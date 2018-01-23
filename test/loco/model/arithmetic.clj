@@ -1,4 +1,5 @@
 (ns ^:model loco.model.arithmetic
+  (:require [loco.model :as model])
   (:use clojure.test
         loco.model.test
         loco.constraints))
@@ -63,6 +64,19 @@
    [($in :x 0 5)
     ($in :y 0 5)
     ($sum 10 := [:x :y 5])])
+
+  (are [expected input] (= expected
+                           (->> input model/compile
+                                (map (juxt identity (comp vec keys meta)))))
+    '([[:var :x :public [:bool 0 1]] []]
+      [[:var :y :public [:bool 0 1]] []]
+      [[:var :z :public [:bool 0 1]] []]
+      [[:var :1 :hidden [:const 1]] []]
+      [[:constraint [:sum [:1 := [:x :y :z]]]] [:compiler]])
+    [($bool :x)
+     ($bool :y)
+     ($bool :z)
+     ($sum 1 := [:x :y :z])])
 
   (compiled-assert
    [[:var :x :public [:int 0 5]]

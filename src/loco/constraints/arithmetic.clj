@@ -3,11 +3,9 @@
   (:use loco.utils
         loco.constraints.utils)
   (:require [clojure.core.match :refer [match]]
-            [defun.core :refer [defun]]))
-
-
-;;TODO: implement below functions
-;; square(IntVar var1, IntVar var2)
+            [defun.core :refer [defun]]
+            [loco.match :refer [match+]]
+            [loco.constraints.sum :refer [sum]]))
 
 (defn square
   "Creates a square constraint: result = dependency^2"
@@ -91,26 +89,6 @@
   to equal (x - y - z - ...)"
   ([& args]
    [:constraint :partial [:- (vec args)]]))
-
-(defn sum
-  "Creates a sum constraint. Enforces that ∑i in |vars|varsi operator sum
-  Creates a constraint summing elements of set sum{i | i in set} = sum"
-  {:choco ["sum(IntVar[] vars, String operator, IntVar sum)"
-           "sum(SetVar set, IntVar sum)"]
-   :partial true}
-  ([vars]
-   {:pre [(sequential? vars)]}
-   [:constraint :partial [:+ vars]]) ;; this is named differently
-                                       ;; because it creates nice var
-                                       ;; names. gets converted into a
-                                       ;; :sum at compile step
-
-  ([summation set-var]
-   [:constraint [:sum [summation := set-var]]])
-
-  ([summation operator vars]
-   {:pre [(sequential? vars) (comparison-operator? operator)]}
-   [:constraint [:sum [summation operator vars]]]))
 
 (defn +
   "Takes a combination of int-vars and numbers, and returns another

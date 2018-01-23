@@ -161,12 +161,16 @@
                  [:reify var-name constraint]
                  (let [[transformed-original & vars] (unnest-partial-vars constraint)]
                    (conj (vec vars)
-                         [:reify var-name [:constraint transformed-original]]))
+                         ;;updates data structure as below:
+                         ;;[:reify var-name [:constraint transformed-original]]
+                         (assoc-in statement [2 1] transformed-original)))
 
                  [:constraint _statement-args]
                  (let [[transformed-original & vars] (unnest-partial-vars statement)]
                    (conj (vec vars)
-                         [:constraint transformed-original])))))))
+                         ;;updates data structure as below:
+                         ;;[:constraint transformed-original]
+                         (assoc statement 1 transformed-original))))))))
 
 (defn- const-transform [statement]
   (let [acc (atom [])
@@ -275,10 +279,6 @@
           (into [($element var-name vars index offset)]))
 
       :else [statement]))))
-
-
-
-;;TODO: add a deps meta tag to partial constraints!
 
 (defn- lb-ub-seq [domains]
   (->>
@@ -546,7 +546,9 @@
   (->> ast
        (every? (comp #{:constraint :var :reify} first))))
 
-(defn- create-variable-name-replacement-map [ast]
+(defn- create-variable-name-replacement-map
+  "This is used for replacing object-var-names with strings"
+  [ast]
   (->>
    ast
    ((juxt (p filter var?) (p filter reify?)))
@@ -557,10 +559,6 @@
                           (str %))))
    (remove (p apply =))
    (into {})))
-
-(defn- reverse-map [map]
-  (reduce (fn [acc [key val]]
-            (assoc acc val key)) {} map))
 
 (defn compile
   "take in a representation of a model, a list of maps created using the
@@ -577,9 +575,10 @@
                                  [%])
         flattened-problem (mapcat unnest-generated-vars problem)
         var-name-obj-to-str-mapping (create-variable-name-replacement-map flattened-problem)
-        proto-ast (->> flattened-problem
-                 (walk/prewalk-replace var-name-obj-to-str-mapping)
-                 to-ast)
+        replaced-crazy-var-names (->> flattened-problem
+                                      (walk/prewalk-replace var-name-obj-to-str-mapping)
+                                      )
+        proto-ast (to-ast replaced-crazy-var-names) ;;problem
         ast (->> proto-ast domain-transform)
         ]
 

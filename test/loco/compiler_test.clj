@@ -140,14 +140,6 @@
       ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
       ($sum :sum :set)])
 
-    (constraints-assert
-     '("SETSUM ([PropSumOfElements(set, sum)])")
-     [($in :sum 0 10)
-      ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
-      ($sum :set :sum)]
-     "should be able to reverse sum/set vars for $sum"
-     )
-
     )
 
   (testing "arithm"
@@ -208,13 +200,15 @@
     )
 
   (testing "subtration"
-    (constraints-assert
-     '("SUM ([PropXplusYeqZ(y, -(x), y-x)])"
-       "SUM ([PropXplusYeqZ(x, -(y-x), x-y-x)])"
-       "ARITHM ([x-y-x = 5])")
-     [($in :x 0 5)
-      ($in :y 0 5)
-      ($= 5 ($- :x ($- :y :x)))]))
+    (are [expected input] (= expected
+                             (->> input model/compile compiler/compile :model .getCstrs (map str)))
+
+      '("SUM ([PropXplusYeqZ(y, -(x), y-x)])"
+        "SUM ([PropXplusYeqZ(x, -(y-x), x-y-x)])"
+        "ARITHM ([x-y-x = 5])")
+      [($in :x 0 5)
+       ($in :y 0 5)
+       ($= 5 ($- :x ($- :y :x)))]))
 
   (testing "div"
     (constraints-assert
