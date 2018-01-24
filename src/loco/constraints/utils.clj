@@ -10,5 +10,29 @@
          :else val
          ))
 
-(def comparison-operator? #{:= :> :< :!= :>= :<=})
-(def arithmetic-operator? #{:+ :* :/ :-})
+(defn constraint [input]
+  {:pre [(vector? input)]}
+  [:constraint input])
+
+(defn partial-constraint [input]
+  {:pre [(vector? input)]}
+  [:constraint :partial input])
+
+
+(def comparison-operator? (sorted-set := :> :< :!= :>= :<=))
+(def arithmetic-operator? (sorted-set :+ :* :/ :-))
+
+(def qualified-comparison-operator? (->>
+                                     comparison-operator?
+                                     (map #(keyword "op" (name %)))
+                                     (into (sorted-set))))
+
+(def qualified-arithmetic-operator? (->>
+                                     arithmetic-operator?
+                                     (map #(keyword "op" (name %)))
+                                     (into (sorted-set))))
+
+(def qualified-operator-map
+  (zipmap
+   comparison-operator?
+   qualified-comparison-operator?))

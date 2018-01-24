@@ -13,8 +13,8 @@
     [:var :y-x :proto [:int -5 5]]
     [:var :-y-x :proto [:int -5 5]]
     [:var :x-y-x :proto [:int -5 10]]
-    [:constraint [:sum [:y-x := [:y :-x]]]]
-    [:constraint [:sum [:x-y-x := [:x :-y-x]]]]
+    [:constraint [:con/sum [:y-x :op/= [:y :-x]]]]
+    [:constraint [:con/sum [:x-y-x :op/= [:x :-y-x]]]]
     [:constraint [:arithm [:5 := :x-y-x]]]]
 
    [($in :x 0 5)
@@ -33,8 +33,8 @@
     [:var :-3 :proto [:const -3]]
     [:var :-y-x-7 :proto [:int 2 12]]
     [:var :x-3-y-x-7 :proto [:int -1 14]]
-    [:constraint [:sum [:y-x-7 := [:y :-x :-7]]]]
-    [:constraint [:sum [:x-3-y-x-7 := [:x :-3 :-y-x-7]]]]
+    [:constraint [:con/sum [:y-x-7 :op/= [:y :-x :-7]]]]
+    [:constraint [:con/sum [:x-3-y-x-7 :op/= [:x :-3 :-y-x-7]]]]
     [:constraint [:arithm [:5 := :x-3-y-x-7]]]]
 
    [($in :x 0 5)
@@ -47,36 +47,12 @@
     [:var :10 :hidden [:const 10]]
     [:var :5 :hidden [:const 5]]
     [:var :x+y+5 :proto [:int 5 15]]
-    [:constraint [:sum [:x+y+5 := [:x :y :5]]]]
+    [:constraint [:con/sum [:x+y+5 :op/= [:x :y :5]]]]
     [:constraint [:arithm [:10 := :x+y+5]]]]
 
    [($in :x 0 5)
     ($in :y 0 5)
     ($= 10 ($+ :x :y 5))])
-
-  (compiled-assert
-   [[:var :x :public [:int 0 5]]
-    [:var :y :public [:int 0 5]]
-    [:var :10 :hidden [:const 10]]
-    [:var :5 :hidden [:const 5]]
-    [:constraint [:sum [:10 := [:x :y :5]]]]]
-
-   [($in :x 0 5)
-    ($in :y 0 5)
-    ($sum 10 := [:x :y 5])])
-
-  (are [expected input] (= expected
-                           (->> input model/compile
-                                (map (juxt identity (comp vec keys meta)))))
-    '([[:var :x :public [:bool 0 1]] []]
-      [[:var :y :public [:bool 0 1]] []]
-      [[:var :z :public [:bool 0 1]] []]
-      [[:var :1 :hidden [:const 1]] []]
-      [[:constraint [:sum [:1 := [:x :y :z]]]] [:compiler]])
-    [($bool :x)
-     ($bool :y)
-     ($bool :z)
-     ($sum 1 := [:x :y :z])])
 
   (compiled-assert
    [[:var :x :public [:int 0 5]]
@@ -171,8 +147,8 @@
     [:var :x-y :proto [:int -5 5]]
     [:var :-x :proto [:int -5 0]]
     [:var :y-x :proto [:int -5 5]]
-    [:constraint [:sum [:x-y := [:x :-y]]]]
-    [:constraint [:sum [:y-x := [:y :-x]]]]
+    [:constraint [:con/sum [:x-y :op/= [:x :-y]]]]
+    [:constraint [:con/sum [:y-x :op/= [:y :-x]]]]
     [:constraint [:all-equal [:5 :x-y :y-x]]]]
 
    [($in :_a 1)
@@ -188,36 +164,24 @@
     [:var :5 :hidden [:const 5]]
     [:var :-5 :proto [:const -5]]
     [:var :x-5 :proto [:int -5 0]]
-    [:constraint [:sum [:x-5 := [:x :-5]]]]
+    [:constraint [:con/sum [:x-5 :op/= [:x :-5]]]]
     [:constraint [:arithm [:x-5 := 0]]]]
    [($in :x 0 5)
     ($= ($- :x 5) 0)])
 )
 
-(deftest $sum-test
-  (compiled-assert
-   [[:var :x :public [:bool 0 1]]
-    [:var :y :public [:bool 0 1]]
-    [:var :2 :hidden [:const 2]]
-    [:var :x+y :proto [:int 0 2]]
-    [:constraint [:sum [:x+y := [:x :y]]]]
-    [:constraint [:arithm [:2 := :x+y]]]]
+(deftest partial-+-model-test
+  (are [expected input] (= expected (->> input model/compile))
+    [[:var :x :public [:bool 0 1]]
+     [:var :y :public [:bool 0 1]]
+     [:var :2 :hidden [:const 2]]
+     [:var :x+y :proto [:int 0 2]]
+     [:constraint [:con/sum [:x+y :op/= [:x :y]]]]
+     [:constraint [:arithm [:2 := :x+y]]]]
 
-   [($bool :x)
-    ($bool :y)
-    ($= 2 ($+ :x :y))])
-
-  (compiled-assert
-   [[:var :x :public [:bool 0 1]]
-    [:var :y :public [:bool 0 1]]
-    [:var :z :public [:bool 0 1]]
-    [:var :1 :hidden [:const 1]]
-    [:constraint [:sum [:1 := [:x :y :z]]]]]
-
-   [($bool :x)
-    ($bool :y)
-    ($bool :z)
-    ($sum 1 := [:x :y :z])])
+    [($bool :x)
+     ($bool :y)
+     ($= 2 ($+ :x :y))])
   )
 
 (deftest $arithm-test

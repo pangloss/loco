@@ -45,7 +45,7 @@
     [:var :c :public [:int 0 9]]
     [:var :4 :hidden [:const 4]]
     [:var :a+b :proto [:int 0 18]]
-    [:constraint [:sum [:a+b := [:a :b]]]]
+    [:constraint [:con/sum [:a+b :op/= [:a :b]]]]
     [:constraint [:distinct [:a :b :c :4 :a+b]]]]
 
    [($in :a 0 9)

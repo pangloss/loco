@@ -111,36 +111,7 @@
   )
 
 (deftest compiling-constraints-test
-  (testing "sum"
-    (constraints-assert
-     '("SUM ([z + y + x = 1])")
-     [($bool :x)
-      ($bool :y)
-      ($bool :z)
-      ($sum 1 := [:x :y :z])]
-     "should handle list of booleans")
 
-    (constraints-assert
-     '("SUM ([z + y + x = 2])")
-     [($in :x 1 2)
-      ($in :y 1 2)
-      ($in :z 1 2)
-      ($sum 2 := [:x :y :z])])
-
-    (constraints-assert
-     '("SUM ([z + y + x = 2])")
-     [($in :x 1 2)
-      ($bool :y)
-      ($in :z 1 2)
-      ($sum 2 := [:x :y :z])])
-
-    (constraints-assert
-     '("SETSUM ([PropSumOfElements(set, sum)])")
-     [($in :sum 0 10)
-      ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
-      ($sum :sum :set)])
-
-    )
 
   (testing "arithm"
     (constraints-assert
