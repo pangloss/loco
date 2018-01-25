@@ -39,8 +39,15 @@
            (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 (defn sum
-  "Creates a sum constraint. Enforces that ∑i in |vars|varsi operator sum
-  Creates a constraint summing elements of set sum{i | i in set} = sum"
+  "Creates a sum constraint.
+
+  constrain a var to be compared to the sum of a set or list of integers or booleans
+
+  summation = IntVar
+  set-var   = SetVar
+  vars      = IntVar[] | BoolVar[]
+
+  operator  of #{:= :> :< :!= :>= :<=}"
   {:choco ["sum(BoolVar[] vars, String operator, IntVar sum)"
            "sum(IntVar[]  vars, String operator, IntVar sum)"
            "sum(SetVar set, IntVar sum)"]
