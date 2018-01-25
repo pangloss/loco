@@ -30,7 +30,8 @@
         'loco.vars
         'loco.constraints.arithmetic
         'loco.constraints.set
-        'loco.constraints.sum]
+        'loco.constraints.sum
+        'loco.constraints.arithm]
        (map ns-publics)
        (into {})))
 

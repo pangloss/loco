@@ -26,7 +26,7 @@
     [:var :x :public [:int 0 5]]
     [:var :min_x_y :proto [:int 0 5]]
     [:constraint [:min [:min_x_y [:of [:x :y]]]]]
-    [:constraint [:arithm [:z := :min_x_y]]]]
+    [:constraint [:con/arithm [:z :op/= :min_x_y]]]]
 
    [($in :y 0 10)
     ($in :z 0 1)
@@ -83,7 +83,7 @@
     [:var :x :public [:int 0 5]]
     [:var :max_x_y :proto [:int 0 10]]
     [:constraint [:max [:max_x_y [:of [:x :y]]]]]
-    [:constraint [:arithm [:z := :max_x_y]]]]
+    [:constraint [:con/arithm [:z :op/= :max_x_y]]]]
 
    [($in :y 0 10)
     ($in :z 0 1)
@@ -142,7 +142,7 @@
     [:var :555 :hidden [:const 555]]
     [:var :scalar_1922668695 :proto [:int -136 1026]]
     [:constraint [:scalar [:scalar_1922668695 := [:1s :10s :100s :1s :1s :1s] [1 10 100 1 1 1]]]]
-    [:constraint [:arithm [:555 := :scalar_1922668695]]]]
+    [:constraint [:con/arithm [:555 :op/= :scalar_1922668695]]]]
 
    [($in :1s -1 9)
     ($in :10s 0 9)
@@ -157,7 +157,7 @@
     [:var :555 :hidden [:const 555]]
     [:var :scalar_1s*1+10s*10+100s*100 :proto [:int -109 999]]
     [:constraint [:scalar [:scalar_1s*1+10s*10+100s*100 := [:1s :10s :100s] [1 10 100]]]]
-    [:constraint [:arithm [:555 := :scalar_1s*1+10s*10+100s*100]]]]
+    [:constraint [:con/arithm [:555 :op/= :scalar_1s*1+10s*10+100s*100]]]]
 
    [($in :1s -1 9)
     ($in :10s 0 9)
@@ -172,7 +172,7 @@
     [:var :scalar_1*1+2*10+3*100 :proto [:int 14 321]]
     [:constraint
      [:scalar [:scalar_1*1+2*10+3*100 := [:1 :2 :3] [1 10 100]]]]
-    [:constraint [:arithm [:555 := :scalar_1*1+2*10+3*100]]]]
+    [:constraint [:con/arithm [:555 :op/= :scalar_1*1+2*10+3*100]]]]
 
    [($= 555 ($scalar [1 2 3] [1 10 100]))])
 

@@ -154,20 +154,6 @@
      (match+
       ?constraint
 
-      [:arithm [comp-var comp-op var1 op var2]]
-      (.arithm model
-               (lookup-var comp-var)
-               (name comp-op)
-               (lookup-var var1)
-               (name op)
-               (lookup-var var2))
-
-      [:arithm [comp-var comp-op var]]
-      (.arithm model
-               (lookup-var comp-var)
-               (name comp-op)
-               (lookup-var var))
-
       [:times [comp-var := var1 :* var2]]
       (.times model
                (lookup-var var1)

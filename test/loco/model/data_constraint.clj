@@ -48,8 +48,8 @@
        [:at :index]
        [:offset 0]]]]
     [:constraint
-     [:arithm
-      [:4 := :$nth_:a_:2_:3_:4_:5_:at_:index_:offset_0]]]]
+     [:con/arithm
+      [:4 :op/= :$nth_:a_:2_:3_:4_:5_:at_:index_:offset_0]]]]
 
    [($in :a 100 200)
     ($in :index 0 5)
@@ -68,7 +68,7 @@
        [:at :index]
        [:offset 0]]]]
     [:constraint
-     [:arithm [:4 := :$nth_1_2_3_5_8_13_:at_:index_:offset_0]]]]
+     [:con/arithm [:4 :op/= :$nth_1_2_3_5_8_13_:at_:index_:offset_0]]]]
 
    [($in :index 0 5)
     ($= 4 ($nth [1 2 3 5 8 13] :index))])
@@ -84,7 +84,7 @@
        [:at :index]
        [:offset 2]]]]
     [:constraint
-     [:arithm [:4 := :$nth_1_2_3_5_8_13_:at_:index_:offset_2]]]]
+     [:con/arithm [:4 :op/= :$nth_1_2_3_5_8_13_:at_:index_:offset_2]]]]
 
    [($in :index 0 2)
     ($= 4 ($nth [1 2 3 5 8 13] :index 2))])
@@ -98,7 +98,7 @@
                 [:in [1 2 3 4 5 3 4 5 6 7 8 9]]
                 [:at :index]
                 [:offset 2]]]]
-    [:constraint [:arithm [:4 := :$nth_473901430]]]]
+    [:constraint [:con/arithm [:4 :op/= :$nth_473901430]]]]
 
    [($in :index 0 2)
     ($= 4 ($nth [1 2 3 4 5 3 4 5 6 7 8 9] :index 2))])
@@ -113,7 +113,7 @@
                    [:at :index]
                    [:offset 0]]]]
     [:constraint
-     [:arithm [:array-val := :$nth_1_2_3_4_5_:at_:index_:offset_0]]]]
+     [:con/arithm [:array-val :op/= :$nth_1_2_3_4_5_:at_:index_:offset_0]]]]
 
    [($in :index 0 2)
     ($in :array-val 1 5)

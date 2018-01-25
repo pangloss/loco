@@ -113,20 +113,7 @@
 (deftest compiling-constraints-test
 
 
-  (testing "arithm"
-    (constraints-assert
-     '("DIVISION ([PropDivXYZ(x, cste -- 10, IV_1, ..., IV_1)])"
-       "ARITHM ([prop(y.EQ.IV_1)])")
-     [($in :x 0 100)
-      ($in :y 0 10)
-      ($arithm :y := :x :/ 10)])
 
-    (constraints-assert
-     '("ARITHM ([prop(y.EQ.x)])")
-     [($in :x 0 100)
-      ($in :y 0 10)
-      ($arithm :y := :x)])
-    )
 
   (testing "times"
     (constraints-assert

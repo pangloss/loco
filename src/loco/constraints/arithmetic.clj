@@ -5,30 +5,13 @@
   (:require [clojure.core.match :refer [match]]
             [defun.core :refer [defun]]
             [loco.match :refer [match+]]
-            [loco.constraints.sum :refer [sum]]))
+            [loco.constraints.sum :refer [sum]]
+            [loco.constraints.arithm :refer [arithm]]))
 
 (defn square
   "Creates a square constraint: result = dependency^2"
   [result dependency]
   [:constraint [:square [result dependency]]])
-
-(defn arithm
-  "similar to choco arithm. lets you use division with an IntVar. other
-  than that it is a shortcut for having a compare and operation in 1
-  instruction. lets you write a = b + c. allowed operators are
-  #{:+ :* :/ :-}, allowed comparisons are #{:= :> :< :!= :>= :<=}
-  a, b and c are allowed to be partial constraints"
-  {:choco ["arithm(IntVar var,  String op,  int cste)"
-           "arithm(IntVar var1, String op,  IntVar var2)"
-           "arithm(IntVar var1, String op1, IntVar var2, String op2, int cste)"
-           "arithm(IntVar var1, String op1, IntVar var2, String op2, IntVar var3)"]}
-  ([a compare b]
-   {:pre [(comparison-operator? compare)]}
-   [:constraint [:arithm [a compare (preserve-consts b)]]])
-
-  ([a compare b op c]
-   {:pre [(comparison-operator? compare) (arithmetic-operator? op)]}
-   [:constraint [:arithm [a compare b op (preserve-consts c)]]]))
 
 ;;in clojure these are actually able to tell if the args are sorted...
 (defn <

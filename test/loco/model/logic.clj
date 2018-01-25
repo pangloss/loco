@@ -89,7 +89,7 @@
     [:var :2 :hidden [:const 2]]
     [:var :b+2 :proto [:int 2 4]]
     [:constraint [:con/sum [:b+2 :op/= [:b :2]]]]
-    [:reify :a [:constraint [:arithm [:c := :b+2]]]]]
+    [:reify :a [:constraint [:con/arithm [:c :op/= :b+2]]]]]
    [($in :b 0 2)
     ($in :c 0 2)
     ($reify :a ($= :c ($+ :b 2)))])
