@@ -154,9 +154,6 @@
      (match+
       ?constraint
 
-      [:div [result := numerator :/ denominator ]]
-      (.div model (lookup-var numerator) (lookup-var denominator) (lookup-var result))
-
       [:all-equal var-names]
       (match (mapv lookup-var var-names)
              (vars :guard (p every? int-var?))

@@ -9,10 +9,10 @@
    [loco.match :refer [match+]]
    [clojure.walk :as walk]))
 
-(def ^:private constraint-name :mod)
+(def ^:private constraint-name 'mod)
 
 (s/def ::compile-spec
-  (s/cat :constraint #{'mod}
+  (s/cat :constraint #{constraint-name}
          :args (s/spec
                 (s/tuple int-var? #{'=} int-var? #{'%} int-var?))))
 
@@ -37,7 +37,7 @@
    :partial true}
   ([eq = operand1 _% operand2] (mod eq operand1 operand2))
   ([eq operand1 operand2]
-   (-> (constraint ['mod [eq '= operand1 '% operand2]])
+   (-> (constraint [constraint-name [eq '= operand1 '% operand2]])
        (with-compiler compiler)))
   ([operand1 operand2]
    (partial-constraint [:% [operand1 operand2]])))

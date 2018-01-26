@@ -86,14 +86,6 @@
          [x y] [:constraint :partial [:* [x y]]]
          [x & more] [:constraint :partial [:* [x (apply * more)]]]))
 
-(defn div
-  "Creates an euclidean division constraint. Ensures dividend / divisor
-  = result, rounding towards 0 Also ensures divisor != 0"
-  {:choco "div(IntVar dividend, IntVar divisor, IntVar result)"}
-  ([dividend, divisor]
-   [:constraint :partial [:/ [dividend, divisor]]])
-  ([dividend, divisor, result]
-   [:constraint [:div [result := dividend :/ divisor]]]))
 
 (defn- min-partial [& vars]
   [:constraint :partial [:min (vec vars)]])

@@ -133,12 +133,7 @@
        ($in :y 0 5)
        ($= 5 ($- :x ($- :y :x)))]))
 
-  (testing "div"
-    (constraints-assert
-     '("DIVISION ([PropDivXYZ(x, y, 0, ..., cste -- 0)])")
-     [($in :x 5 5)
-      ($in :y 0 2)
-      ($div :x :y 0)]))
+
 
   (testing "square"
     (constraints-assert

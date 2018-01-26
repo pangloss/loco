@@ -86,7 +86,7 @@
      [:var :y :public [:int 0 2]]
      [:var :0 :hidden [:const 0]]
      [:var :x/y :proto [:int 2 5]]
-     [:constraint [:div [:x/y := :x :/ :y]]]
+     [:constraint ['div [:x/y '= :x '/ :y]]]
      [:constraint ['arithm [:0 '= :x/y]]]]
     [($in :x 5 5)
      ($in :y 0 2)
@@ -96,7 +96,7 @@
      [:var :y :public [:int -2 0]]
      [:var :0 :hidden [:const 0]]
      [:var :x/y :proto [:int -2 5]]
-     [:constraint [:div [:x/y := :x :/ :y]]]
+     [:constraint ['div [:x/y '= :x '/ :y]]]
      [:constraint ['arithm [:0 '= :x/y]]]]
     [($in :x  5 5)
      ($in :y -2 0)
@@ -106,7 +106,7 @@
      [:var :y :public [:int 2 2]]
      [:var :0 :hidden [:const 0]]
      [:var :x/y :proto [:int -2 2]]
-     [:constraint [:div [:x/y := :x :/ :y]]]
+     [:constraint ['div [:x/y '= :x '/ :y]]]
      [:constraint ['arithm [:0 '= :x/y]]]]
     [($in :x -5 5)
      ($in :y 2 2)

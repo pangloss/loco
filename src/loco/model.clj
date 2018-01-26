@@ -251,7 +251,7 @@
       [var-name [:/ [arg1 arg2]]]
       (-> []
           (into [statement])
-          (into [($div arg1 arg2 var-name)]))
+          (into [($div var-name arg1 arg2)]))
 
       [var-name [:abs [arg]]]
       (-> []
