@@ -31,7 +31,7 @@
   )
 
 (deftest search-monitor-tests
-  ;;TODO: implement
+  ;;TODO: implement search-monitors [limitSearch, setNogoodrecordingfromsolutions]
   ;;:limitSearch, ;; void <- limitSearch(Criterion aStopCriterion)
   ;;:setNoGoodRecordingFromSolutions ;; void <- setNoGoodRecordingFromSolutions(IntVar... vars)
   (def search-monitor-params

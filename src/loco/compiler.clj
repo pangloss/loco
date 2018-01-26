@@ -120,8 +120,10 @@
     (let [casted-to-intvars (map #(cast IntVar %) max-vars)]
       (.max model eq-var (into-array IntVar casted-to-intvars)))))
 
+;;TODO: use prewalk-replace?
 (defn compile-constraint-statement [vars-index model statement]
-  (let [lookup-var (partial lookup-var vars-index)
+  (let [
+        lookup-var (partial lookup-var vars-index)
         lookup-var-unchecked (partial lookup-var-unchecked vars-index)
         realize-nested-constraints (fn [constraints]
                                      (->> constraints
@@ -252,9 +254,9 @@
                         (->> vars (map lookup-var) (into-array IntVar))
                         offset
                         ({:all CircuitConf/ALL
-                           :first CircuitConf/FIRST
-                           :light CircuitConf/LIGHT
-                           :rd CircuitConf/RD
+                          :first CircuitConf/FIRST
+                          :light CircuitConf/LIGHT
+                          :rd CircuitConf/RD
                           } conf)))
 
       [:cardinality [vars [values occurrences] [:closed closed?]]]
@@ -482,13 +484,16 @@
                    (lookup-var capacity)
                    incremental?
                    (->> filters
-                        (map {:default Cumulative$Filter/DEFAULT
-                              :disjunctive-task-interval Cumulative$Filter/DISJUNCTIVE_TASK_INTERVAL
-                              :heights Cumulative$Filter/HEIGHTS
-                              :nrj Cumulative$Filter/NRJ
-                              :sweep Cumulative$Filter/SWEEP
-                              :sweep-hei-sort Cumulative$Filter/SWEEP_HEI_SORT
-                              :time Cumulative$Filter/TIME})
+                        (keep
+                         {
+                          :default                   Cumulative$Filter/DEFAULT
+                          :disjunctive-task-interval Cumulative$Filter/DISJUNCTIVE_TASK_INTERVAL
+                          :heights                   Cumulative$Filter/HEIGHTS
+                          :nrj                       Cumulative$Filter/NRJ
+                          :sweep                     Cumulative$Filter/SWEEP
+                          :sweep-hei-sort            Cumulative$Filter/SWEEP_HEI_SORT
+                          :time                      Cumulative$Filter/TIME
+                          })
                         (into-array Cumulative$Filter)))
 
       [:table [:vars vars] [:tuples tuples]]
@@ -632,8 +637,6 @@
                            (into-array BoolVar (map lookup-var bools))
                            (lookup-var set-var)
                            offset)
-
-      ;;[:sets-ints-channeling [:ints [:s1 :s2 :s3] :offset 1] [:sets [:i1 :i2 :i3] :offset 1]]
 
       [:sets-ints-channeling [:sets sets :offset offset-set] [:ints ints :offset offset-ints]]
       :guard [ints [sequential? all-lookup-int-vars?]

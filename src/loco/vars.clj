@@ -69,7 +69,9 @@
 ;; default SetVar[][] setVarMatrix(String name, int dim1, int dim2, int[] lb, int[] ub)
 ;; Creates a matrix of dim1*dim2 set variables, taking their domain in [lb, ub]
 
-(defn- upper-bound-contains-lower-bound? [lb ub]
+(defn- upper-bound-contains-lower-bound?
+  "when a set is instantiated, it will error if the upper bound does not contain the lower bound"
+  [lb ub]
   (every? (clojure.core/set ub) (clojure.core/set lb)))
 
 (defn set
@@ -147,7 +149,8 @@
 (reset-meta! (var bool-) (meta (var bool)))
 
 (defn bools
-  "Declares a list of booleans with given var-names"
+  "Declares a list of booleans with given var-names.
+  this is not a equivalent to a BoolVar[]"
   [& var-names]
   (->
    (mapv bool var-names)

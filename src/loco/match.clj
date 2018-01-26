@@ -2,6 +2,8 @@
   (:require [clojure.core.match :refer [match]]
             [clojure.walk :as walk]))
 
+;;TODO: add this syntax to defun, and improve arglists
+
 (defn guards-to-map
   "transforms a single matching clause (with new :guard syntax) into supported syntax
     e.g.: [sym _] :guard [sym [pred1 pred2]] return"

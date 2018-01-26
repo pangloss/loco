@@ -1,8 +1,9 @@
 (ns loco.model
   (:refer-clojure :exclude [compile var?])
-  (:use loco.constraints
-        loco.utils)
   (:require
+   [loco.utils :refer [c index-by p reverse-map remove-dupes-by
+                       debug-print]]
+   [loco.constraints :refer [$abs $div $element $max $min $mod $neg $scalar $sum $times]]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk]))
 
@@ -68,11 +69,12 @@
         (when (clojure.string/ends-with? str ":") true)
         )))
 
-#_[(nice-keyword-str? "re")
- (nice-keyword-str? ":re")
- (nice-keyword-str? ":re:")
- (nice-keyword-str? ":re[f]")
- ]
+#_(= [(nice-keyword-str? "re")
+       (nice-keyword-str? ":re")
+       (nice-keyword-str? ":re:")
+       (nice-keyword-str? ":re[f]")
+      ]
+     [true true false false])
 
 (defn constraint-to-keyword
   "takes an un-nested partial-constraint and tries to make a nice name
@@ -576,8 +578,8 @@
         flattened-problem (mapcat unnest-generated-vars problem)
         var-name-obj-to-str-mapping (create-variable-name-replacement-map flattened-problem)
         replaced-crazy-var-names (->> flattened-problem
-                                      (walk/prewalk-replace var-name-obj-to-str-mapping)
-                                      )
+                                      (walk/prewalk-replace var-name-obj-to-str-mapping))
+
         proto-ast (to-ast replaced-crazy-var-names) ;;problem
         ast (->> proto-ast domain-transform)
         ]

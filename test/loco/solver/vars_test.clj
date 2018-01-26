@@ -8,9 +8,12 @@
 (deftest solutions-var-test
   (testing "task-vars"
     (are [input expected] (= expected (solver/solutions input))
-      [($task :task [0 1] [0 1] [0 1])] '({:task {:start 0, :duration 0, :end 0}}
-                                          {:task {:start 0, :duration 1, :end 1}}
-                                          {:task {:start 1, :duration 0, :end 1}})
+
+      [($task :task [0 1] [0 1] [0 1])]
+
+      '({:task {:start 0, :duration 0, :end 0}}
+        {:task {:start 0, :duration 1, :end 1}}
+        {:task {:start 1, :duration 0, :end 1}})
 
       [($int- :start [0 1])
        ($int- :duration 0)
@@ -48,13 +51,14 @@
 
   (testing "int-vars"
     (are [input expected] (= expected (solver/solutions input))
-      [($const :a 0)]     '({:a 0})
-      [($const- :a 0)]    '({})
+      [($const :a 0)]            '({:a 0})
+      [($const- :a 0)]           '({})
       [($const- :aa 0)
-       ($const :a 0)]     '({:a 0})
-      [($int :a 0)]       '({:a 0})
-      [($int :a 0 4)]     '({:a 0} {:a 1} {:a 2} {:a 3} {:a 4})
-      [($int [:a 1] 0 2)] '({[:a 1] 0} {[:a 1] 1} {[:a 1] 2})
+       ($const :a 0)]            '({:a 0})
+      [($int :a 0)]              '({:a 0})
+      [($int :a 0 4)]            '({:a 0} {:a 1} {:a 2} {:a 3} {:a 4})
+      [($int :a [3 5 8 13])]     '({:a 3} {:a 5} {:a 8} {:a 13})
+      [($int [:a 1] 0 2)]        '({[:a 1] 0} {[:a 1] 1} {[:a 1] 2})
       )
     )
   )

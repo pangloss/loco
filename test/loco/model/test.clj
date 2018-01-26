@@ -4,7 +4,9 @@
   (:use clojure.test
         loco.utils))
 
-;;order of ast statements is very important... in the ast building process, not really after
+;;TODO: use clojure.test/assert-expr multi-method instead of custom macros
+
+;;TODO: replace with (are ...) statements
 (defmacro compiled-assert
   "used for testing model/compile"
   ([expected model-input msg]
@@ -16,6 +18,35 @@
 
   ([expected model-input]
    `(compiled-assert ~expected ~model-input nil)))
+
+(defmacro constraints-thrown-with-msg?
+  "used for testing compile chain model/compile -> compiler/compile
+  tests the constraints throw"
+  ([expected-class expected-msg actual-input]
+   `(constraints-thrown-with-msg? ~expected-class ~expected-msg ~actual-input nil))
+  ([expected-class expected-msg actual-input msg]
+   `(is
+     (thrown-with-msg?
+      ~expected-class
+      ~expected-msg
+      (->> ~actual-input
+           model/compile
+           compiler/compile))
+     ~msg)))
+
+(defmacro constraints-thrown?
+  "used for testing compile chain model/compile -> compiler/compile
+  tests the constraints throw"
+  ([expected-class actual-input]
+   `(constraints-thrown? ~expected-class ~actual-input nil))
+  ([expected-class actual-input msg]
+   `(is
+     ('thrown?
+      ~expected-class
+      (->> ~actual-input
+           model/compile
+           compiler/compile))
+     ~msg)))
 
 (defmacro constraints-assert
   "used for testing compile chain model/compile -> compiler/compile
@@ -29,8 +60,8 @@
            model/compile
            compiler/compile
            :model
-           (.getCstrs)
-           (map (memfn toString))
+           .getCstrs
+           (map str)
            ))
      ~msg)))
 

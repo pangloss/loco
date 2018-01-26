@@ -59,8 +59,6 @@
   []
   [:constraint :false])
 
-;;TODO: there is also a boolean list form that can be useful to implement
-;;needs to be done at the compile phase, not here
 (defn $and
   "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if
   and only if every subconstraint is true."
@@ -70,7 +68,6 @@
   {:pre [(sequential? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:and (vec constraints-or-bools)]])
 
-;;TODO: there is also a boolean list form that can be useful to implement
 (defn $or
   "An \"or\" statement (i.e. \"PvQv...\"); this statement is true if and
   only if at least one subconstraint is true."
@@ -212,22 +209,6 @@ In other words, if P is true, Q must be true (otherwise the whole
 
 (def $all-different-except-0 $distinct-except-0)
 (reset-meta! (var $all-different-except-0) (meta (var $distinct-except-0)))
-
-;;TODO: implement allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)
-;;TODO: figure out how to convert a function into a Condition object
-;;http://www.choco-solver.org/apidocs/org/chocosolver/solver/constraints/nary/alldifferent/conditions/Condition.html
-;;possibly need to use reify
-#_(defn $distinct-under-condidiont
-  "Creates an allDifferent constraint subject to the given
-  condition. More precisely: IF singleCondition for all X,Y in vars,
-  condition(X) => X != Y ELSE for all X,Y in vars, condition(X) AND
-  condition(Y) => X != Y"
-  {:choco "allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)"}
-  [int-vars condition single-condition?]
-  {:pre [(sequential? int-vars)
-         (boolean? single-condition?)
-         (fn? condition)]}
-  )
 
 (defn $circuit
   "Given a list of int-vars L, and an optional offset number (default
@@ -746,24 +727,6 @@ In other words, if P is true, Q must be true (otherwise the whole
                  [(vec vars2) [:offset (preserve-consts offset2)]]]]))
 
 
-;;TODO: key-sort implementation requires int-var[][]
-#_(defn $key-sort
-  "Creates a keySort constraint which ensures that the variables of
-  SORTEDvars correspond to the variables of vars according to a
-  permutation stored in PERMvars (optional, can be null). The variables
-  of SORTEDvars are also sorted in increasing order wrt to K-size
-  tuples. The sort is stable, that is, ties are broken using the
-  position of the tuple in vars.
-
-
-For example:
-- vars= (<4,2,2>,<2,3,1>,<4,2,1><1,3,0>)
-- SORTEDvars= (<1,3,0>,<2,3,1>,<4,2,2>,<4,2,1>)
-- PERMvars= (2,1,3,0)
-- K = 2"
-  {:choco "keySort(IntVar[][] vars, IntVar[] PERMvars, IntVar[][] SORTEDvars, int K)"}
-  [])
-
 (defn $tree
   "Creates a tree constraint.
   Partition succs variables into nbTrees (anti) arborescences
@@ -782,7 +745,6 @@ For example:
                         [:offset (preserve-consts offset)]]]]))
 
 ;; -------------------- TASK --------------------
-
 
 (defn $cumulative
   "Creates a cumulative constraint: Enforces that at each point in
@@ -811,7 +773,8 @@ For example:
    {:pre
     [(sequential? filters)
      (every?
-      #{:default :disjunctive-task-interval :heights :nrj :sweep :sweep-hei-sort :time} filters)
+      #{:default :disjunctive-task-interval :heights :nrj :sweep :sweep-hei-sort :time}
+      filters)
      (sequential? tasks)
      (sequential? heights)
      (boolean? incremental?)]}
@@ -887,3 +850,48 @@ For example:
    [:constraint [:table [:pair int-var1 int-var2] [:tuples tuples] [:algo algo]]]
    )
   )
+
+;;TODO: implement below constraint factory methods
+;; -------------------- AUTOMATA --------------------
+;; costRegular(IntVar[] vars, IntVar cost, ICostAutomaton costAutomaton)
+;; multiCostRegular(IntVar[] vars, IntVar[] costVars, ICostAutomaton costAutomaton)
+;; -------------------- MDD --------------------
+;; mddc(IntVar[] vars, MultivaluedDecisionDiagram MDD)
+;; requires building a complex object of ints and tuples
+;;http://www.choco-solver.org/apidocs/org/chocosolver/util/objects/graphs/MultivaluedDecisionDiagram.html
+
+
+;;TODO: implement allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)
+;;TODO: figure out how to convert a function into a Condition object
+;;http://www.choco-solver.org/apidocs/org/chocosolver/solver/constraints/nary/alldifferent/conditions/Condition.html
+;;possibly need to use reify
+#_(defn $distinct-under-condidiont
+    "Creates an allDifferent constraint subject to the given
+  condition. More precisely: IF singleCondition for all X,Y in vars,
+  condition(X) => X != Y ELSE for all X,Y in vars, condition(X) AND
+  condition(Y) => X != Y"
+    {:choco "allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition)"}
+    [int-vars condition single-condition?]
+    {:pre [(sequential? int-vars)
+           (boolean? single-condition?)
+           (fn? condition)]}
+    )
+
+
+;;TODO: key-sort implementation requires int-var[][]
+#_(defn $key-sort
+    "Creates a keySort constraint which ensures that the variables of
+  SORTEDvars correspond to the variables of vars according to a
+  permutation stored in PERMvars (optional, can be null). The variables
+  of SORTEDvars are also sorted in increasing order wrt to K-size
+  tuples. The sort is stable, that is, ties are broken using the
+  position of the tuple in vars.
+
+
+For example:
+- vars= (<4,2,2>,<2,3,1>,<4,2,1><1,3,0>)
+- SORTEDvars= (<1,3,0>,<2,3,1>,<4,2,2>,<4,2,1>)
+- PERMvars= (2,1,3,0)
+- K = 2"
+    {:choco "keySort(IntVar[][] vars, IntVar[] PERMvars, IntVar[][] SORTEDvars, int K)"}
+    [])
