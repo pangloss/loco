@@ -122,7 +122,7 @@
      [:var :y-x :proto [:int -5 5]]
      [:constraint ['sum [:x-y '= [:x :-y]]]]
      [:constraint ['sum [:y-x '= [:y :-x]]]]
-     [:constraint [:all-equal [:5 :x-y :y-x]]]]
+     [:constraint ['all-equal [:5 :x-y :y-x]]]]
     [($in :_a 1)
      ($in :x 0 5)
      ($in :y 0 5)

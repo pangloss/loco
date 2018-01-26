@@ -12,12 +12,25 @@
          [_ {:preserve-consts true}] val
          [(val :guard number?) _] (with-meta [val] {:preserve-const true})
          [(val :guard vector?) _] (with-meta val {:preserve-consts true})
-         :else val
-         ))
+         :else val))
 
-(defn constraint [input]
-  {:pre [(vector? input)]}
-  [:constraint input])
+(defn- compiler [compiler]
+  {:compiler compiler})
+
+(defn with-compiler [obj compiler]
+  (with-meta obj {:compiler compiler}))
+
+(defn constraint
+  ([name input compiler]
+   {:pre [(vector? input)]}
+   (-> [:constraint [name input]]
+       (with-meta {:compiler compiler})))
+  ([name input]
+   {:pre [(vector? input)]}
+   [:constraint [name input]])
+  ([input]
+   {:pre [(vector? input)]}
+   [:constraint input]))
 
 (defn partial-constraint [input]
   {:pre [(vector? input)]}
@@ -107,9 +120,3 @@
           (->> statement
                (s/explain-data spec-name)
                convert-vars-to-strings))))
-
-(defn- compiler [compiler]
-  {:compiler compiler})
-
-(defn with-compiler [obj compiler]
-  (with-meta obj {:compiler compiler}))

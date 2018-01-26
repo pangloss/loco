@@ -154,14 +154,6 @@
      (match+
       ?constraint
 
-      [:all-equal var-names]
-      (match (mapv lookup-var var-names)
-             (vars :guard (p every? int-var?))
-             (.allEqual model (into-array IntVar vars))
-
-             (vars :guard (p every? set-var?))
-             (.allEqual model (into-array SetVar vars)))
-
       [:not-all-equal vars]
       (.notAllEqual model (->> vars (map lookup-var) (into-array IntVar)))
 

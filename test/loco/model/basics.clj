@@ -62,15 +62,12 @@
        [:var :z :public [:int 1 5]]
        [:var :a :public [:int 1 5]]
        [:var :b :public [:int 1 5]]
-       [:var :2 :hidden [:const 2]]
-       [:constraint [:all-equal [:z :2 :a :b]]]
        [:constraint [:not-all-equal [:x :y :z]]]]
       [($in :x 1 5)
        ($in :y 1 5)
        ($in :z 1 5)
        ($in :a 1 5)
        ($in :b 1 5)
-       ($= :z 2 :a :b)
        ($!= :x :y :z)]
 
       [[:var :7 :hidden [:const 7]]]
@@ -84,17 +81,6 @@
 
       [[:var :i :public [:int fib]]]
       [($in :i fib)]
-
-      [[:var :a :public [:int fib]]
-       [:var :b :public [:int fib]]
-       [:var :c :public [:int fib]]
-       [:var :b+c :proto [:int 2 26]]
-       [:constraint ['sum [:b+c '= [:b :c]]]]
-       [:constraint ['arithm [:a '= :b+c]]]]
-      [($in :a fib)
-       ($in :b fib)
-       ($in :c fib)
-       ($= :a ($+ :b :c))]
 
       [[:var :a :public [:int fib]]
        [:var :b :public [:int fib]]

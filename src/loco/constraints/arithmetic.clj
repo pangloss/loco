@@ -34,22 +34,6 @@
   [x y]
   (arithm x '>= y))
 
-(defn all-equal [vars]
-  {:pre [(vector? vars)]}
-  [:constraint [:all-equal vars]])
-
-(defn =
-  "Constrains that X = Y.
-
-  Creates a constraint stating that ints should be all equal.
-  Creates a constraint stating that sets should be all equal."
-  {:choco ["allEqual(IntVar... vars)"
-           "allEqual(SetVar... sets)"]}
-  [& more]
-  (let [morev (vec more)]
-    (match [morev]
-           [[x y]] (arithm x '= y)
-           :else   (all-equal morev))))
 
 (defn not-all-equal [vars]
   {:pre [(vector? vars)]}

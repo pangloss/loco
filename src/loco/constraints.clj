@@ -1,17 +1,20 @@
 (ns loco.constraints
   (:use loco.utils
         loco.constraints.utils)
-  (:require [clojure.core.match :refer [match]]
-            [loco.match :refer [match+]]
-            loco.automata
-            loco.constraints.arithmetic
-            loco.constraints.set
-            loco.vars
-            loco.constraints.times
-            loco.constraints.mod
-            loco.constraints.abs
-            loco.constraints.div
-            )
+  (:require
+   [clojure.core.match :refer [match]]
+   [loco.match :refer [match+]]
+   loco.automata
+   loco.vars
+   loco.constraints.arithmetic
+   loco.constraints.set
+   loco.constraints.times
+   loco.constraints.mod
+   loco.constraints.abs
+   loco.constraints.div
+   loco.constraints.all-equal
+
+   )
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
 
 (defn- inherit-def [prefix sym var-to-inherit]
@@ -32,6 +35,8 @@
         'loco.constraints.mod
         'loco.constraints.abs
         'loco.constraints.div
+        'loco.constraints.all-equal
+
         ]
        (map ns-publics)
        (into {})))
