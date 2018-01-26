@@ -241,7 +241,7 @@
       [var-name [:% [arg1 arg2]]]
       (-> []
           (into [statement])
-          (into [($mod arg1 arg2 var-name)]))
+          (into [($mod var-name = arg1 '% arg2)]))
 
       [var-name [:* [arg1 arg2]]]
       (-> []

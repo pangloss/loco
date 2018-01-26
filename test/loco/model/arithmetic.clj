@@ -17,32 +17,6 @@
     ($div :x :y :z)])
   )
 
-(deftest $mod-test
-  (compiled-assert
-   [[:var :x :public [:int 0 100]]
-    [:var :y :public [:int 0 10]]
-    [:var :z :public [:int 0 5]]
-    [:constraint [:mod [:z := :x :% :y]]]]
-
-   [($in :x 0 100)
-    ($in :y 0 10)
-    ($in :z 0 5)
-    ($mod :x :y :z)])
-
-  (compiled-assert
-   [[:var :x :public [:int 0 100]]
-    [:var :y :public [:int 0 10]]
-    [:var :z :public [:int 0 5]]
-    [:var :x%y :proto [:int 0 10]]
-    [:constraint [:mod [:x%y := :x :% :y]]]
-    [:constraint ['arithm [:z '= :x%y]]]]
-
-   [($in :x 0 100)
-    ($in :y 0 10)
-    ($in :z 0 5)
-    ($= :z ($mod :x :y))])
-  )
-
 (deftest abs-test
   (compiled-assert
    [[:var :y :public [:int 0 10]]

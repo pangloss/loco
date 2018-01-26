@@ -6,15 +6,15 @@
    [loco.model :as model]
    [loco.automata :as a]))
 
-(defn test-constraint-model
+(defmacro test-constraint-model
   ([docstring model solution-maps]
-   (is
-    (=
-     (set solution-maps)
-     (set (solver/solutions model)))
-    docstring))
+   `(is
+     (=
+      (set ~solution-maps)
+      (set (solver/solutions ~model)))
+     ~docstring))
   ([model solution-maps]
-   (test-constraint-model nil model solution-maps)))
+   `(test-constraint-model nil ~model ~solution-maps)))
 
 (deftest basic-tests
   (test-constraint-model

@@ -27,13 +27,13 @@
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:constraint 'sum, :args [:ints {:eq-var eq-var :op op, :vars vars}]}
+           {:args [:ints {:eq-var eq-var :op op, :vars vars}]}
            (.sum model (into-array IntVar vars) (name op) eq-var)
 
-           {:constraint 'sum,:args [:bools {:eq-var eq-var :op op, :vars vars}]}
+           {:args [:bools {:eq-var eq-var :op op, :vars vars}]}
            (.sum model (into-array BoolVar vars) (name op) eq-var)
 
-           {:constraint 'sum,:args [:set {:eq-var eq-var :op '=, :var set-var}]}
+           {:args [:set {:eq-var eq-var :op '=, :var set-var}]}
            (.sum model set-var eq-var)
 
            ::s/invalid

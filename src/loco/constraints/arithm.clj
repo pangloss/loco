@@ -27,13 +27,11 @@
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:constraint 'arithm,:args
-            [:compare {:eq-var eq-var :compare-op op, :operand var}]}
+           {:args [:compare {:eq-var eq-var :compare-op op, :operand var}]}
            (.arithm model eq-var (name op) var)
 
-           {:constraint 'arithm, :args
-            [:arithm {:eq-var eq-var :compare-op op, :operand1 var
-                       :arithm-op op2 :operand2 var2}]}
+           {:args [:arithm {:eq-var eq-var :compare-op op, :operand1 var
+                            :arithm-op op2 :operand2 var2}]}
            (.arithm model eq-var (name op) var (name op2) var2)
 
            ::s/invalid

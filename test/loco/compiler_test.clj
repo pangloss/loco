@@ -111,17 +111,6 @@
   )
 
 (deftest compiling-constraints-test
-  (testing "mod"
-    (constraints-assert
-     '("ABSOLUTE ([|T1_1| = [0,100] = |T1_1 = [-100,100]|])"
-       "DIVISION ([PropDivXYZ(x, y, T1_1, ..., |T1_1|)])"
-       "TIMES ([PropTimesNaive(T1_1, y, T2_2)])"
-       "SUM ([PropXplusYeqZ(z, T2_2, x)])")
-     [($in :x 0 100)
-      ($in :y 0 10)
-      ($in :z 0 5)
-      ($mod :x :y :z)]))
-
   (testing "abs"
     (constraints-assert
      '("ABSOLUTE ([y = {0..10} = |z = {-5..0}|])")

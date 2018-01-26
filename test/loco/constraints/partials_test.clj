@@ -181,7 +181,7 @@
      [:var :y :hidden [:const 10]]
      [:var :z :public [:int 0 5]]
      [:var :x%y :proto [:int 0 10]]
-     [:constraint [:mod [:x%y := :x :% :y]]]
+     [:constraint ['mod [:x%y '= :x '% :y]]]
      [:constraint ['arithm [:z '= :x%y]]]]
     [($in :x 0 100)
      ($const- :y 10)

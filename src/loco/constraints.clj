@@ -7,7 +7,9 @@
             loco.constraints.arithmetic
             loco.constraints.set
             loco.vars
-            loco.constraints.times)
+            loco.constraints.times
+            loco.constraints.mod
+            )
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
 
 (defn- inherit-def [prefix sym var-to-inherit]
@@ -25,6 +27,7 @@
         'loco.constraints.sum
         'loco.constraints.arithm
         'loco.constraints.times
+        'loco.constraints.mod
         ]
        (map ns-publics)
        (into {})))

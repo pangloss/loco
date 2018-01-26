@@ -152,15 +152,7 @@
                        [:not-empty? not-empty?]]]])
   ([& int-vars] (apply max-partial int-vars)))
 
-(defn mod
-  "Creates a modulo constraint. Ensures X % Y = Z"
-  {:choco "mod(IntVar X, IntVar Y, IntVar Z)"}
-  ([x y z]
-   [:constraint [:mod [z := x :% y]]])
-  ([x y]
-   [:constraint :partial [:% [x y]]]))
 
-(def % (partial mod))
 
 (defn abs
   "Creates an absolute value constraint: abs-val = |var|"

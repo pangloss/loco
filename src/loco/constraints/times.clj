@@ -17,20 +17,23 @@
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:constraint 'times ,:args [eq-var _ operand1 _ operand2]}
+           {:args [eq-var _ operand1 _ operand2]}
            (.times model operand1 operand2 eq-var)
 
            ::s/invalid
            (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 (defn times
-  "Creates a multiplication constraint: X * Y = Z, they can all be
-  IntVars. seems similar to arithm... you should probably use arithm
-  instead, for readability"
+  "Creates a multiplication constraint:
+
+  eq = operand1 * operand2
+
+  eq         = IntVar
+  operand1   = IntVar
+  operand2   = IntVar"
+
   {:choco "times(IntVar X, IntVar Y, IntVar Z)"}
-  ([eq = operand1 * operand2]
-   (-> (constraint ['times [eq '= operand1 '* operand2]])
-       (with-compiler compiler)))
+  ([eq = operand1 * operand2] (times eq operand1 operand2))
   ([eq operand1 operand2]
    (-> (constraint ['times [eq '= operand1 '* operand2]])
        (with-compiler compiler))))

@@ -154,12 +154,6 @@
      (match+
       ?constraint
 
-      [:mod [comp-var := var1 :% var2]]
-      (.mod model
-            (lookup-var var1)
-            (lookup-var var2)
-            (lookup-var comp-var))
-
       [:abs [abs-var := var]]
       (.absolute model (lookup-var abs-var) (lookup-var var))
 
