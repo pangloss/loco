@@ -231,12 +231,12 @@
         (-> []
             (into negative-vars)
             (into [statement])
-            (into [($sum var-name := (into [arg1] negative-var-names))])))
+            (into [($sum var-name = (into [arg1] negative-var-names))])))
 
       [var-name [:+ args]]
       (-> []
           (into [statement])
-          (into [($sum var-name := args)]))
+          (into [($sum var-name = args)]))
 
       [var-name [:% [arg1 arg2]]]
       (-> []
@@ -246,7 +246,7 @@
       [var-name [:* [arg1 arg2]]]
       (-> []
           (into [statement])
-          (into [($times arg1 arg2 var-name)]))
+          (into [($times var-name = arg1 * arg2)]))
 
       [var-name [:/ [arg1 arg2]]]
       (-> []

@@ -23,31 +23,52 @@
   {:pre [(vector? input)]}
   [:constraint :partial input])
 
-(def operator-prefix "op")
 
-(def comparison-operator? (sorted-set := :> :< :!= :>= :<=))
-(def arithmetic-operator? (sorted-set :+ :* :/ :-))
+(def comparison-operator? #{'= '> '< '!=  '>= '<=
+                            := :> :< :!= :not=  :>= :<=
+                            =  >  <  not= >=  <=})
 
-(def qualified-comparison-operator? (->>
-                                     comparison-operator?
-                                     (map #(keyword operator-prefix (name %)))
-                                     (into (sorted-set))))
+(def comparison-symbol? (->> comparison-operator?
+                             (filter symbol?)
+                             (into #{})))
 
-(def qualified-arithmetic-operator? (->>
-                                     arithmetic-operator?
-                                     (map #(keyword operator-prefix (name %)))
-                                     (into (sorted-set))))
+(def arithmetic-operator? #{'+ '* '/ '-
+                            :+ :* :/ :-
+                            +  *  /  -})
 
-(def qualified-arithmetic-operator-map
-  (zipmap
-   arithmetic-operator?
-   qualified-arithmetic-operator?))
+(def arithmetic-symbol? (->> arithmetic-operator?
+                             (filter symbol?)
+                             (into #{})))
 
-(def qualified-operator-map
-  (zipmap
-   comparison-operator?
-   qualified-comparison-operator?))
+(def op-map
+  {
+   + '+
+   - '-
+   * '*
+   / '/
+   = '=
+   not= '!=
+   > '>
+   < '<
+   >= '>=
+   <= '<=
+   :+ '+
+   :- '-
+   :* '*
+   :/ '/
+   := '=
+   :not= '!=
+   :!= '!=
+   :> '>
+   :< '<
+   :>= '>=
+   :<= '<=
+   })
 
+(defn to-operator [op]
+  (get op-map op
+       ;;TODO: remove this after converting all constraints to spec
+       ((clojure.set/union arithmetic-operator? comparison-operator?) op)))
 
 (def int-var?  (p instance? IntVar))
 (def int-or-intvar? #(or (int? %) (int-var? %)))
@@ -87,7 +108,7 @@
                (s/explain-data spec-name)
                convert-vars-to-strings))))
 
-(defn compiler [compiler]
+(defn- compiler [compiler]
   {:compiler compiler})
 
 (defn with-compiler [obj compiler]

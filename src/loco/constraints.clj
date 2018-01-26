@@ -1,12 +1,3 @@
-;;TODO: implement below constraint factory methods
-;; -------------------- AUTOMATA --------------------
-;; costRegular(IntVar[] vars, IntVar cost, ICostAutomaton costAutomaton)
-;; multiCostRegular(IntVar[] vars, IntVar[] costVars, ICostAutomaton costAutomaton)
-;; -------------------- MDD --------------------
-;; mddc(IntVar[] vars, MultivaluedDecisionDiagram MDD)
-;; requires building a complex object of ints and tuples
-;;http://www.choco-solver.org/apidocs/org/chocosolver/util/objects/graphs/MultivaluedDecisionDiagram.html
-
 (ns loco.constraints
   (:use loco.utils
         loco.constraints.utils)
@@ -15,7 +6,8 @@
             loco.automata
             loco.constraints.arithmetic
             loco.constraints.set
-            loco.vars)
+            loco.vars
+            loco.constraints.times)
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
 
 (defn- inherit-def [prefix sym var-to-inherit]
@@ -31,7 +23,9 @@
         'loco.constraints.arithmetic
         'loco.constraints.set
         'loco.constraints.sum
-        'loco.constraints.arithm]
+        'loco.constraints.arithm
+        'loco.constraints.times
+        ]
        (map ns-publics)
        (into {})))
 

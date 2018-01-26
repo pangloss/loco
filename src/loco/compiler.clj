@@ -154,12 +154,6 @@
      (match+
       ?constraint
 
-      [:times [comp-var := var1 :* var2]]
-      (.times model
-               (lookup-var var1)
-               (lookup-var var2)
-               (lookup-var comp-var))
-
       [:mod [comp-var := var1 :% var2]]
       (.mod model
             (lookup-var var1)

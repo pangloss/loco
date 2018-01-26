@@ -17,22 +17,22 @@
 (defn <
   "Constrains that X < Y"
   [x y]
-  (arithm x :< y))
+  (arithm x '< y))
 
 (defn >
   "Constrains that X > Y"
   [x y]
-  (arithm x :> y))
+  (arithm x '> y))
 
 (defn <=
   "Constrains that X <= Y"
   [x y]
-  (arithm x :<= y))
+  (arithm x '<= y))
 
 (defn >=
   "Constrains that X >= Y"
   [x y]
-  (arithm x :>= y))
+  (arithm x '>= y))
 
 (defn all-equal [vars]
   {:pre [(vector? vars)]}
@@ -48,7 +48,7 @@
   [& more]
   (let [morev (vec more)]
     (match [morev]
-           [[x y]] (arithm x := y)
+           [[x y]] (arithm x '= y)
            :else   (all-equal morev))))
 
 (defn not-all-equal [vars]
@@ -61,7 +61,7 @@
   [& more]
   (let [morev (vec more)]
     (match [morev]
-           [[x y]] (arithm x :!= y)
+           [[x y]] (arithm x '!= y)
            :else   (not-all-equal morev))))
 
 (def != not=)
@@ -94,14 +94,6 @@
    [:constraint :partial [:/ [dividend, divisor]]])
   ([dividend, divisor, result]
    [:constraint [:div [result := dividend :/ divisor]]]))
-
-(defn times
-  "Creates a multiplication constraint: X * Y = Z, they can all be
-  IntVars. seems similar to arithm... you should probably use arithm
-  instead, for readability"
-  {:choco "times(IntVar X, IntVar Y, IntVar Z)"}
-  [x y z]
-  [:constraint [:times [z := x :* y]]])
 
 (defn- min-partial [& vars]
   [:constraint :partial [:min (vec vars)]])

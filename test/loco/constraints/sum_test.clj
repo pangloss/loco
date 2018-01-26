@@ -13,12 +13,12 @@
      [:var :y :public [:int 0 5]]
      [:var :10 :hidden [:const 10]]
      [:var :5 :hidden [:const 5]]
-     [:constraint [:con/sum [:10 :op/= [:x :y :5]]]]
-     [:constraint [:con/sum [:10 :op/> [:x :y :5]]]]
-     [:constraint [:con/sum [:10 :op/< [:x :y :5]]]]
-     [:constraint [:con/sum [:10 :op/>= [:x :y :5]]]]
-     [:constraint [:con/sum [:10 :op/<= [:x :y :5]]]]
-     [:constraint [:con/sum [:10 :op/!= [:x :y :5]]]]]
+     [:constraint ['sum [:10 '= [:x :y :5]]]]
+     [:constraint ['sum [:10 '> [:x :y :5]]]]
+     [:constraint ['sum [:10 '< [:x :y :5]]]]
+     [:constraint ['sum [:10 '>= [:x :y :5]]]]
+     [:constraint ['sum [:10 '<= [:x :y :5]]]]
+     [:constraint ['sum [:10 '!= [:x :y :5]]]]]
    [($in :x 0 5)
     ($in :y 0 5)
     ($sum 10 := [:x :y 5])
@@ -32,7 +32,7 @@
     [:var :y :public [:bool 0 1]]
     [:var :z :public [:bool 0 1]]
     [:var :1 :hidden [:const 1]]
-    [:constraint [:con/sum [:1 :op/= [:x :y :z]]]]]
+    [:constraint ['sum [:1 '= [:x :y :z]]]]]
    [($bool :x)
     ($bool :y)
     ($bool :z)
@@ -40,7 +40,7 @@
 
    [[:var :sum :public [:int 0 10]]
     [:var :set :public [:set #{0 1 2} #{0 7 1 4 6 3 2 5}]]
-    [:constraint [:con/sum [:sum :op/= :set]]]]
+    [:constraint ['sum [:sum '= :set]]]]
    [($in :sum 0 10)
     ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
     ($sum :sum :set)])
@@ -159,9 +159,9 @@
          :spec
          :loco.constraints.sum/compile-spec,
          :value
-         [:con/sum
+         ['sum
           ["r = {0..10}"
-           :op/=
+           '=
            ["x = {1..2}"
             "y = [0,1]"
             "z = [{}, {1, 2}]"]]]}

@@ -17,19 +17,6 @@
     ($div :x :y :z)])
   )
 
-(deftest $times-test
-  (compiled-assert
-   [[:var :x :public [:int 0 100]]
-    [:var :y :public [:int 0 10]]
-    [:var :z :public [:int 0 5]]
-    [:constraint [:times [:z := :x :* :y]]]]
-
-   [($in :x 0 100)
-    ($in :y 0 10)
-    ($in :z 0 5)
-    ($times :x :y :z)])
-  )
-
 (deftest $mod-test
   (compiled-assert
    [[:var :x :public [:int 0 100]]
@@ -48,7 +35,7 @@
     [:var :z :public [:int 0 5]]
     [:var :x%y :proto [:int 0 10]]
     [:constraint [:mod [:x%y := :x :% :y]]]
-    [:constraint [:con/arithm [:z :op/= :x%y]]]]
+    [:constraint ['arithm [:z '= :x%y]]]]
 
    [($in :x 0 100)
     ($in :y 0 10)
@@ -71,7 +58,7 @@
     [:var :z :public [:int -5 0]]
     [:var :|z| :proto [:int 0 5]]
     [:constraint [:abs [:|z| := :z]]]
-    [:constraint [:con/arithm [:y :op/= :|z|]]]]
+    [:constraint ['arithm [:y '= :|z|]]]]
 
    [($in :y 0 10)
     ($in :z -5 0)
@@ -81,7 +68,7 @@
    [[:var :x :public [:int -5 5]]
     [:var :|x| :proto [:int 0 5]]
     [:constraint [:abs [:|x| := :x]]]
-    [:constraint [:con/arithm [:|x| :op/= 2]]]]
+    [:constraint ['arithm [:|x| '= 2]]]]
    [($in :x -5 5)
     ($= ($abs :x) 2)])
   )

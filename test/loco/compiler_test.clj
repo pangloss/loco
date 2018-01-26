@@ -111,18 +111,6 @@
   )
 
 (deftest compiling-constraints-test
-
-
-
-
-  (testing "times"
-    (constraints-assert
-     '("TABLE ([CSPLarge({x = {0..100}, , y = {0..10}, , z = {0..5}, })])")
-     [($in :x 0 100)
-      ($in :y 0 10)
-      ($in :z 0 5)
-      ($times :x :y :z)]))
-
   (testing "mod"
     (constraints-assert
      '("ABSOLUTE ([|T1_1| = [0,100] = |T1_1 = [-100,100]|])"

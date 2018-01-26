@@ -13,18 +13,18 @@
     [[:var :x :public [:int 0 100]]
      [:var :y :public [:int 0 10]]
      [:var :z :public [:int 0 5]]
-     [:constraint [:con/arithm [:y :op/= :x]]]
-     [:constraint [:con/arithm [:y :op/!= :x]]]
-     [:constraint [:con/arithm [:y :op/<= :x]]]
-     [:constraint [:con/arithm [:y :op/>= :x]]]
-     [:constraint [:con/arithm [:y :op/< :x]]]
-     [:constraint [:con/arithm [:y :op/> :x]]]
-     [:constraint [:con/arithm [:y :op/= :x :op/* :z]]]
-     [:constraint [:con/arithm [:y :op/!= :x :op/+ :z]]]
-     [:constraint [:con/arithm [:y :op/<= :x :op/- :z]]]
-     [:constraint [:con/arithm [:y :op/>= :x :op// :z]]]
-     [:constraint [:con/arithm [:y :op/< :x :op/+ :z]]]
-     [:constraint [:con/arithm [:y :op/> :x :op/+ :z]]]]
+     [:constraint ['arithm [:y '= :x]]]
+     [:constraint ['arithm [:y '!= :x]]]
+     [:constraint ['arithm [:y '<= :x]]]
+     [:constraint ['arithm [:y '>= :x]]]
+     [:constraint ['arithm [:y '< :x]]]
+     [:constraint ['arithm [:y '> :x]]]
+     [:constraint ['arithm [:y '= :x '* :z]]]
+     [:constraint ['arithm [:y '!= :x '+ :z]]]
+     [:constraint ['arithm [:y '<= :x '- :z]]]
+     [:constraint ['arithm [:y '>= :x '/ :z]]]
+     [:constraint ['arithm [:y '< :x '+ :z]]]
+     [:constraint ['arithm [:y '> :x '+ :z]]]]
     [($in :x 0 100)
      ($in :y 0 10)
      ($in :z 0 5)
@@ -43,8 +43,8 @@
 
     [[:var :x :public [:int 0 100]]
      [:var :y :public [:int 0 10]]
-     [:constraint [:con/arithm [:y :op/= :x :op// 1]]]
-     [:constraint [:con/arithm [:y :op/!= :x :op// 2]]]]
+     [:constraint ['arithm [:y '= :x '/ 1]]]
+     [:constraint ['arithm [:y '!= :x '/ 2]]]]
     [($in :x 0 100)
      ($in :y 0 10)
      ($arithm :y := :x :/ 1)
@@ -55,12 +55,12 @@
      [:var :z :public [:int 1 5]]
      [:var :a :public [:int 1 5]]
      [:var :b :public [:int 1 5]]
-     [:constraint [:con/arithm [:z :op/= 2]]]
-     [:constraint [:con/arithm [:x :op/< :y]]]
-     [:constraint [:con/arithm [:y :op/<= :z]]]
-     [:constraint [:con/arithm [:y :op/> :x]]]
-     [:constraint [:con/arithm [:z :op/>= :y]]]
-     [:constraint [:con/arithm [:x :op/!= :y]]]]
+     [:constraint ['arithm [:z '= 2]]]
+     [:constraint ['arithm [:x '< :y]]]
+     [:constraint ['arithm [:y '<= :z]]]
+     [:constraint ['arithm [:y '> :x]]]
+     [:constraint ['arithm [:z '>= :y]]]
+     [:constraint ['arithm [:x '!= :y]]]]
     [($in :x 1 5)
      ($in :y 1 5)
      ($in :z 1 5)

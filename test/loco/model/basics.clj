@@ -12,16 +12,16 @@
 
       [[:var "[:public]" :public [:const 1]]
        [:var "[:public]+[:public]" :proto [:int 2 2]]
-       [:constraint [:con/sum ["[:public]+[:public]" :op/= ["[:public]" "[:public]"]]]]
-       [:constraint [:con/arithm ["[:public]" :op/= "[:public]+[:public]"]]]]
+       [:constraint ['sum ["[:public]+[:public]" '= ["[:public]" "[:public]"]]]]
+       [:constraint ['arithm ["[:public]" '= "[:public]+[:public]"]]]]
       [($in [:public] [1])
        ($= [:public] ($+ [:public] [:public]))]
 
       [[:var "[:p 0 1]" :public [:const 0]]
        [:var "[:p 0 1]*[:p 0 1]" :proto [:int 0 0]]
        [:constraint
-        [:times ["[:p 0 1]*[:p 0 1]" := "[:p 0 1]" :* "[:p 0 1]"]]]
-       [:constraint [:con/arithm ["[:p 0 1]" :op/= "[:p 0 1]*[:p 0 1]"]]]]
+        ['times ["[:p 0 1]*[:p 0 1]" '= "[:p 0 1]" '* "[:p 0 1]"]]]
+       [:constraint ['arithm ["[:p 0 1]" '= "[:p 0 1]*[:p 0 1]"]]]]
       [($in [:p 0 1] [0])
        ($= [:p 0 1] ($* [:p 0 1] [:p 0 1]))])
     )
@@ -89,8 +89,8 @@
        [:var :b :public [:int fib]]
        [:var :c :public [:int fib]]
        [:var :b+c :proto [:int 2 26]]
-       [:constraint [:con/sum [:b+c :op/= [:b :c]]]]
-       [:constraint [:con/arithm [:a :op/= :b+c]]]]
+       [:constraint ['sum [:b+c '= [:b :c]]]]
+       [:constraint ['arithm [:a '= :b+c]]]]
       [($in :a fib)
        ($in :b fib)
        ($in :c fib)
@@ -100,8 +100,8 @@
        [:var :b :public [:int fib]]
        [:var :c :public [:int [1 2 3 5 8]]]
        [:var :b+c :proto [:int 2 (+ 13 8)]]
-       [:constraint [:con/sum [:b+c :op/= [:b :c]]]]
-       [:constraint [:con/arithm [:a :op/= :b+c]]]]
+       [:constraint ['sum [:b+c '= [:b :c]]]]
+       [:constraint ['arithm [:a '= :b+c]]]]
       [($in :a fib)
        ($in :b fib)
        ($in :c (butlast fib))
@@ -109,21 +109,21 @@
 
       [[:var :i :public [:int 0 5]]
        [:var :1 :hidden [:const 1]]
-       [:constraint [:con/arithm [:1 :op/= :i]]]]
+       [:constraint ['arithm [:1 '= :i]]]]
       [($in :i 0 5)
        ($= 1 :i)]
 
       [[:var :i :public [:int 0 5]]
        [:var :1 :hidden [:const 1]]
        [:var :-i :proto [:int -5 0]]
-       [:constraint [:con/arithm [:1 :op/= :-i]]]]
+       [:constraint ['arithm [:1 '= :-i]]]]
       [($in :i 0 5)
        ($= 1 ($neg :i))]
 
       [[:var :i :public [:int 0 5]]
        [:var :-i :proto [:int -5 0]]
        [:var :1 :hidden [:const 1]]
-       [:constraint [:con/arithm [:1 :op/= :-i]]]]
+       [:constraint ['arithm [:1 '= :-i]]]]
       [($in :i 0 5)
        ($neg :-i :i)
        ($= 1 :-i)]
