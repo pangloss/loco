@@ -152,16 +152,6 @@
                        [:not-empty? not-empty?]]]])
   ([& int-vars] (apply max-partial int-vars)))
 
-
-
-(defn abs
-  "Creates an absolute value constraint: abs-val = |var|"
-  {:choco "absolute(IntVar var1, IntVar var2)"}
-  ([var]
-   [:constraint :partial [:abs [var]]])
-  ([abs-val var]
-   [:constraint [:abs [abs-val := var]]]))
-
 ;; one issue here is that the coeffs need to remain as ints, not as IntVars
 (defn scalar
   "Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i]) operator scalar"

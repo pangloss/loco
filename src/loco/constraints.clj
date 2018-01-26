@@ -9,6 +9,7 @@
             loco.vars
             loco.constraints.times
             loco.constraints.mod
+            loco.constraints.abs
             )
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
 
@@ -28,6 +29,7 @@
         'loco.constraints.arithm
         'loco.constraints.times
         'loco.constraints.mod
+        'loco.constraints.abs
         ]
        (map ns-publics)
        (into {})))

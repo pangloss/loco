@@ -154,9 +154,6 @@
      (match+
       ?constraint
 
-      [:abs [abs-var := var]]
-      (.absolute model (lookup-var abs-var) (lookup-var var))
-
       [:div [result := numerator :/ denominator ]]
       (.div model (lookup-var numerator) (lookup-var denominator) (lookup-var result))
 
