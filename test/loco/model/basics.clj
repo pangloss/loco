@@ -57,18 +57,6 @@
       [[:var :public :hidden [:const 1]]]
       [($in- :public [1 1 1])]
 
-      [[:var :x :public [:int 1 5]]
-       [:var :y :public [:int 1 5]]
-       [:var :z :public [:int 1 5]]
-       [:var :a :public [:int 1 5]]
-       [:var :b :public [:int 1 5]]
-       [:constraint [:not-all-equal [:x :y :z]]]]
-      [($in :x 1 5)
-       ($in :y 1 5)
-       ($in :z 1 5)
-       ($in :a 1 5)
-       ($in :b 1 5)
-       ($!= :x :y :z)]
 
       [[:var :7 :hidden [:const 7]]]
       [($const- :7 7)]

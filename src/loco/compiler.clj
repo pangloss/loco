@@ -154,8 +154,6 @@
      (match+
       ?constraint
 
-      [:not-all-equal vars]
-      (.notAllEqual model (->> vars (map lookup-var) (into-array IntVar)))
 
       [:min [min
              [:of weights]

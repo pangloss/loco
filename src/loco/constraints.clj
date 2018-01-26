@@ -13,6 +13,7 @@
    loco.constraints.abs
    loco.constraints.div
    loco.constraints.all-equal
+   loco.constraints.not-all-equal
 
    )
   (:import org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
@@ -36,6 +37,7 @@
         'loco.constraints.abs
         'loco.constraints.div
         'loco.constraints.all-equal
+        'loco.constraints.not-all-equal
 
         ]
        (map ns-publics)

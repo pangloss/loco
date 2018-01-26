@@ -143,21 +143,7 @@
       ($square :y :x)]))
 
 
-  (testing "not-all-equal"
-    (constraints-assert
-     '("ATLEASTNVALUES ([PropAtLeastNValues(x, y, cste -- 2)])")
-     [($in :x 0 5)
-      ($in :y 0 2)
-      ($not-all-equal [:x :y])]
-     )
 
-    (constraints-assert
-     '("ATLEASTNVALUES ([PropAtLeastNValues(x, y, 1, cste -- 2)])")
-     [($in :x 0 5)
-      ($in :y 0 2)
-      ($!= :x :y 1)]
-     )
-    )
 
   (testing "max"
     (constraints-assert

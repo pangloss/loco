@@ -35,20 +35,7 @@
   (arithm x '>= y))
 
 
-(defn not-all-equal [vars]
-  {:pre [(vector? vars)]}
-  [:constraint [:not-all-equal vars]])
 
-(defn not=
-  "Constrains that X != Y, i.e. (not X = Y = ...)"
-  {:choco "notAllEqual(IntVar... vars)"}
-  [& more]
-  (let [morev (vec more)]
-    (match [morev]
-           [[x y]] (arithm x '!= y)
-           :else   (not-all-equal morev))))
-
-(def != not=)
 
 ;;;;;; ARITHMETIC
 (defn -
