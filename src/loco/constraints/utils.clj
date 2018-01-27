@@ -4,33 +4,21 @@
             [clojure.spec.alpha :as s]
             [clojure.walk :as walk])
   (:import
-   [org.chocosolver.solver.variables IntVar BoolVar SetVar]))
+   [org.chocosolver.solver.variables IntVar BoolVar SetVar Task]
+   org.chocosolver.solver.constraints.extension.Tuples))
 
 (defn ^:dynamic preserve-consts [val]
   (match [val (meta val)]
          [_ {:preserve-const true}] val
          [_ {:preserve-consts true}] val
          [(val :guard number?) _] (with-meta [val] {:preserve-const true})
-         [(val :guard vector?) _] (with-meta val {:preserve-consts true})
+         [(val :guard sequential?) _] (with-meta val {:preserve-consts true})
          :else val))
-
-(defn- compiler [compiler]
-  {:compiler compiler})
-
-(defn with-compiler [obj compiler]
-  (with-meta obj {:compiler compiler}))
 
 (defn constraint
   ([name input compiler]
-   {:pre [(vector? input)]}
    (-> [:constraint [name input]]
-       (with-meta {:compiler compiler})))
-  ([name input]
-   {:pre [(vector? input)]}
-   [:constraint [name input]])
-  ([input]
-   {:pre [(vector? input)]}
-   [:constraint input]))
+       (with-meta {:compiler compiler}))))
 
 (defn partial-constraint [input]
   {:pre [(vector? input)]}
@@ -83,12 +71,13 @@
        ;;TODO: remove this after converting all constraints to spec
        ((clojure.set/union arithmetic-operator? comparison-operator?) op)))
 
-(def int-var?  (p instance? IntVar))
+(def int-var?       (p instance? IntVar))
 (def int-or-intvar? #(or (int? %) (int-var? %)))
-(def bool-var? (p instance? BoolVar))
-(def set-var?  (p instance? SetVar))
+(def bool-var?      (p instance? BoolVar))
+(def set-var?       (p instance? SetVar))
+(def task?          (p instance? Task))
+(def tuples?        (p instance? Tuples))
 ;;(def int-or-bool? #(or (bool-var? %) (int-var? %)))
-
 
 
 (s/def ::int-vars (s/coll-of int-var?))
@@ -111,12 +100,14 @@
            (str %)))))
 
 (defn report-spec-error [constraint-name, spec-name, statement]
+  (clojure.pprint/pprint (s/explain-data spec-name statement))
   (throw (ex-info
           (str "There is an error in the input to constraint [" constraint-name "]"
                "\n"
                (->> statement (s/explain-str spec-name))
                "\n"
-               (s/describe spec-name))
+               (s/describe spec-name)
+               )
           (->> statement
                (s/explain-data spec-name)
                convert-vars-to-strings))))

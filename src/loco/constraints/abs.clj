@@ -35,5 +35,6 @@
   ([operand]
    (partial-constraint [:abs [operand]]))
   ([eq operand]
-   (-> (constraint [constraint-name [eq '= operand]])
-       (with-compiler compiler))))
+   (constraint constraint-name
+               [eq '= operand]
+               compiler)))

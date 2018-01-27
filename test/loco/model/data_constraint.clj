@@ -132,7 +132,7 @@
                   [:int-var :int-var]]]]
 
    [($in :int-var 0 16)
-    ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]
+    ($bits-int-channeling [:b1 :b2 :b3 :b4] :int-var)]
    "should generate bool vars")
 
   (compiled-assert
@@ -147,7 +147,7 @@
 
    [($in :int-var 0 16)
     ($bool- :b1)
-    ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]
+    ($bits-int-channeling [:b1 :b2 :b3 :b4] :int-var)]
    "should remove overlapping generated vars")
 
   )

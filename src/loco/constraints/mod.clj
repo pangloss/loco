@@ -37,8 +37,9 @@
    :partial true}
   ([eq = operand1 _% operand2] (mod eq operand1 operand2))
   ([eq operand1 operand2]
-   (-> (constraint [constraint-name [eq '= operand1 '% operand2]])
-       (with-compiler compiler)))
+   (constraint constraint-name
+               [eq '= operand1 '% operand2]
+               compiler))
   ([operand1 operand2]
    (partial-constraint [:% [operand1 operand2]])))
 

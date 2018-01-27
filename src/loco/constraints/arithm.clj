@@ -1,4 +1,5 @@
 (ns loco.constraints.arithm
+  (:refer-clojure :exclude [< > <= >=])
   (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
@@ -10,10 +11,10 @@
   (:import
    [org.chocosolver.solver.variables BoolVar IntVar]))
 
-(def ^:private constraint-name :arithm)
+(def ^:private constraint-name 'arithm)
 
 (s/def ::compile-spec
-  (s/cat :constraint #{'arithm}
+  (s/cat :constraint #{constraint-name}
          :args (s/or
                 :compare (s/cat :eq-var int-var?
                                 :compare-op comparison-symbol?
@@ -38,11 +39,14 @@
            (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 (defn arithm
-  "similar to choco arithm. lets you use division with an IntVar. other
-  than that it is a shortcut for having a compare and operation in 1
-  instruction. lets you write a = b + c. allowed operators are
-  #{+ * / -}, allowed comparisons are #{= > < != not= >= <=}
-  a, b and c are allowed to be partial constraints"
+  "Creates an arithmetic constraint:
+  eq op1 operand1 op2 operand2,
+
+  eq = IntVar
+  operand1 = IntVar
+  operand2 = IntVar | integer
+  op1 in #{= > < != not= >= <=}
+  op2 in #{+ * / -}"
   {:choco ["arithm(IntVar var,  String op,  int cste)"
            "arithm(IntVar var1, String op,  IntVar var2)"
            "arithm(IntVar var1, String op1, IntVar var2, String op2, int cste)"
@@ -50,13 +54,35 @@
   ([a compare b]
    {:pre [(comparison-operator? compare)]}
    (let [compare (to-operator compare)]
-     (-> (constraint ['arithm [a compare (preserve-consts b)]])
-         (with-compiler compiler))))
+     (constraint constraint-name
+                 [a compare (preserve-consts b)]
+                 compiler)))
 
   ([a compare b op c]
    {:pre [(comparison-operator? compare)
           (arithmetic-operator? op)]}
    (let [op (to-operator op)
          compare (to-operator compare)]
-     (-> (constraint ['arithm [a compare b op (preserve-consts c)]])
-         (with-compiler compiler)))))
+     (constraint constraint-name
+                 [a compare b op (preserve-consts c)]
+                 compiler))))
+
+(defn <
+  "Constrains that X < Y"
+  [x y]
+  (arithm x :< y))
+
+(defn >
+  "Constrains that X > Y"
+  [x y]
+  (arithm x :> y))
+
+(defn <=
+  "Constrains that X <= Y"
+  [x y]
+  (arithm x :<= y))
+
+(defn >=
+  "Constrains that X >= Y"
+  [x y]
+  (arithm x :>= y))

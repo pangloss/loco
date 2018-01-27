@@ -8,10 +8,10 @@
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar]))
 
-(def ^:private constraint-name :sum)
+(def ^:private constraint-name 'sum)
 
 (s/def ::compile-spec
-  (s/cat :constraint #{'sum}
+  (s/cat :constraint #{constraint-name}
          :args (s/spec
                 (s/or
                  :set   (s/cat :eq-var int-var?
@@ -51,20 +51,25 @@
   operator  of #{'= '> '< '!= '>= '<=}"
   {:choco ["sum(BoolVar[] vars, String operator, IntVar sum)"
            "sum(IntVar[]  vars, String operator, IntVar sum)"
-           "sum(SetVar set, IntVar sum)"]
-   :partial true}
-  ([vars]
-   {:pre [(sequential? vars)]}
-   ;; this is named differently because it creates nice var
-   ;; names. gets converted into a :sum at compile step
-   (partial-constraint [:+ vars]))
-
+           "sum(SetVar set, IntVar sum)"]}
   ([summation set-var]
-   (-> (constraint ['sum [summation '= set-var]])
-       (with-compiler compiler)))
+   (constraint constraint-name
+               [summation '= set-var]
+               compiler))
 
   ([summation operator vars]
    {:pre [(sequential? vars)
           (comparison-operator? operator)]}
-   (-> (constraint ['sum [summation (to-operator operator) vars]])
-       (with-compiler compiler))))
+   (constraint constraint-name
+               [summation (to-operator operator) vars]
+               compiler)))
+
+(defn +
+  "partial of $sum
+
+  e.g.:
+  ($= :eq ($+ :n1 :n2 :n3 4))
+  "
+  {:partial true}
+  ([& args]
+   (partial-constraint [:+ (vec args)])))

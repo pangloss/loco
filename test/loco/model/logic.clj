@@ -34,7 +34,7 @@
     ($if ($false) ($false) ($true))
     ])
 
-  (binding [loco.constraints/*cond-name-gen* (fn [_] "")]
+  (binding [loco.constraints.logic.logic/*cond-name-gen* (fn [_] "")]
     (compiled-assert
      [[:var :_if_cond_0 :hidden [:bool 0 1]]
       [:var :_if_0 :hidden [:bool 0 1]]

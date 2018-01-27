@@ -502,11 +502,11 @@
        [:bin-load-1 :bin-load-2]
        )]))
 
-  (testing "bits-channeling"
+  (testing "bits-int-channeling"
     (constraints-assert
      '("BITSINTCHANNELING ([PropBitChanneling(int-var, b1, b2, ..., b4)])")
      [($in :int-var 0 16)
-      ($bits-channeling [:b1 :b2 :b3 :b4] :int-var)]))
+      ($bits-int-channeling [:b1 :b2 :b3 :b4] :int-var)]))
 
   ;;wtf lawl
   (testing "diff-n"

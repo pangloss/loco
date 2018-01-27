@@ -22,7 +22,7 @@
            (.div model dividend divisor eq)
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 (defn div
   "Creates an euclidean division constraint.
@@ -37,7 +37,10 @@
    :partial true}
   ([dividend, divisor]
    (partial-constraint [:/ [dividend, divisor]]))
+
   ([eq = dividend / divisor] (div eq dividend divisor))
+
   ([eq dividend, divisor]
-   (-> (constraint [constraint-name [eq '= dividend '/ divisor]])
-       (with-compiler compiler))))
+   (constraint constraint-name
+               [eq '= dividend '/ divisor]
+               compiler)))
