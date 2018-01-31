@@ -1,7 +1,7 @@
 (ns loco.constraints.logic.logic
   (:refer-clojure :exclude [compile var?])
   (:require
-   [loco.vars :refer [bool-]]))
+   [loco.vars :refer [$bool-]]))
 
 (defn and
   "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if

@@ -18,7 +18,6 @@
          [(val :guard sequential?) _] (vary-meta val merge {:preserve-consts true})
          :else val))
 
-
 (defn constraint
   ([name input compiler]
    ^{:constraint true
@@ -45,25 +44,6 @@
     (if (<= (.length deps-name) max-name-length)
       deps-name
       (hash deps-name))))
-
-#_(defn partial-constraint
-  ({:keys [name body get-deps gen-name]}
-   {:pre [(vector? body)
-          (fn? gen-name)
-          (symbol? name)
-          (fn? get-deps)]}
-   (-> [:constraint :partial [name body]]
-       (with-meta
-         {:deps-fn get-deps
-          ;;:domain-fn
-          :name-fn
-          (c (p str name "_") hasher (fn [partial]
-                                       (match partial
-                                              [:constraint :partial [_partial-name partial-body]]
-                                              (gen-name partial-body))))})))
-  #_([partial-name partial-def deps-fn]
-   (partial-constraint partial-name partial-def deps-fn default-partial-name-fn)
-))
 
 (def ^:private get-domain (c :domain meta))
 (def ^:private has-domain? (c some? :domain meta))
@@ -110,10 +90,6 @@
       :name-fn name-fn
       :constraint-fn constraint-fn
       :domain-fn domain-fn
-      ;; :replace-with var-name
-      ;; :replacement-map {partial var-name}
-      ;; :var (vars/proto var-name partial) ;;not sure if i should modify the partial given to proto
-      ;; :constraint (constraint-fn var-name partial)
       } [op-name body]))
 
 
@@ -138,8 +114,7 @@
           ]
       ;; [(conj acc statement) var-index]
       [(conj acc statement-with-domain) updated-var-index])
-    [(conj acc statement) var-index]
-    ))
+    [(conj acc statement) var-index]))
 
 (defn compile [problem]
   (let [problem (->> (unfold-partials problem)

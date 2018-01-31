@@ -1,6 +1,5 @@
 (in-ns 'loco.constraints)
 (ns loco.constraints.sum
-  (:refer-clojure :exclude [compile])
   (:use loco.constraints.utils
         loco.utils)
   (:require
@@ -55,16 +54,16 @@
   {:choco ["sum(BoolVar[] vars, String operator, IntVar sum)"
            "sum(IntVar[]  vars, String operator, IntVar sum)"
            "sum(SetVar set, IntVar sum)"]}
-  ([summation set-var]
+  ([summation-var set-var]
    (constraint constraint-name
-               [summation '= set-var]
+               [summation-var '= set-var]
                compiler))
 
-  ([summation operator vars]
+  ([summation-var operator vars]
    {:pre [(sequential? vars)
           (comparison-operator? operator)]}
    (constraint constraint-name
-               [summation (to-operator operator) vars]
+               [summation-var (to-operator operator) vars]
                compiler)))
 
 (def ^:private partial-name '+)
@@ -75,7 +74,7 @@
          (apply str (interpose "+" body))))
 
 (defn- constraint-fn [var-name [op body]]
-  (sum var-name '= body))
+  ($sum var-name '= body))
 
 (defn domain-fn [partial]
   (match partial
@@ -91,17 +90,12 @@
                     ;; should never see this, because sum can not handle naked ints
                     ;; just for testing
                     (num :guard int?) {:lb (unchecked-add lb num)
-                                       :ub (unchecked-add ub num)}
-                    ))
+                                       :ub (unchecked-add ub num)}))
            {:lb 0 :ub 0}
            body)
           (assoc :int true)
           (update :lb int)
           (update :ub int))))
-
-;;from model
-;; (defn- add-domains [[lb1 ub1] [lb2 ub2]]
-;;   [(+ lb1 lb2) (+ ub1 ub2)])
 
 (defn $+
   "partial of $sum
@@ -121,6 +115,12 @@
 
 (use 'loco.vars)
 
+;; :D
 #_(->> [($int :x 0 5)
-        ($sum :z = (+ 1 (+ 2 :x)))]
+        ($sum :z = ($+ 2 :x))]
+       compile)
+
+;; :D
+#_(->> [($int :x 0 5)
+        ($sum :z = ($+ 1 ($+ 2 :x)))]
        compile)
