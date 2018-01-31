@@ -1,5 +1,5 @@
 (ns loco.compiler
-  (:refer-clojure :exclude [compile ints])
+  (:refer-clojure :exclude [compile ints var?])
   (:use loco.constraints
         loco.utils)
   (:require
@@ -139,8 +139,8 @@
         ]
     (match
      [statement (meta statement)]
-     [[:constraint constraint] {:compiler compiler}] (compiler model vars-index constraint)
-     [[:constraint ?constraint] _]
+     [[constraint] {:compiler compiler}] (compiler model vars-index constraint)
+     [[?constraint] _]
      (match+
       ?constraint
 
@@ -150,14 +150,14 @@
       [:and (bools :guard (p every? (c (p instance? BoolVar) lookup-var-unchecked)))]
       (.and model (->> bools (map lookup-var) (into-array BoolVar)))
 
-      [:and (constraints :guard (p every? model/constraint?))]
+      [:and (constraints :guard (p every? constraint?))]
       (.and model (realize-nested-constraints constraints))
 
       ;; handle boolean lists
       [:or (bools :guard (p every? (c (p instance? BoolVar) lookup-var-unchecked)))]
       (.or model (->> bools (map lookup-var) (into-array BoolVar)))
 
-      [:or (constraints :guard (p every? model/constraint?))]
+      [:or (constraints :guard (p every? constraint?))]
       (.or model (realize-nested-constraints constraints))
 
       [:when [(bool :guard (c (p instance? BoolVar) lookup-var-unchecked)) then-constraint]]
@@ -230,11 +230,11 @@
   ([ast] (compile (Model.) ast))
   ([model ast]
    (let [
-         uncompiled-vars        (->> ast (filter model/var?))
-         uncompiled-constraints (->> ast (filter model/constraint?))
-         uncompiled-reifies     (->> ast (filter model/reify?))
+         uncompiled-vars        (->> ast (filter var?))
+         uncompiled-constraints (->> ast (filter constraint?))
+         uncompiled-reifies     (->> ast (filter reify?))
          [vars-index vars _]    (compile-vars model uncompiled-vars)
-         public-var-names       (->> uncompiled-vars (filter model/public-var?) (map second))
+         public-var-names       (->> uncompiled-vars (filter public-var?) (map second))
          public-vars-index      (select-keys vars-index public-var-names)
          _reifies               (compile-reifies model vars-index uncompiled-reifies)
          constraints (->>

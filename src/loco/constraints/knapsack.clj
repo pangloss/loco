@@ -15,9 +15,9 @@
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
                       (s/tuple
-                       (s/tuple #{'weight} (s/coll-of int?))
-                       (s/tuple #{'energy} (s/coll-of int?))
-                       (s/tuple #{'occurences} (s/coll-of int-var?))
+                       (s/tuple #{'weight} (s/coll-of nat-int?))
+                       (s/tuple #{'energy} (s/coll-of nat-int?))
+                       (s/tuple #{'occurrences} (s/coll-of int-var?))
                        (s/tuple #{'weight-sum} int-var?)
                        (s/tuple #{'energy-sum} int-var?)))))
 

@@ -3,7 +3,7 @@
   (:use loco.utils
         loco.constraints.utils)
   (:require
-   loco.vars
+   ;;loco.vars
 
    [loco.constraints.automata
     regular]
@@ -72,6 +72,7 @@
     square
     sub-circuit
     sub-path
+    ;;sum
     table
     tree
     ]
@@ -92,9 +93,9 @@
 
 (def ^:private to-inherit
   (->> [
-        'loco.vars
+        ;;'loco.vars
         'loco.constraints.arithmetic
-        'loco.constraints.sum
+        ;;'loco.constraints.sum
         'loco.constraints.arithm
         'loco.constraints.times
         'loco.constraints.mod
@@ -157,10 +158,8 @@
         'loco.constraints.set.sets-ints-channeling
         'loco.constraints.set.inverse
 
-
         'loco.constraints.logic.logic
         'loco.constraints.automata.regular
-
         ]
        (map ns-publics)
        (into {})))
@@ -171,6 +170,9 @@
 (def $true [:constraint :true])
 
 (def $false [:constraint :false])
+
+(load "vars")
+(load "constraints/sum")
 
 ;; -------------------- MDD --------------------
 ;; mddc(IntVar[] vars, MultivaluedDecisionDiagram MDD)

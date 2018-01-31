@@ -266,14 +266,24 @@
       ($element :value [:a :b :c] :index 2)]
      )
 
+    ;;TODO: test that :a is created and overridden in the model/compiler tests
     (constraints-assert
      '("ELEMENT ([PropElementV_fast($nth_:a_:2_:3_:4_:5_:at_:index_:offset_0, index, a, ..., 5)])"
        "ARITHM ([$nth_:a_:2_:3_:4_:5_:at_:index_:offset_0 = 4])")
-     [($in :a 100 200)
+     [;($in :a 100 200)
       ($in :index 0 5)
-      ($= 4 ($nth [:a 2 3 4 5] :index))]
+      ($= 4 ($nth [:a 2 3] :index))]
      )
     )
+
+
+
+
+  (->> [                                  ;($in :a 100 200)
+        ($in :index 0 5)
+        ($= 4 ($nth [:a 2 3] :index))
+        ($nth [:a 2 3] :index)]
+       (map (juxt identity meta (comp meta meta))))
 
   (testing "all different"
     (constraints-assert
@@ -353,10 +363,13 @@
 
   (testing "cardinality"
     (constraints-assert
-     '("GCC ([PropFastGCC_(a, b, ones, twos, cste -- 0)])")
+     '("GCC ([PropFastGCC_(a, b, c, d, ...,cste -- 0)])")
      [($in :a 2 3)
       ($in :b 1 3)
-      ($cardinality [:a :b] {1 :ones, 2 :twos} :closed)]
+      ($in :c 1 3)
+      ($in :d 2 3)
+      ($in :e 1 3)
+      ($cardinality [:a :b :c :d :e] {1 :ones, 2 :twos} :closed)]
      )
     )
 

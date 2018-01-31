@@ -1,8 +1,11 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.sum
-  (:use loco.constraints.utils)
+  (:refer-clojure :exclude [compile])
+  (:use loco.constraints.utils
+        loco.utils)
   (:require
-   [clojure.spec.alpha :as s]
    [loco.constraints.utils :as utils]
+   [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])
   (:import
@@ -39,7 +42,7 @@
            ::s/invalid
            (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn sum
+(defn $sum
   "Creates a sum constraint.
 
   constrain a var to be compared to the sum of a set or list of integers or booleans
@@ -64,12 +67,60 @@
                [summation (to-operator operator) vars]
                compiler)))
 
-(defn +
+(def ^:private partial-name '+)
+
+(defn- name-fn [partial]
+  (match partial
+         [partial-name body]
+         (apply str (interpose "+" body))))
+
+(defn- constraint-fn [var-name [op body]]
+  (sum var-name '= body))
+
+(defn domain-fn [partial]
+  (match partial
+         [partial-name body]
+         (->
+          (reduce
+           (fn [{:keys [lb ub] :as acc} domain]
+             (match domain
+                    ;;TODO: handle enumerated domains
+                    {:int true :lb d-lb :ub d-ub} {:lb (unchecked-add lb d-lb)
+                                                   :ub (unchecked-add ub d-ub)}
+
+                    ;; should never see this, because sum can not handle naked ints
+                    ;; just for testing
+                    (num :guard int?) {:lb (unchecked-add lb num)
+                                       :ub (unchecked-add ub num)}
+                    ))
+           {:lb 0 :ub 0}
+           body)
+          (assoc :int true)
+          (update :lb int)
+          (update :ub int))))
+
+;;from model
+;; (defn- add-domains [[lb1 ub1] [lb2 ub2]]
+;;   [(+ lb1 lb2) (+ ub1 ub2)])
+
+(defn $+
   "partial of $sum
 
   e.g.:
-  ($= :eq ($+ :n1 :n2 :n3 4))
+  ($= :eq ($+ :n1 :n2 :n3 4)) => ($sum :eq := :n1 :n2 :n3 4)
   "
   {:partial true}
   ([& args]
-   (partial-constraint [:+ (vec args)])))
+   (partial-constraint
+    partial-name
+    (vec args)
+    name-fn
+    constraint-fn
+    domain-fn)))
+
+
+(use 'loco.vars)
+
+#_(->> [($int :x 0 5)
+        ($sum :z = (+ 1 (+ 2 :x)))]
+       compile)

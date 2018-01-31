@@ -1,8 +1,11 @@
 (ns loco.constraints.utils
+  (:refer-clojure :exclude [partial])
   (:use [loco.utils])
   (:require [clojure.core.match :refer [match]]
+            [loco.match :refer [match+]]
             [clojure.spec.alpha :as s]
-            [clojure.walk :as walk])
+            [clojure.walk :as walk]
+            [loco.vars :as vars])
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar SetVar Task]
    org.chocosolver.solver.constraints.extension.Tuples))
@@ -11,19 +14,144 @@
   (match [val (meta val)]
          [_ {:preserve-const true}] val
          [_ {:preserve-consts true}] val
-         [(val :guard number?) _] (with-meta [val] {:preserve-const true})
-         [(val :guard sequential?) _] (with-meta val {:preserve-consts true})
+         [(val :guard number?) _] (vary-meta [val] merge {:preserve-const true})
+         [(val :guard sequential?) _] (vary-meta val merge {:preserve-consts true})
          :else val))
+
 
 (defn constraint
   ([name input compiler]
-   (-> [:constraint [name input]]
-       (with-meta {:compiler compiler}))))
+   ^{:constraint true
+     :compiler compiler}
+   [name input]))
 
-(defn partial-constraint [input]
-  {:pre [(vector? input)]}
-  [:constraint :partial input])
+(defn str+ [thing]
+  (if (or (keyword? thing) (string? thing) (symbol? thing))
+    (name thing)
+    (str thing)))
 
+(defn- default-partial-name-fn [[partial-name [& partial-contents]]]
+  (->> partial-contents
+       (map str+)
+       (interpose "_")
+       (apply str (str+ partial-name) "_")))
+
+
+(defn hasher
+  "produce a readable and short name"
+  [deps-name]
+  {:pre [(string? deps-name) (pos? (.length deps-name))]}
+  (let [max-name-length 30]
+    (if (<= (.length deps-name) max-name-length)
+      deps-name
+      (hash deps-name))))
+
+#_(defn partial-constraint
+  ({:keys [name body get-deps gen-name]}
+   {:pre [(vector? body)
+          (fn? gen-name)
+          (symbol? name)
+          (fn? get-deps)]}
+   (-> [:constraint :partial [name body]]
+       (with-meta
+         {:deps-fn get-deps
+          ;;:domain-fn
+          :name-fn
+          (c (p str name "_") hasher (fn [partial]
+                                       (match partial
+                                              [:constraint :partial [_partial-name partial-body]]
+                                              (gen-name partial-body))))})))
+  #_([partial-name partial-def deps-fn]
+   (partial-constraint partial-name partial-def deps-fn default-partial-name-fn)
+))
+
+(def ^:private get-domain (c :domain meta))
+(def ^:private has-domain? (c some? :domain meta))
+(def ^:private get-var-name (c second))
+
+(defn var-name-domain-map [problem]
+  (let [get-name second]
+    (->> problem
+         (filter var?)
+         (filter has-domain?)
+         (map (juxt get-name get-domain))
+         (into {}))))
+
+(defn unfold-partials [problem]
+  (->> problem
+       (mapcat
+        (fn [constraint]
+          (if-not (constraint? constraint)
+            [constraint]
+            (let [acc (atom [])
+                  constraints-without-partials
+                  (->> constraint
+                       (walk/postwalk (fn [statement]
+                                        (if-not (partial-constraint? statement)
+                                          statement
+                                          (let [{:keys [name-fn constraint-fn]} (meta statement)
+                                                var-name (name-fn statement)
+                                                var (vars/proto var-name statement)
+                                                constraint (constraint-fn var-name statement)
+                                                ]
+                                            (swap! acc
+                                                   into [var constraint])
+                                            var-name)))))
+                  ]
+              (into @acc
+                    [constraints-without-partials])))))))
+
+(defn partial-constraint [op-name body name-fn constraint-fn domain-fn]
+  {:pre [(symbol? op-name) (vector? body)]}
+  (let [partial [op-name body]
+        var-name (name-fn partial)]
+    ^{
+      :partial-constraint true
+      :name-fn name-fn
+      :constraint-fn constraint-fn
+      :domain-fn domain-fn
+      ;; :replace-with var-name
+      ;; :replacement-map {partial var-name}
+      ;; :var (vars/proto var-name partial) ;;not sure if i should modify the partial given to proto
+      ;; :constraint (constraint-fn var-name partial)
+      } [op-name body]))
+
+
+(defn- realize-domain [[acc var-index] statement]
+  ;;statement + meta looks something like
+  ;;[:var "2+:x" :proto] {:var true, :proto true, :from [+ [2 :x]]}
+
+  ;; :from has it's own meta too
+  ;; ^{
+  ;;   :partial-constraint true
+  ;;   :name-fn name-fn
+  ;;   :constraint-fn constraint-fn
+  ;;   :domain-fn domain-fn
+  ;;   }
+  (if (and (var? statement) (not (has-domain? statement)))
+    (let [partial (->> statement meta :from)
+          domain-fn (->> partial meta :domain-fn)
+          partial-with-replaced-var-names (walk/postwalk-replace var-index partial)
+          domain (domain-fn partial-with-replaced-var-names)
+          statement-with-domain (vary-meta statement assoc :domain domain)
+          updated-var-index (assoc var-index (get-var-name statement) domain)
+          ]
+      ;; [(conj acc statement) var-index]
+      [(conj acc statement-with-domain) updated-var-index])
+    [(conj acc statement) var-index]
+    ))
+
+(defn compile [problem]
+  (let [problem (->> (unfold-partials problem)
+                     (sort-by var?)
+                     (split var?)
+                     (apply concat))
+        var-index (var-name-domain-map problem)
+        [problem _] (reduce realize-domain [[] var-index] problem)
+        ]
+    [(map (juxt identity meta) problem)
+;;     var-index
+     ]))
 
 (def comparison-operator? #{'= '> '< '!=  '>= '<=
                             := :> :< :!= :not=  :>= :<=

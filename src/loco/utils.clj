@@ -10,13 +10,13 @@
    [(aprefix :guard #(or (symbol? %) (keyword? %) (string? %))) alist]
    (do
      (doseq [item alist]
-       (println aprefix item))
+       (println aprefix item (meta item)))
      alist)
 
    [alist (aprefix :guard #(or (symbol? %) (keyword? %) (string? %)))]
    (do
      (doseq [item alist]
-       (println aprefix item))
+       (println aprefix item (meta item)))
      alist)))
 
 (defn remove-dupes [ast]
@@ -65,3 +65,37 @@
    (remove pred coll)
    ]
   )
+
+;; (defn var?
+;;   [form]
+;;   (match form
+;;          [:var & _] true
+;;          :else false))
+
+(defn public-var? [form]
+  (match form
+         [:var _ :public & _] true
+         :else false))
+
+(defn hidden-var? [form]
+  (match form
+         [:var _ :hidden & _] true
+         :else false))
+
+;; (defn proto-var? [form]
+;;   (match form
+;;          [:var _ :proto & _] true
+;;          :else false))
+
+(def var? (c some? :var meta))
+
+(def proto? (c some? :proto meta))
+
+(def constraint? (c some? :constraint meta))
+
+(def partial-constraint? (c some? :partial-constraint meta))
+
+(defn reify? [form]
+  (match form
+         [:reify _ _] true
+         :else false))

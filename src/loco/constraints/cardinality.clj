@@ -1,6 +1,8 @@
 (ns loco.constraints.cardinality
+  (:use loco.utils)
   (:use loco.constraints.utils)
   (:require
+   [loco.vars :as vars]
    [clojure.spec.alpha :as s]
    [loco.constraints.utils :as utils]
    [loco.match :refer [match+]]
@@ -16,7 +18,7 @@
          :args       (s/spec
                       (s/tuple
                        (s/coll-of int-var?)
-                       (s/tuple (s/coll-of int?) (s/coll-of keyword?))
+                       (s/tuple (s/coll-of int?) (s/coll-of int-var?))
                        (s/tuple #{'closed} boolean?)
                        ))))
 
@@ -26,21 +28,22 @@
            {:args [vars [values occurrences] [_ closed?]]}
            (.globalCardinality model
                                (into-array IntVar vars)
-                               values
+                               (int-array values)
                                (into-array IntVar occurrences)
                                closed?)
 
            ::s/invalid
            (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-;;TODO: cardinality should generate intvars from freqs vals
 (defn cardinality
   "Takes a list of variables, and a frequency map (from numbers to
   frequencies), constrains that the frequency map is accurate. If
   the :closed flag is set to true, any keys that aren't in the
   frequency map can't appear at all in the list of variables.
 
-  Example: ($cardinality [:a :b :c :d :e] {1 :ones, 2 :twos} :closed true)
+  cardinality will generate vars in the model/compile phase
+
+  Example: ($cardinality [:a :b :c :d :e] {1 :ones, 2 :twos})
   => {:a 1, :b 1, :c 2, :d 2, :e 2 :ones 2, :twos 3}"
   {:choco "globalCardinality(IntVar[] vars, int[] values, IntVar[] occurrences, boolean closed)"
    :gccat "http://sofdem.github.io/gccat/gccat/Cglobal_cardinality.html"}
@@ -59,9 +62,13 @@
     }
    (let [closed (get {:closed true} closed? closed?)
          values (preserve-consts (vec (keys frequencies)))
-         occurences (vec (vals frequencies))]
-     (constraint constraint-name
-                 [(vec variables)
-                  [values occurences]
-                  ['closed closed]]
-                 compiler))))
+         occurences (vec (vals frequencies))
+         cardinality-constraint (constraint constraint-name
+                                            [(vec variables)
+                                             [values occurences]
+                                             ['closed closed]]
+                                            compiler)]
+     (-> (concat
+          (mapv (p vars/proto cardinality-constraint (vec variables)) occurences)
+          [cardinality-constraint])
+         (with-meta {:generated-vars true})))))

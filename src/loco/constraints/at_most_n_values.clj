@@ -14,15 +14,15 @@
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
-                      (s/cat
-                       :ints     (s/coll-of int-var?)
-                       :n-values (s/spec (s/tuple #{'n-values} int-var?))
-                       :strong   (s/spec (s/tuple #{'ac} boolean?))))))
+                      (s/tuple
+                       (s/coll-of int-var?)
+                       (s/tuple #{'n-values} int-var?)
+                       (s/tuple #{'strong} boolean?)))))
 
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args {:ints vars :n-values [_ n-values] :strong [_ strong]} }
+           {:args [vars [_ n-values] [_ strong]] }
            (.atMostNValues model
                            (into-array IntVar vars)
                            n-values
@@ -36,10 +36,10 @@
   Enforce condition N <= nValues to hold."
   {:choco "atMostNValues(IntVar[] vars, IntVar nValues, boolean STRONG)"}
   ([vars n-values] (at-most-n-values vars n-values false))
-  ([vars n-values strong]
-   {:pre [(sequential? vars) (boolean? strong)]}
+  ([vars n-values strong?]
+   {:pre [(sequential? vars) (boolean? strong?)]}
    (constraint constraint-name
                [(vec vars)
                 ['n-values n-values]
-                ['strong strong]]
+                ['strong strong?]]
                compiler)))

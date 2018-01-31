@@ -1,4 +1,5 @@
 (ns loco.constraints.member
+  (:refer-clojure :exclude [set])
   (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
@@ -15,15 +16,15 @@
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
                       (s/or
-                       :int-table (s/tuple int-var? #{'of} (s/coll-of int?))
+                       :int-table (s/tuple
+                                   int-var? #{'of} (s/coll-of int?))
                        :int-lb-ub (s/tuple
                                      int-var?
                                      (s/tuple #{'lb} int?)
                                      (s/tuple #{'ub} int?))
 
                        :int-set   (s/tuple
-                                   int-or-intvar?
-                                   (s/tuple #{'of} set-var?))
+                                   int-or-intvar? #{'of} set-var?)
 
                        :set-sets  (s/tuple set-var? #{'of} (s/coll-of set-var?))))))
 
@@ -39,7 +40,7 @@
            {:args [:set-sets [member _ sets]]}
            (.member model (into-array SetVar sets) member)
 
-           [:member [:int-table [member _ table]]]
+           {:args [:int-table [member _ table]]}
            (.member model member (int-array table))
 
            ::s/invalid

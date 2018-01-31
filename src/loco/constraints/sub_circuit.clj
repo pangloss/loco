@@ -46,4 +46,5 @@
    (constraint constraint-name
                [(vec int-vars)
                 ['sub-circuit-length sub-circuit-length]
-                ['offset (preserve-consts offset)]])))
+                ['offset (preserve-consts offset)]]
+               compiler)))

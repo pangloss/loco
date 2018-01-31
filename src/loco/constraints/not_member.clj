@@ -1,4 +1,5 @@
 (ns loco.constraints.not-member
+  (:refer-clojure :exclude [set])
   (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
@@ -15,15 +16,15 @@
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
                       (s/or
-                       :int-table (s/tuple int-var? #{'of} (s/coll-of int?))
+                       :int-table (s/tuple
+                                   int-var? #{'of} (s/coll-of int?))
                        :int-lb-ub (s/tuple
                                    int-var?
                                    (s/tuple #{'lb} int?)
                                    (s/tuple #{'ub} int?))
 
                        :int-set   (s/tuple
-                                   int-or-intvar?
-                                   (s/tuple #{'of} set-var?))))))
+                                   int-or-intvar? #{'of} set-var?)))))
 
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
@@ -34,7 +35,7 @@
            {:args [:int-set [not-member _ set-var]]}
            (.notMember model not-member set-var)
 
-           [:not-member [:int-table [not-member _ table]]]
+           {:args [:int-table [not-member _ table]]}
            (.notMember model not-member (int-array table))
 
            ::s/invalid

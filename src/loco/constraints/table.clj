@@ -19,7 +19,7 @@
                                           (s/coll-of int-var?)
                                           (s/tuple #{'tuples}  tuples?))
 
-                       :var-tuples-algo  (s/tuple
+                       :vars-tuples-algo  (s/tuple
                                           (s/coll-of int-var?)
                                           (s/tuple #{'tuples}  tuples?)
                                           (s/tuple #{'algo} #{'CT+ 'GAC2001 'GAC2001+
@@ -45,10 +45,10 @@
            {:args [:vars-tuples-algo [vars [_ tuples] [_ algo]]]}
            (.table model (into-array IntVar vars) tuples (name algo))
 
-           {:args [:pairs-tuples [_ var1 var2 [_ tuples]]]}
+           {:args [:pair-tuples [[_ var1 var2] [_ tuples]]]}
            (.table model var1 var2 tuples)
 
-           {:args [:pairs-tuples-algo [_ var1 var2 [_ tuples] [_ algo]]]}
+           {:args [:pair-tuples-algo [[_ var1 var2] [_ tuples] [_ algo]]]}
            (.table model var1 var2 tuples (name algo))
 
            ::s/invalid

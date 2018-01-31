@@ -1,8 +1,8 @@
 (ns loco.model
   (:refer-clojure :exclude [compile var?])
+  (:use loco.utils)
   (:require
-   [loco.utils :refer [c index-by p reverse-map remove-dupes-by
-                       debug-print]]
+   [loco.vars :as vars]
    [loco.constraints :refer [$abs $div $element $max $min $mod $neg $scalar $sum $times]]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk]))
@@ -15,41 +15,6 @@
 (defn- neg-var-name [dep-name]
   (keyword (str "-" (name dep-name))))
 
-(defn var?
-  [form]
-  (match form
-         [:var & _] true
-         :else false))
-
-(defn public-var? [form]
-  (match form
-         [:var _ :public & _] true
-         :else false))
-
-(defn- hidden-var? [form]
-  (match form
-         [:var _ :hidden & _] true
-         :else false))
-
-(defn- proto-var? [form]
-  (match form
-         [:var _ :proto & _] true
-         :else false))
-
-(defn constraint? [form]
-  (match form
-         [:constraint & _] true
-         :else false))
-
-(defn- partial-constraint? [form]
-  (match form
-         [:constraint :partial & _] true
-         :else false))
-
-(defn reify? [form]
-  (match form
-         [:reify _ _] true
-         :else false))
 
 ;;TODO: attach the name making function to the constraint itself via
 ;;meta from ($neg) function
@@ -107,14 +72,8 @@
                    ;;TODO: take this concept of making a name, and put it into $nth meta
                    ;;or the meta of the partial-constraint
                    ;;fetch the function from $nth and run it if exists
-                   [:$nth stuff]
-                   (->> stuff
-                        flatten
-                        (map str)
-                        (interpose "_")
-                        (apply str "$nth_"))
 
-                   [op [& deps]]
+
                    (->> (interpose "_" (map name deps))
                         (apply str (name op) "_")))
 
@@ -123,95 +82,12 @@
       (keywordize new-name)
       new-name)))
 
-(defn- unnest-partial-vars
-  "expects form of [:constraint [... ]]"
-  [[_  statement-args]]
-  (let [unnest-acc (atom [])
-        extract-constraints
-        (fn [form]
-          (match [form]
-                 [[:cardinality [deps [_ occurences] _]]]
-                 (do
-                   (swap! unnest-acc
-                          into
-                          (map #(with-meta [:var % :proto] {:from form}) occurences))
-                   ;; we need to preserve the cardinality constraint
-                   ;; in it's originality. we are not actually
-                   ;; unnesting partials in this case
-                   form)
-
-                 [(form :guard partial-constraint?)]
-                 (let [var-name (constraint-to-keyword form)]
-                   (swap! unnest-acc
-                          conj
-                          ^{:from form} [:var var-name :proto])
-                   var-name)
-                 :else form))
-        transformed-constraint (walk/postwalk extract-constraints statement-args)]
-    (into [transformed-constraint] @unnest-acc)))
-
-(defn- unnest-all-constraints
-  "the loco.constraints DSL allows for nested constraints, which aren't
-  permitted in choco, this function will create intermediate variables
-  and move deeply nested constraints to be top-level. should output
-  proto-vars sorted topologically based on their dependancies"
-  [statements]
-  (->> statements
-       (mapcat
-        (fn [statement]
-          (match statement
-                 [:reify var-name constraint]
-                 (let [[transformed-original & vars] (unnest-partial-vars constraint)]
-                   (conj (vec vars)
-                         ;;updates data structure as below:
-                         ;;[:reify var-name [:constraint transformed-original]]
-                         (assoc-in statement [2 1] transformed-original)))
-
-                 [:constraint _statement-args]
-                 (let [[transformed-original & vars] (unnest-partial-vars statement)]
-                   (conj (vec vars)
-                         ;;updates data structure as below:
-                         ;;[:constraint transformed-original]
-                         (assoc statement 1 transformed-original))))))))
-
-(defn- const-transform [statement]
-  (let [acc (atom [])
-        transformed-statement
-        (->>  statement
-              (walk/prewalk
-               (fn [form]
-                 ;; the main reason for this gnarly code is to mark
-                 ;; constants without creating infinite recursion
-                 (match [form (meta form)]
-                        [[(const :guard number?)] {:preserve-const true}]
-                        const
-
-                        [[(const :guard number?)] {:const true}]
-                        (let [var-name (keyword (str const))]
-                          (swap! acc conj [:var var-name :hidden [:const const]])
-                          var-name)
-
-                        [(form :guard sequential?) {:preserve-consts true}]
-                        (->> form (map #(if (number? %)
-                                          (with-meta [%] {:preserve-const true})
-                                          %))
-                             (into (empty form)))
-
-                        [(form :guard vector?) _]
-                        (->> form (map #(if (number? %)
-                                          (with-meta [%] {:const true})
-                                          %))
-                             (into (empty form)))
-
-                        :else form))))
-        ]
-    (conj @acc transformed-statement)))
-
 (defn- constraint-from-proto-var [statement]
   ;;since preserve-const will turn a const into a wrapped const, and
   ;;we are calling functions with preserve-const, we need to insure
   ;;that it is a passthrough, or we will unwrap and rewrap consts
   ;;unintentionally
+  (println 'con-from-proto ((juxt identity meta) statement))
   (binding [loco.constraints.utils/preserve-consts identity]
     (->
      [statement (meta statement)]
@@ -357,7 +233,21 @@
     ;;vars of cardinality should always be IntVars
     [:int 0 ub]))
 
+(defn- get-domain [statement]
+  (match [statement]
+         [[:var _ _ domain]] domain
+         ;; [[:var _ _ [:int lb ub]]] [:int lb ub]
+         ;; [[:var _ _ [:const val]]] [:const val]
+         ;; [[:var _ _ [:int (domain :guard vector?)]]]
+         :else nil))
+
+(defn- has-domain? [statement]
+  (if (get-domain statement) true false))
+
+;;TODO: this crazy matching could be replaced with spec/conform
 (defn- apply-dependant-domain [statement dep-domains]
+  {:pre [(every? has-domain? dep-domains)]}
+  (println 'apply-dependant-domain statement (meta statement) dep-domains)
   (->
    [statement (meta statement)]
    (match
@@ -395,7 +285,6 @@
 
     [[:min _] domains]
     (into [:int] (->> domains lb-ub-seq (reduce min-domains)))
-
     [[:max _] domains]
     (into [:int] (->> domains lb-ub-seq (reduce max-domains)))
 
@@ -404,26 +293,22 @@
                       (map #(multiply-domains %2 [%1 %1]) coeffs)
                       (reduce add-domains)))
 
-    [[:$nth [_ _ [:offset (offset :guard integer?)]]] [[:int index-lb index-ub] & vars]]
+    [[:$nth [_ _ [:offset (offset :guard nat-int?)]]] [[:int index-lb index-ub] & vars]]
     (into [:int] (element-domains vars index-lb index-ub offset))
 
-    [(var-name :guard keyword?) [:cardinality [vars [values occurences] _]] dep-domains]
+    [var-name [:constraint ['cardinality [vars [values occurences] _]]] dep-domains]
     (cardinality-domain var-name values occurences dep-domains)
     )))
 
-(defn- get-domain [statement]
-  (match [statement]
-         [[:var _ _ domain]] domain
-         ;; [[:var _ _ [:int lb ub]]] [:int lb ub]
-         ;; [[:var _ _ [:const val]]] [:const val]
-         ;; [[:var _ _ [:int (domain :guard vector?)]]]
-         :else nil))
-
+;;TODO: this way of getting deps for generated vars should probably be in the constraint-meta
+;;TODO: mixing of partials and deps is a bit confusing, as partials have a different syntax
 (defn- var-get-dependancies [statement]
+  (println 'var-get-dependancies statement (meta statement))
   (->
    [statement (meta statement)]
 
    (match
+    [_                {:deps deps}]                        ['defined-deps deps]
     [[:var _ _]       {:neg dep}]                          [:neg dep]
     [[:var _ :proto]  {:from [:constraint :partial more]}] more
     [[:var _ :proto]  {:from constraint}]                  constraint
@@ -431,10 +316,10 @@
     )
 
    (match
+    ['defined-deps deps] deps
     [:neg dep] [dep]
     [:scalar [deps _]] deps
-    [:$nth [deps [:at index] & _]] (into [index] deps)
-    [:cardinality [deps [values occurences] _]] deps
+;;    [:$nth [deps ['at index] & _]] (into [index] deps)
     [_type deps] deps)))
 
 (defn domain-transform [statements]
@@ -458,6 +343,7 @@
                               (mapv #(if-let [domain (get-domain %)]
                                        domain
                                        %)))
+
                     domain (apply-dependant-domain statement deps)
                     updated-statement (conj statement domain)
                     ]
@@ -477,13 +363,70 @@
          (apply concat)
          vec)))
 
+(defn- unnest-all-constraints
+  "the loco.constraints DSL allows for nested constraints, which aren't
+  permitted in choco, this function will create intermediate variables
+  and move deeply nested constraints to be top-level. should output
+  proto-vars sorted topologically based on their dependancies"
+  [statements]
+  (->> statements
+       (mapcat
+        (fn [statement]
+          (match statement
+                 [:reify var-name constraint]
+                 (let [[transformed-original & vars] (unnest-partial-vars constraint)]
+                   (conj (vec vars)
+                         ;;updates data structure as below:
+                         ;;[:reify var-name [:constraint transformed-original]]
+                         (assoc-in statement [2 1] transformed-original)))
+
+                 [:constraint _statement-args]
+                 (let [[transformed-original & vars] (unnest-partial-vars statement)]
+                   (conj (vec vars)
+                         ;;updates data structure as below:
+                         ;;[:constraint transformed-original]
+                         (assoc statement 1 transformed-original))))))))
+
+(defn- const-transform [statement]
+  (let [acc (atom [])
+        transformed-statement
+        (->>  statement
+              (walk/prewalk
+               (fn [form]
+                 ;; the main reason for this gnarly code is to mark
+                 ;; constants without creating infinite recursion
+                 (match [form (meta form)]
+                        [[(const :guard number?)] {:preserve-const true}]
+                        const
+
+                        [[(const :guard number?)] {:const true}]
+                        (let [var-name (keyword (str const))]
+                          (swap! acc conj ($const var-name const))
+                          var-name)
+
+                        [(form :guard sequential?) {:preserve-consts true}]
+                        (->> form (map #(if (number? %)
+                                          (with-meta [%] {:preserve-const true})
+                                          %))
+                             (into (empty form)))
+
+                        [(form :guard vector?) _]
+                        (->> form (map #(if (number? %)
+                                          (with-meta [%] {:const true})
+                                          %))
+                             (into (empty form)))
+
+                        :else form))))
+        ]
+    (conj @acc transformed-statement)))
+
 (defn to-ast [problem]
   {:pre
    ;;very basic validation of objects in the ast list
-   [(->> problem (every? #(->> % ((juxt var? reify? constraint?)) (some (c not nil?)))))]}
+   [(->> problem (every? #(->> % ((juxt var? reify? constraint?)) (not-any? nil?))))]}
   (let [
         vars (filter var? problem)
-        [extracted-consts transformed-constraints]
+        [extracted-consts constraints-with-replaced-consts]
         (->> problem
              (filter #(or
                        (constraint? %)
@@ -493,15 +436,30 @@
              ((juxt
                (p filter hidden-var?)
                (p remove hidden-var?))))
-        transformed-problem (->> transformed-constraints
-                                 (filter #(or
-                                           (constraint? %)
-                                           (partial-constraint? %)
-                                           (reify? %)))
-                                 unnest-all-constraints)
-        constraints (filter constraint? transformed-problem)
-        reifies     (filter reify? transformed-problem)
-        proto-vars  (filter proto-var? transformed-problem)
+        partial-constraints-replacement-map (atom {})
+        constraints-without-partials
+        (->> constraints-with-replaced-consts
+             (walk/postwalk (fn [statement]
+                              (if (partial-constraint? statement)
+                                (do (swap! partial-constraints-replacement-map
+                                           ;;want to build up replacement map for postwalk-replace
+                                           assoc statement (constraint-to-keyword statement))
+                                    (constraint-to-keyword statement))
+                                statement))))
+        _ (println 'no-partials constraints-without-partials)
+        _ (println 'partials @partial-constraints-replacement-map)
+        ;; flattened-constraints (->> constraints-with-replaced-consts
+        ;;                            (filter #(or
+        ;;                                      (constraint? %)
+        ;;                                      (partial-constraint? %)
+        ;;                                      (reify? %)))
+        ;;                            unnest-all-constraints)
+        flattened-constraints constraint
+
+        _ (println 'flattened-constraints flattened-constraints)
+        constraints (filter constraint? flattened-constraints)
+        reifies     (filter reify? flattened-constraints)
+        proto-vars  (filter proto-var? flattened-constraints)
         ]
 
     (-> []
@@ -580,12 +538,29 @@
         replaced-crazy-var-names (->> flattened-problem
                                       (walk/prewalk-replace var-name-obj-to-str-mapping))
 
-        proto-ast (to-ast replaced-crazy-var-names) ;;problem
-        ast (->> proto-ast domain-transform)
-        ]
+        proto-ast (->>
+                   replaced-crazy-var-names
+                   (map (fn [statement]
+                          (println 'map statement (meta statement))
+                          (if-let [deps (->> statement meta :deps)]
+                            (let [transformed-deps
+                                  (->> deps
+                                       (walk/prewalk-replace var-name-obj-to-str-mapping)
+                                       )]
+                              (println 'deps-transform transformed-deps)
 
+                              (vary-meta statement assoc :deps transformed-deps)
+                              ))
+                          statement))
+                   to-ast
+                   )
+        ;;ast (->> proto-ast domain-transform)
+        ]
     ;;TODO: test malformed problems
-    (assert only-constraints-and-vars-and-reifies-present? flattened-problem)
-    (assert only-constraints-and-vars-and-reifies-present? proto-ast)
-    (-> ast
-        (with-meta {:var-name-mapping (reverse-map var-name-obj-to-str-mapping)}))))
+    ;;(assert only-constraints-and-vars-and-reifies-present? flattened-problem)
+    ;;(assert only-constraints-and-vars-and-reifies-present? proto-ast)
+    (println 'var-name-mapping {:var-name-mapping (reverse-map var-name-obj-to-str-mapping)})
+    #_(-> ast
+          (with-meta {:var-name-mapping (reverse-map var-name-obj-to-str-mapping)}))
+    ;;proto-ast
+    ))

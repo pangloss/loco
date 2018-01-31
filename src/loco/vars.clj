@@ -1,8 +1,9 @@
+(in-ns 'loco.constraints)
 (ns loco.vars
-  (:refer-clojure :exclude [set int])
   (:require [clojure.core.match :refer [match]]
             [loco.match :refer [match+]]
-            [clojure.set :as set])
+            [clojure.set :as set]
+            [loco.utils :as utils])
   (:use loco.utils)
   (:import org.chocosolver.solver.variables.IntVar))
 
@@ -22,7 +23,7 @@
 ;;toBoolVar
 
 ;; -------------------- Tuples --------------------
-(defn tuples
+(defn $tuples
   "tuples act like a mask to be used with the table constraint.
   tuples can define the explicit arbitrary values a collection of
   variables can assume.
@@ -46,7 +47,7 @@
   Create a list of tuples which represents all allowed tuples if
   feasible=true or a set of forbidden tuples if feasible=false."
   {:choco "Tuples(int[][] values, boolean feasible)"}
-  ([var-name ints-lists] (tuples var-name ints-lists true))
+  ([var-name ints-lists] ($tuples var-name ints-lists true))
   ([var-name ints-lists feasible?]
    {:pre [(sequential? ints-lists)
           (every? (p every? int?) ints-lists)
@@ -54,7 +55,7 @@
           (boolean? feasible?)
           (keyword? var-name) ;;not supporting crazy var names yet
           ]}
-   [:var var-name :hidden [:tuples feasible? (mapv vec ints-lists)]]
+   ^:var [:var var-name :hidden [:tuples feasible? (mapv vec ints-lists)]]
    ))
 
 ;; -------------------- Sets --------------------
@@ -72,9 +73,9 @@
 (defn- upper-bound-contains-lower-bound?
   "when a set is instantiated, it will error if the upper bound does not contain the lower bound"
   [lb ub]
-  (every? (clojure.core/set ub) (clojure.core/set lb)))
+  (every? (set ub) (set lb)))
 
-(defn set
+(defn $set
   "Creates a set variable taking its domain in [lb, ub], For
    instance [#{0,3}, #{-2,0,2,3}] means the variable must include both
    0 and 3 and can additionnaly include -2, and 2
@@ -87,19 +88,19 @@
    {:pre [(or (set? lb) (sequential? lb)) (or (set? ub) (sequential? ub))
           ;;all elements from lb must be in ub
           (upper-bound-contains-lower-bound? lb ub)
-          (every? integer? lb)
-          (every? integer? ub)]}
+          (every? int? lb)
+          (every? int? ub)]}
 
-   [:var var-name :public [:set (clojure.core/set lb) (clojure.core/set ub)]])
+   ^:var [:var var-name :public [:set (set lb) (set ub)]])
 
   ([var-name ints]
    {:pre [(or (set? ints) (sequential? ints))
-          (every? integer? ints)]}
+          (every? int? ints)]}
 
-   [:var var-name :public [:set (clojure.core/set ints)]]))
+   ^:var [:var var-name :public [:set (set ints)]]))
 
-(def set- (comp #(assoc % 2 :hidden) (partial set)))
-(reset-meta! (var set-) (meta (var set)))
+(def $set- (comp #(assoc % 2 :hidden) (partial $set)))
+(reset-meta! (var $set-) (meta (var $set)))
 
 ;; -------------------- Utils --------------------
 
@@ -124,44 +125,44 @@
           :else var))
 
 ;; -------------------- Constants --------------------
-
-(defn const
+;;TODO: deprecate $const
+(defn $const
   "Declares that a variable must be a specific value (integer)"
   [var-name value]
   {:pre [(integer? value)]}
-  (->> [:var var-name :public [:const value]]))
+  ^:var [:var var-name :public [:const value]])
 
-(def const- (comp #(assoc % 2 :hidden) (partial const)))
-(reset-meta! (var const-) (meta (var const)))
+(def $const- (comp #(assoc % 2 :hidden) (partial $const)))
+(reset-meta! (var $const-) (meta (var $const)))
 
 ;; -------------------- booleans --------------------
 
 ;;TODO: implement const bool?  	boolVar(String name, boolean value)
-(defn bool
+(defn $bool
   "Declares that a variable must be a boolean (true/false or [0 1])
   some constraints have optimizations for booleans/boolean-lists (e.g. Model.sum|and|or)"
   {:choco "boolVar(String name)"}
   [var-name]
-  (->> [:var var-name :public [:bool 0 1]]
-       hidden-conversion))
+  (->>  ^:var [:var var-name :public [:bool 0 1]]
+        hidden-conversion))
 
-(def bool- (comp #(assoc % 2 :hidden) (partial bool)))
-(reset-meta! (var bool-) (meta (var bool)))
+(def $bool- (comp #(assoc % 2 :hidden) (partial $bool)))
+(reset-meta! (var $bool-) (meta (var $bool)))
 
-(defn bools
+(defn $bools
   "Declares a list of booleans with given var-names.
   this is not a equivalent to a BoolVar[]"
   [& var-names]
-  (->
-   (mapv bool var-names)
-   (with-meta {:generated-vars true})))
+  ^:generated-vars (mapv $bool var-names))
 
 ;; -------------------- Integers --------------------
-
-(defn int
+;;TODO: change name to something else $?
+;;can use (load file) to import public functions, not sure if it is good solution
+(defn $int
   "Declares that a variable must be in a certain domain.
    Possible arglist examples:
-   (in :x 1)
+   (in :x)   => (in :x IntVar/MIN_INT_BOUND IntVar/MAX_INT_BOUND)
+   (in :x 1) => const
    (in :x 1 5)
    (in :x [1 2 3 4 5])
    (in :x 1 5 :bounded)"
@@ -170,73 +171,93 @@
            "intVar(String name, int lb, int ub)"
            "intVar(String name, int lb, int ub, boolean boundedDomain)"]}
   ([var-name]
-   (int var-name IntVar/MIN_INT_BOUND IntVar/MAX_INT_BOUND))
+   ($int var-name IntVar/MIN_INT_BOUND IntVar/MAX_INT_BOUND))
 
   ([var-name lb ub bounded?]
-   {:pre [(integer? lb) (integer? ub) (or (boolean? bounded?) (= bounded? :bounded))]}
+   {:pre [(< lb ub) (int? lb) (int? ub) (some? (#{true false :bounded} bounded?))]}
    (->>
     (if bounded?
+      ^:var ^:int ^{:domain {:int true :bounded true :ub (int ub) :lb (int lb)}}
       [:var var-name :public [:int lb ub :bounded]]
-      (int var-name lb ub))
+      ($int var-name lb ub))
     hidden-conversion))
 
   ([var-name lb ub]
+   {:pre [(int? lb) (int? ub)]}
    (->>
     (match (sort [lb ub])
-           [0 1] (bool var-name)
-           :else [:var var-name :public [:int lb ub]])
+           [0 1] ($bool var-name)
+           :else ^:var ^:int ^{:domain {:int true :ub (int ub) :lb (int lb)}}
+           [:var var-name :public [:int lb ub]])
     hidden-conversion))
 
   ([var-name values]
    {:pre [(or
-           (integer? values)
-           (and (sequential? values)
-                (every? integer? values))
-           )]}
+           (int? values)
+           (and
+            (sequential? values)
+            (every? int? values)))]}
    (->>
     (match (vec (dedupe (sort (flatten [values]))))
-           [single-value-domain] (const var-name single-value-domain)
-           [0 1] (bool var-name)
-           domain-list [:var var-name :public [:int domain-list]])
+
+           [single-value-domain :guard int?];;(const var-name single-value-domain)
+           ^:var ^:int ^{:domain {:int true
+                                  :const true
+                                  :ub (int single-value-domain)
+                                  :lb (int single-value-domain)}}
+           [:var var-name :public [:int single-value-domain]]
+
+           [0 1] ($bool var-name)
+           domain-list
+           ^:var ^:int ^{:domain {:int true
+                                  :ub (int (peek domain-list))
+                                  :lb (int (first domain-list))
+                                  :enumeration domain-list}}
+           [:var var-name :public [:int domain-list]])
     hidden-conversion)))
 
-(def int- (comp #(assoc % 2 :hidden) (partial int)))
+(def $int- (comp #(assoc % 2 :hidden) $int))
 
-(def in int)
-(def in- int-)
+(def $in $int)
+(def $in- $int-)
 
-(reset-meta! (var in) (meta (var int)))
-(reset-meta! (var in-) (meta (var int)))
-(reset-meta! (var int-) (meta (var int)))
+(reset-meta! (var $in) (meta (var $int)))
+(reset-meta! (var $in-) (meta (var $int)))
+(reset-meta! (var $int-) (meta (var $int)))
+
+
+(defn proto
+  "this is not meant to be used like $bool or $int, more for internal usage"
+  [var-name partial]
+  {:pre [(string? var-name)]}
+  ^{:from partial} ^:proto ^:var [:var var-name :proto])
 
 ;; -------------------- Tasks -------------------
 ;;taskVarArray,
 ;;taskVarMatrix,
 
-(defn task
+(defn $task
   "Container representing a task: It ensures that: start + duration = end"
   {:choco "Task(IntVar s, IntVar d, IntVar e)"}
   [var-name start duration end]
   {:pre [(keyword? var-name)]} ;;not supporting crazy var names yet
-  [:var var-name :public [:task start duration end]])
+  ^:var [:var var-name :public [:task start duration end]])
 ;; -------------------- Views --------------------
 
 ;;FIXME: change neg from a var to a view
 ;;maybe change ^{:neg dependency} => ^{:view [:neg dependency]}
 ;;need to support offset and scale, which include arguments/modifiers
 ;;e.g.: ^{:view [:offset dependency :by 5]}
-(defn neg
+#_(defn neg
   "takes a partial constraint and creates a negative constraint from
   it (neg (- :x :b)) also can be used to create a neg var
   via (neg :-i :i)
   "
   ([label dependency]
    {:pre [(keyword? label) (keyword? dependency)]}
-   (->
-    [:var label :proto]
-    (with-meta {:neg dependency})))
+   (proto label ['neg dependency]))
   ([dependency]
-   [:constraint :partial [:neg dependency]]))
+   (partial-constraint 'neg dependency)))
 
 ;;TODO: write scale partial resolver and tests
 #_(defn scale

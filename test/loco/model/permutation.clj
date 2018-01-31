@@ -67,8 +67,8 @@
     [:var :ones :proto [:int 0 3]]
     [:var :twos :proto [:int 0 5]]
     [:constraint
-     [:cardinality
-      [[:a :b :c :d :e] [[1 2] [:ones :twos]] [:closed true]]]]]
+     ['cardinality
+      [[:a :b :c :d :e] [[1 2] [:ones :twos]] ['closed true]]]]]
 
    [($in :a 2 3)
     ($in :b 1 3)
