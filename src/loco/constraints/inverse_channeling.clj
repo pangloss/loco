@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.inverse-channeling
   (:use loco.constraints.utils)
   (:require
@@ -30,7 +31,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn inverse-channeling
+(defn $inverse-channeling
   "Creates an inverse channeling between vars1 and vars2:
   vars1[i-offset2] = j <=> vars2[j-offset1] = i Performs AC if domains are enumerated.
   If not, then it works on bounds without guaranteeing BC
@@ -39,7 +40,7 @@
   Beware you should have |vars1| = |vars2|"
   {:choco ["inverseChanneling(IntVar[] vars1, IntVar[] vars2)"
            "inverseChanneling(IntVar[] vars1, IntVar[] vars2, int offset1, int offset2)"]}
-  ([vars1 vars2] (inverse-channeling vars1 0 vars2 0))
+  ([vars1 vars2] ($inverse-channeling vars1 0 vars2 0))
   ([vars1 offset1 vars2 offset2]
    {:pre [(= (count vars1) (count vars2))
           (every? sequential? [vars1 vars2])

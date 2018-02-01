@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.bin-packing
     (:use loco.constraints.utils)
     (:require
@@ -32,10 +33,10 @@
                         offset)
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 
-(defn bin-packing
+(defn $bin-packing
   "Creates a BinPacking constraint. Bin Packing formulation:
   forall b in [0, binLoad.length - 1],
   binLoad[b] = sum(itemSize[i] |
@@ -66,15 +67,13 @@
 
   ([item-bin, item-size, bin-load, offset]
    {:pre [(sequential? item-bin)
-          (< 0 (count item-bin))
+          (not-empty item-bin)
           (distinct? item-bin)
           (sequential? item-size)
-          (every? integer? item-size)
-          (every? pos? item-size)
+          (every? pos-int? item-size)
           (= (count item-size) (count item-bin))
           (sequential? bin-load)
-          (integer? offset)
-          (<= 0 offset)]}
+          (nat-int? offset)]}
    (constraint constraint-name
                [['item-bin  (vec item-bin)]
                 ['item-size (preserve-consts (vec item-size))]

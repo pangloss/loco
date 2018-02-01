@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.max
   (:use loco.constraints.utils)
   (:require
@@ -61,7 +62,7 @@
 ;;TODO: redo max and min docs, this is complicated...
 ;;TODO: replace defun with match+ or conform add bool documentation
 ;;TODO: fix arglists
-(defun max
+(defun $max
   "The maximum of several arguments.
   The arguments can be a mixture of int-vars and numbers
   Creates a constraint over the maximum element in a set: max{i | i in set} = maxElementValue

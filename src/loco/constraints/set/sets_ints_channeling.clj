@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.sets-ints-channeling
   (:use loco.constraints.utils)
   (:require
@@ -31,7 +32,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn sets-ints-channeling
+(defn $sets-ints-channeling
   "Creates a constraint channeling set variables and integer variables :
   x in sets[y] <=> ints[x] = y
 
@@ -39,7 +40,7 @@
   x in sets[y-offset1] <=> ints[x-offset2] = y"
   {:choco ["setsIntsChanneling(SetVar[] sets, IntVar[] ints)"
            "setsIntsChanneling(SetVar[] sets, IntVar[] ints, int offset1, int offset2)"]}
-  ([sets ints] (sets-ints-channeling sets 0 ints 0))
+  ([sets ints] ($sets-ints-channeling sets 0 ints 0))
   ([sets offset-set ints offset-int]
    {:pre [(nat-int? offset-int) (nat-int? offset-set) (sequential? ints) (sequential? sets)]}
    (constraint constraint-name

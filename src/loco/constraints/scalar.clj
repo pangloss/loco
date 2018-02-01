@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.scalar
   (:use loco.constraints.utils)
   (:require
@@ -34,7 +35,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;;TODO: scalar can accept a list of [[int-var coeff] ...] tuples
-(defn scalar
+(defn $scalar
   "Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i]) operator scalar"
   {:choco "scalar(IntVar[] vars, int[] coeffs, String operator, IntVar scalar)"
    :partial true}

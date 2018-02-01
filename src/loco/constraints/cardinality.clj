@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.cardinality
   (:use loco.utils)
   (:use loco.constraints.utils)
@@ -33,9 +34,9 @@
                                closed?)
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn cardinality
+(defn $cardinality
   "Takes a list of variables, and a frequency map (from numbers to
   frequencies), constrains that the frequency map is accurate. If
   the :closed flag is set to true, any keys that aren't in the
@@ -48,14 +49,14 @@
   {:choco "globalCardinality(IntVar[] vars, int[] values, IntVar[] occurrences, boolean closed)"
    :gccat "http://sofdem.github.io/gccat/gccat/Cglobal_cardinality.html"}
   ([variables frequencies]
-   (cardinality variables frequencies false))
+   ($cardinality variables frequencies false))
 
   ([variables frequencies closed?]
    {:pre [
           (map? frequencies)
           (sequential? variables)
           (#{:closed true false} closed?)
-          (every? integer? (keys frequencies))
+          (every? int? (keys frequencies))
           (distinct? (keys frequencies))
           (distinct? (vals frequencies))
           ]

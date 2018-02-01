@@ -1,7 +1,8 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.all-equal
   (:use loco.constraints.utils)
   (:require
-   [loco.constraints.arithm :refer [arithm]]
+   [loco.constraints.arithm :refer [$arithm]]
    [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])
@@ -29,7 +30,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn all-equal
+(defn $all-equal
   "Constrains that all vars are equal to each other
 
   Creates a constraint stating that ints should be all equal.
@@ -41,11 +42,12 @@
   (constraint constraint-name (vec vars)
               compiler))
 
-(defn =
+;;TODO: partial implementation
+(defn $=
   [& more]
   (let [morev (vec more)]
     (match [morev]
-           [[x y]] (arithm x '= y)
-           :else   (all-equal morev))))
+           [[x y]] ($arithm x = y)
+           :else   ($all-equal morev))))
 
-(reset-meta! (var =) (meta (var all-equal)))
+(reset-meta! (var $=) (meta (var $all-equal)))

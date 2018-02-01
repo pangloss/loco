@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.int-value-precede-chain
   (:use loco.constraints.utils)
   (:require
@@ -38,7 +39,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;;TODO: find better names for  int-value-precede-chain arguments
-(defn int-value-precede-chain
+(defn $int-value-precede-chain
   "Creates an intValuePrecedeChain constraint.
   Ensure that, for each pair of V[k] and V[l] of values in V,
   such that k < l, if there exists j such that X[j] = V[l], then,
@@ -50,7 +51,7 @@
   {:choco ["intValuePrecedeChain(IntVar[] X, int[] V)"
            "intValuePrecedeChain(IntVar[] X, int S, int T)"]}
   ([xs vs]
-   {:pre [(every? integer? vs) (sequential? xs)]}
+   {:pre [(every? int? vs) (sequential? xs)]}
    (constraint constraint-name
                [(vec xs)
                 (preserve-consts (vec vs))]

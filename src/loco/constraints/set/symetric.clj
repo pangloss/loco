@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.symetric
   (:use loco.constraints.utils)
   (:require
@@ -26,7 +27,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn symetric
+(defn $symetric
   "Creates a constraint stating that sets are symmetric sets: x in sets[y] <=> y in sets[x]
   Creates a constraint stating that sets are symmetric sets: x in sets[y-offset] <=> y in sets[x-offset]"
   {:choco ["symmetric(SetVar... sets)"
@@ -42,5 +43,5 @@
                        ['offset (preserve-consts offset)]]
                       compiler)
 
-          [set-list :guard sequential?] (symetric set-list 0)
-          set-list (symetric set-list 0)))
+          [set-list :guard sequential?] ($symetric set-list 0)
+          set-list ($symetric set-list 0)))

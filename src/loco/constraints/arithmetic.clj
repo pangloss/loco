@@ -1,5 +1,5 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.arithmetic
-  (:refer-clojure :exclude [- *])
   (:use loco.utils
         loco.constraints.utils)
   (:require [clojure.core.match :refer [match]]))
@@ -20,5 +20,5 @@
   {:partial true}
   [& args]
   (match (vec args)
-         [x y] (partial-constraint ['* [x y]])
-         [x & more] (partial-constraint ['* [x (apply * more)]])))
+         [x y] (partial-constraint '* [x y])
+         [x & more] (partial-constraint '* [x (apply * more)])))

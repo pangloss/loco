@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.bits-int-channeling
   (:use loco.constraints.utils)
   (:require
@@ -27,7 +28,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn bits-int-channeling
+(defn $bits-int-channeling
   "Creates an channeling constraint between an integer variable and a set of bit variables.
   Ensures that var = 20*BIT_1 + 21*BIT_2 + ... 2n-1*BIT_n.
 

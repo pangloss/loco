@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.set-bools-channeling
   (:use loco.constraints.utils)
   (:require
@@ -27,7 +28,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn set-bools-channeling
+(defn $set-bools-channeling
   "Creates a constraint channeling a set variable with boolean variables :
   i in set <=> bools[i] = TRUE.
 
@@ -35,7 +36,7 @@
   i in set <=> bools[i-offset] = TRUE."
   {:choco ["setBoolsChanneling(BoolVar[] bools, SetVar set)"
            "setBoolsChanneling(BoolVar[] bools, SetVar set, int offset)"]}
-  ([set-var bools] (set-bools-channeling set-var bools 0))
+  ([set-var bools] ($set-bools-channeling set-var bools 0))
   ([set-var bools offset]
    {:pre [(nat-int? offset) (sequential? bools)]}
    (constraint constraint-name

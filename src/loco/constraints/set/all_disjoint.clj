@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.all-disjoint
   (:use loco.constraints.utils)
   (:require
@@ -25,10 +26,10 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn all-disjoint
+(defn $all-disjoint
   "Creates a constraint stating that the intersection of sets should be empty Note that there can be multiple empty sets"
   {:choco "allDisjoint(SetVar... sets)"}
   [& sets]
   (match (vec sets)
          [set-list :guard sequential?] (constraint constraint-name (vec set-list) compiler)
-         set-list (all-disjoint set-list)))
+         set-list ($all-disjoint set-list)))

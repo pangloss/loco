@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.among
   (:use loco.constraints.utils)
   (:require
@@ -29,16 +30,16 @@
                    (int-array values))
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 
-(defn among
+(defn $among
   "Creates an among constraint.
   nb-var is the number of variables of the collection vars that take their value in values."
   {:choco "among(IntVar nbVar, IntVar[] vars, int[] values)"
    :gccat "http://www.emn.fr/x-info/sdemasse/gccat/Camong.html"}
   [nb-var vars values]
-  {:pre [(sequential? vars) (sequential? values) (every? integer? values)]}
+  {:pre [(sequential? vars) (sequential? values) (every? int? values)]}
 
   (constraint constraint-name
               [(vec vars)

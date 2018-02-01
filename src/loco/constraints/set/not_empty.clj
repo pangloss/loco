@@ -1,5 +1,5 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.not-empty
-  (:refer-clojure :exclude [not-empty])
   (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
@@ -25,7 +25,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn not-empty
+(defn $not-empty
   "Creates a constraint preventing set to be empty"
   {:choco "notEmpty(SetVar set)"}
   [set-var]

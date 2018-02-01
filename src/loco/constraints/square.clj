@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.square
   (:use loco.constraints.utils)
   (:require
@@ -25,7 +26,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn square
+(defn $square
   "Creates a square constraint: result = dependency^2"
   {:choco "square(IntVar var1, IntVar var2)"}
   [squared int-var]

@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.circuit
   (:use loco.constraints.utils)
   (:require
@@ -44,7 +45,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn circuit
+(defn $circuit
   "Given a list of int-vars L, and an optional offset number (default
   0), the elements of L define a circuit, where (L[i] = j + offset)
   means that j is the successor of i.  Hint: make the offset 1 when
@@ -76,9 +77,9 @@
   ([vars offset circuit-conf]
    {:pre [(nat-int? offset)
           (sequential? vars)
-          (#{:all :first :light :rd} circuit-conf)]}
+          (#{:all :first :light :rd 'all 'first 'light 'rd} circuit-conf)]}
    (constraint constraint-name
                [(vec vars)
                 ['offset (preserve-consts offset)]
-                ['conf ({:all 'all :first 'first :light 'light :rd 'rd} circuit-conf)]]
+                ['conf (symbol circuit-conf)]]
                compiler)))

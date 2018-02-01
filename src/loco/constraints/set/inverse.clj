@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.inverse
   (:use loco.constraints.utils)
   (:require
@@ -31,7 +32,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn inverse
+(defn $inverse
   "Creates a constraint stating that : x in sets[y-offset1] <=> y in invSets[x-offset2]"
   {:choco ["inverseSet(SetVar[] sets, SetVar[] invSets, int offset1, int offset2)"]}
   ([sets offset-set inverse-sets offset-invsere-set]

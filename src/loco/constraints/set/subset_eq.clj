@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.subset-eq
   (:use loco.constraints.utils)
   (:require
@@ -25,7 +26,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn subset-equal
+(defn $subset-equal
   ;;TODO: fix subset-equal docs
   ;; lawl, choco docs
   "Creates a constraint establishing that sets[i] is a subset of sets[j] if i"
@@ -39,4 +40,4 @@
                      (vec set-list)
                      compiler)
 
-         set-list (subset-equal set-list)))
+         set-list ($subset-equal set-list)))

@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.lex-chain-less
   (:use loco.constraints.utils)
   (:require
@@ -29,7 +30,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;;TODO: lex-chain-less is sort? make alias if so
-(defn lex-chain-less
+(defn $lex-chain-less
   "Creates a lexChainLess constraint.
   For each pair of consecutive vectors varsi and varsi+1 of the vars collection
   varsi is lexicographically strictly less than than varsi+1"

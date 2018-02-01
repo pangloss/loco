@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.clauses-int-channeling
   (:use loco.constraints.utils)
   (:require
@@ -33,7 +34,7 @@
 
 ;;TODO: do the int domain validation in the model/compile step
 ;;the distance of the LB and UB of int-var needs to be equal to (count e-vars)
-(defn clauses-int-channeling
+(defn $clauses-int-channeling
   "Creates an channeling constraint between an integer variable and a
   set of clauses. Link each value from the domain of var to two
   boolean variable: one reifies the equality to the i^th value of the

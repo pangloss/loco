@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.times
   (:use loco.constraints.utils)
   (:require
@@ -23,7 +24,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn times
+(defn $times
   "Creates a multiplication constraint:
 
   eq = operand1 * operand2
@@ -33,7 +34,7 @@
   operand2   = IntVar"
 
   {:choco "times(IntVar X, IntVar Y, IntVar Z)"}
-  ([eq = operand1 * operand2] (times eq operand1 operand2))
+  ([eq = operand1 * operand2] ($times eq operand1 operand2))
   ([eq operand1 operand2]
    (constraint constraint-name
     [eq '= operand1 '* operand2]

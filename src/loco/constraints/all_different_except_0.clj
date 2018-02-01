@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.all-different-except-0
   (:use loco.constraints.utils)
   (:require
@@ -22,9 +23,9 @@
            (.allDifferentExcept0 model (->> vars (into-array IntVar)))
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn distinct-except-0
+(defn $distinct-except-0
   "Creates an allDifferent constraint for variables that are not equal to 0.
   There can be multiple variables equal to 0."
   {:choco "allDifferentExcept0(IntVar[] vars)"
@@ -43,5 +44,5 @@
                      (vec var-list)
                      compiler)))
 
-(def all-different-except-0 distinct-except-0)
-(reset-meta! (var all-different-except-0) (meta (var distinct-except-0)))
+(def $all-different-except-0 $distinct-except-0)
+(reset-meta! (var $all-different-except-0) (meta (var $distinct-except-0)))

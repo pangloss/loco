@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.at-least-n-values
   (:use loco.constraints.utils)
     (:require
@@ -31,7 +32,7 @@
            ::s/invalid
            (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn at-least-n-values
+(defn $at-least-n-values
   "Creates an atLeastNValue constraint.
   Let N be the number of distinct values assigned to the variables of the vars collection.
   Enforce condition N >= nValues to hold."

@@ -1,5 +1,5 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.all-different
-  (:refer-clojure :exclude [distinct])
   (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
@@ -38,9 +38,9 @@
                           ({'default "DEFAULT" 'bc "BC" 'ac "AC"} consistency))
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn distinct
+(defn $distinct
   "-------------------- Ints --------------------
   Creates an allDifferent constraint.
   Ensures that all variables from vars take a different value.
@@ -69,7 +69,7 @@
   [& vars]
   (match+ (vec vars)
           [int-vars, {:consistency consistency}]
-          (distinct int-vars consistency)
+          ($distinct int-vars consistency)
 
           [int-vars, consistency]
           :guard [int-vars sequential?, consistency #{:default :bc :ac}]
@@ -86,5 +86,5 @@
           [& var-list]
           (constraint constraint-name (vec var-list) compiler)))
 
-(def all-different distinct)
-(reset-meta! (var all-different) (meta (var distinct)))
+(def $all-different $distinct)
+(reset-meta! (var $all-different) (meta (var $distinct)))

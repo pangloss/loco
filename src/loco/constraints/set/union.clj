@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.union
   (:use loco.constraints.utils)
   (:require
@@ -37,7 +38,7 @@
 ;;         (into-array IntVar (map lookup-var ints))
 ;;         (lookup-var union-set))
 
-(defn union
+(defn $union
   "Creates a constraint ensuring that union is exactly the union of values taken by ints
   Creates a constraint which ensures that the union of sets is equal to unionSet"
   {:choco ["union(IntVar[] ints, SetVar union)"

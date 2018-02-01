@@ -1,5 +1,4 @@
 (ns loco.constraints.arithm
-  (:refer-clojure :exclude [< > <= >=])
   (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
@@ -38,7 +37,7 @@
            ::s/invalid
            (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn arithm
+(defn $arithm
   "Creates an arithmetic constraint:
   eq op1 operand1 op2 operand2,
 
@@ -67,22 +66,22 @@
                  [a compare b op (preserve-consts c)]
                  compiler))))
 
-(defn <
+(defn $<
   "Constrains that X < Y"
   [x y]
-  (arithm x :< y))
+  ($arithm x < y))
 
-(defn >
+(defn $>
   "Constrains that X > Y"
   [x y]
-  (arithm x :> y))
+  ($arithm x > y))
 
-(defn <=
+(defn $<=
   "Constrains that X <= Y"
   [x y]
-  (arithm x :<= y))
+  ($arithm x <= y))
 
-(defn >=
+(defn $>=
   "Constrains that X >= Y"
   [x y]
-  (arithm x :>= y))
+  ($arithm x >= y))

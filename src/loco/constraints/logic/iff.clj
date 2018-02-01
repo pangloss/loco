@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.iff)
 
 ;; [:iff [if-constraint then-constraint]]

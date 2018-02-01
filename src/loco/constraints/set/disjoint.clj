@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.disjoint
   (:use loco.constraints.utils)
   (:require
@@ -25,12 +26,12 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn disjoint
+(defn $disjoint
   "Creates a constraint stating that the intersection of set1 and set2 should be empty Note that they can be both empty"
   {:choco "disjoint(SetVar set1, SetVar set2)"}
   ([[set1 set2 :as set-pair]]
    {:pre [(= 2 (count set-pair))]}
-   (disjoint set1 set2))
+   ($disjoint set1 set2))
   ([set1 set2]
    (constraint constraint-name
                [set1 set2]

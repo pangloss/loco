@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.nth
   (:use loco.constraints.utils
         loco.vars)

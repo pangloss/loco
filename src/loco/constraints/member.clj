@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.member
   (:refer-clojure :exclude [set])
   (:use loco.constraints.utils)
@@ -46,7 +47,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn member
+(defn $member
   "-------------------- IntVar --------------------
   Creates a member constraint. Ensures var takes its values in [LB, UB]
   Creates a member constraint. Ensures var takes its values in table

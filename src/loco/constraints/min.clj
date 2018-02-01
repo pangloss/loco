@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.min
   (:use loco.constraints.utils)
   (:require
@@ -57,7 +58,7 @@
 (defn- min-partial [& vars]
   (partial-constraint [:min (vec vars)]))
 
-(defun min
+(defun $min
   "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers
   Creates a constraint over the minimum element in a set: min{i | i in set} = minElementValue
   Creates a constraint over the minimum element induces by a set: min{weights[i-offset] | i in indices} = minElementValue"

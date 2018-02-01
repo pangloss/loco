@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.abs
   (:use loco.constraints.utils)
   (:require
@@ -22,9 +23,9 @@
            (.absolute model eq-var operand1)
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn abs
+(defn $abs
   "Creates an absolute value constraint:
   eq = |operand|
 

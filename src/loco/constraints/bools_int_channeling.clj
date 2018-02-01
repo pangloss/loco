@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.bools-int-channeling
   (:use loco.constraints.utils)
   (:require
@@ -27,17 +28,17 @@
            (.boolsIntChanneling model (into-array BoolVar bools) int-var offset)
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn bools-int-channeling
+(defn $bools-int-channeling
   "Creates an channeling constraint between an integer variable and a
   set of boolean variables.
   Maps the boolean assignments variables bVars with the standard assignment variable var.
   var = i <-> bVars[i-offset] = 1"
   {:choco "boolsIntChanneling(BoolVar[] bVars, IntVar var, int offset)"}
-  ([bool-vars, int-var] (bools-int-channeling bool-vars int-var 0))
+  ([bool-vars, int-var] ($bools-int-channeling bool-vars int-var 0))
   ([bool-vars, int-var, offset]
-   {:pre [(integer? offset) (sequential? bool-vars)]}
+   {:pre [(int? offset) (sequential? bool-vars)]}
    (constraint constraint-name
                [['bool-vars (vec bool-vars)]
                 ['int-var int-var]

@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.nb-empty
   (:use loco.constraints.utils)
   (:require
@@ -27,7 +28,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn nb-empty
+(defn $nb-empty
   "Creates a constraint counting the number of empty sets sets |{s in sets where |s|=0}| = nbEmpty"
   {:choco ["nbEmpty(SetVar[] sets, int nbEmpty)"
            "nbEmpty(SetVar[] sets, IntVar nbEmpty)"]}
@@ -38,5 +39,5 @@
                ['of (vec collection)]]
               compiler))
 
-(def count-empty nb-empty)
-(reset-meta! (var count-empty) (meta (var nb-empty)))
+(def $count-empty $nb-empty)
+(reset-meta! (var $count-empty) (meta (var $nb-empty)))

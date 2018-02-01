@@ -1,5 +1,5 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.mod
-  (:refer-clojure :exclude [mod])
   (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
@@ -23,9 +23,9 @@
            (.mod model operand1 operand2 eq-var)
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn mod
+(defn $mod
   "Creates a modulo constraint.
 
   eq = operand1 % operand2
@@ -35,13 +35,13 @@
   operand2   = IntVar"
   {:choco "mod(IntVar X, IntVar Y, IntVar Z)"
    :partial true}
-  ([eq = operand1 _% operand2] (mod eq operand1 operand2))
+  ([eq = operand1 _% operand2] ($mod eq operand1 operand2))
   ([eq operand1 operand2]
    (constraint constraint-name
                [eq '= operand1 '% operand2]
                compiler))
   ([operand1 operand2]
-   (partial-constraint [:% [operand1 operand2]])))
+   (partial-constraint ['% [operand1 operand2]])))
 
-(def % mod)
-(reset-meta! (var %) (meta (var mod)))
+(def $% $mod)
+(reset-meta! (var $%) (meta (var $mod)))

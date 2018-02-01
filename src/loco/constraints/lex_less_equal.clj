@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.lex-less-equal
   (:use loco.constraints.utils)
   (:require
@@ -27,7 +28,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn lex-less-equal
+(defn $lex-less-equal
   "Creates a lexLessEq constraint.
   Ensures that vars1 is lexicographically less or equal than vars2."
   {:choco "lexLessEq(IntVar[] vars1, IntVar[] vars2)"}

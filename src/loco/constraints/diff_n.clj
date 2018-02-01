@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.diff-n
   (:use loco.constraints.utils)
   (:require
@@ -39,7 +40,7 @@
 
 ;;TODO: implement diff-n with object args, as opposed to parallel array args
 ;;[{:x :y :width :height} ...]
-(defn diff-n
+(defn $diff-n
   "Creates a diffN constraint.
   Constrains each rectangle[i],
   given by their origins X[i],Y[i] and sizes width[i], height[i],

@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.partition
   (:use loco.constraints.utils)
   (:require
@@ -26,7 +27,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn partition
+(defn $partition
   "Creates a constraint stating that partitions universe into sets: union(sets) = universe intersection(sets) = {}"
   {:choco "partition(SetVar[] sets, SetVar universe)"}
   [universe collection]

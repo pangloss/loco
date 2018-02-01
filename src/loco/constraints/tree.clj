@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.tree
   (:use loco.constraints.utils)
   (:require
@@ -28,7 +29,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn tree
+(defn $tree
   "Creates a tree constraint.
   Partition succs variables into nbTrees (anti) arborescences
   succs[i] = j means that j is the successor of i.
@@ -38,7 +39,7 @@
   {:choco ["tree(IntVar[] succs, IntVar nbTrees)"
            "tree(IntVar[] succs, IntVar nbTrees, int offset)"]
    :gccat "http://sofdem.github.io/gccat/gccat/Ctree.html"}
-  ([succs, nb-trees] (tree succs nb-trees 0))
+  ([succs, nb-trees] ($tree succs nb-trees 0))
   ([succs, nb-trees, offset]
    {:pre [(nat-int? offset) (sequential? succs)]}
    (constraint constraint-name

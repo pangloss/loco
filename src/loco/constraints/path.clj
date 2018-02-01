@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.path
   (:use loco.constraints.utils)
   (:require
@@ -28,7 +29,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn path
+(defn $path
   "Creates a path constraint which ensures that
   the elements of vars define a covering path from start to end
   where vars[i] = j means that j is the successor of i.
@@ -38,7 +39,7 @@
   Filtering algorithms: see circuit constraint"
   {:choco ["path(IntVar[] vars, IntVar start, IntVar end)"
            "path(IntVar[] vars, IntVar start, IntVar end, int offset)"]}
-  ([vars start end] (path vars start end 0))
+  ([vars start end] ($path vars start end 0))
   ([vars start end offset]
    {:pre [(sequential? vars) (nat-int? offset) (pos? (count vars))]}
    (constraint constraint-name

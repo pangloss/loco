@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.div
   (:use loco.constraints.utils)
   (:require
@@ -24,7 +25,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn div
+(defn $div
   "Creates an euclidean division constraint.
 
   Ensures eq = dividend / divisor
@@ -38,7 +39,7 @@
   ([dividend, divisor]
    (partial-constraint [:/ [dividend, divisor]]))
 
-  ([eq = dividend / divisor] (div eq dividend divisor))
+  ([eq = dividend / divisor] ($div eq dividend divisor))
 
   ([eq dividend, divisor]
    (constraint constraint-name

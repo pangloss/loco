@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.sub-path
   (:use loco.constraints.utils)
   (:require
@@ -29,7 +30,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn sub-path
+(defn $sub-path
   "Creates a subPath constraint which ensures that
   the elements of vars define a path of SIZE vertices, leading from start to end
   where vars[i] = offset+j means that j is the successor of i.
@@ -39,7 +40,7 @@
 
   Filtering algorithms: see subCircuit constraint"
   {:choco "subPath(IntVar[] vars, IntVar start, IntVar end, int offset, IntVar SIZE)"}
-  ([vars start end size] (sub-path vars start end size 0))
+  ([vars start end size] ($sub-path vars start end size 0))
   ([vars start end size offset]
    {:pre [(sequential? vars) (nat-int? offset) (pos? (count vars))]}
    (constraint constraint-name

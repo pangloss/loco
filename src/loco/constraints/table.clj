@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.table
   (:use loco.constraints.utils)
   (:require
@@ -54,7 +55,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn table
+(defn $table
   "-------------------- IntVar [] --------------------
   ;; table(IntVar[] vars, Tuples tuples)
   ;; table(IntVar[] vars, Tuples tuples, String algo)
@@ -114,6 +115,7 @@
 
    [int-vars tuples algo]
    :guard [int-vars sequential?
+           ;;TODO: symbolize and stringize the algos for $table
            algo #{:CT+ :GAC2001 :GAC2001+ :GAC3rm :GAC3rm+ :GACSTR+ :STR2+ :FC :MDD+}]
    (constraint constraint-name
                [(vec int-vars)

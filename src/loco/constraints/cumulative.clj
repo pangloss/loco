@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.cumulative
   (:use loco.constraints.utils)
   (:require
@@ -24,8 +25,10 @@
    'time                      Cumulative$Filter/TIME
    })
 
-(def ^:private filters? (set (keys filter-to-enum)))
-(def ^:private keyword-filters? (set (map keyword filters?)))
+(def ^:private filters? (set (concat
+                              (keys filter-to-enum)
+                              (map keyword (keys filter-to-enum))
+                              (map str (keys filter-to-enum)))))
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
@@ -53,7 +56,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn cumulative
+(defn $cumulative
   "Creates a cumulative constraint:
   Enforces that at each point in time,
   the cumulated height of the set of tasks that overlap that point does not exceed a given limit.
@@ -76,13 +79,13 @@
     "cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental)"
     "cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)"]}
   ([tasks heights capacity]
-   (cumulative tasks heights capacity false))
+   ($cumulative tasks heights capacity false))
   ([tasks heights capacity incremental?]
-   (cumulative tasks heights capacity incremental? [:default]))
+   ($cumulative tasks heights capacity incremental? [:default]))
   ([tasks heights capacity incremental? filters]
    {:pre
     [(sequential? filters)
-     (every? keyword-filters? filters)
+     (every? filters? filters)
      (sequential? tasks)
      (sequential? heights)
      (boolean? incremental?)]}

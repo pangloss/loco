@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.element
   (:use loco.constraints.utils)
   (:require
@@ -35,7 +36,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn element
+(defn $element
   "-------------------- IntVar --------------------
   Given a list of int-vars L, an int-var i, and an optional offset
   number (default 0), returns a new int-var constrained to equal L[i],
@@ -59,7 +60,7 @@
            "element(IntVar index, SetVar[] sets, SetVar set)"
            "element(IntVar index, SetVar[] sets, int offset, SetVar set)"]}
   ([value table index]
-   (element value table index 0))
+   ($element value table index 0))
 
   ([value table index offset]
    {:pre [(nat-int? offset) (sequential? table)]}
@@ -73,5 +74,5 @@
                   ['offset (preserve-consts offset)]]
                  compiler))))
 
-(def elem element)
-(reset-meta! (var elem) (meta (var element)))
+(def $elem $element)
+(reset-meta! (var $elem) (meta (var $element)))

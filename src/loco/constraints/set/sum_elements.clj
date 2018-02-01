@@ -1,3 +1,4 @@
+(in-ns 'loco.constraints)
 (ns loco.constraints.set.sum-elements
   (:use loco.constraints.utils)
   (:require
@@ -29,7 +30,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;;TODO: can do partial for sum-elements
-(defn sum-elements
+(defn $sum-elements
   "Creates a constraint summing weights given by a set of indices:
   sum{weights[i-offset] | i in indices} = sum Also ensures that
   elements in indices belong to [offset, offset+weights.length-1]
@@ -39,7 +40,7 @@
   indices belong to [0, weights.length-1]"
   {:choco ["sumElements(SetVar indices, int[] weights, IntVar sum)"
            "sumElements(SetVar indices, int[] weights, int offset, IntVar sum)"]}
-  ([sum-var indices-set weights] (sum-elements sum-var indices-set weights 0))
+  ([sum-var indices-set weights] ($sum-elements sum-var indices-set weights 0))
   ([sum-var indices-set weights offset]
    {:pre [(sequential? weights)
           (every? int? weights)
