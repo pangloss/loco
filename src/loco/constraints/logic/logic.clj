@@ -1,9 +1,8 @@
 (ns loco.constraints.logic.logic
-  (:refer-clojure :exclude [compile var?])
   (:require
    [loco.vars :refer [$bool-]]))
 
-(defn and
+(defn $and
   "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if
   and only if every subconstraint is true."
   {:choco ["and(BoolVar... bools)"
@@ -12,7 +11,7 @@
   {:pre [(sequential? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:and (vec constraints-or-bools)]])
 
-(defn or
+(defn $or
   "An \"or\" statement (i.e. \"PvQv...\"); this statement is true if and
   only if at least one subconstraint is true."
   {:choco ["or(BoolVar... bools)"
@@ -21,17 +20,17 @@
   {:pre [(sequential? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:or (vec constraints-or-bools)]])
 
-(defn not
+(defn $not
   "Given a constraint C, returns \"not C\" a.k.a. \"~C\", which is true iff C is false."
   {:choco "not(Constraint cstr)"}
   [constraint]
   [:constraint [:not constraint]])
 
-(defn when
+(defn $when
   [if-this then-this]
   [:constraint [:when [if-this then-this]]])
 
-(defn if
+(defn $if
   "An \"if\" statement (i.e. \"implies\", \"P=>Q\"); this statement is true if and only if P is false or Q is true.
 In other words, if P is true, Q must be true (otherwise the whole
   statement is false).  An optional \"else\" field can be specified,
@@ -39,19 +38,20 @@ In other words, if P is true, Q must be true (otherwise the whole
   [if-this then-this else-this]
   [:constraint [:if-else [if-this then-this else-this]]])
 
-(defn iff
+(defn $iff
   "Posts an equivalence constraint stating that cstr1 is satisfied <=>
   cstr2 is satisfied, BEWARE : it is automatically posted (it cannot
   be reified)"
   [if-this then-this]
   [:constraint [:iff [if-this then-this]]])
 
-(defn reify
+;;TODO: fix up reify to be more like constraint/var format (more meta)
+(defn $reify
   "Given a constraint C, will generate a bool-var V such that (V = 1) iff C."
   {:choco "reification(BoolVar var, Constraint cstr)"}
   [var-label, constraint]
-  (-> [(bool- var-label)
-       [:reify var-label constraint]]
+  (-> [($bool- var-label)
+       ^:reify [:reify var-label constraint]]
       (with-meta {:generated-vars true})))
 
 (defn ^:dynamic *cond-name-gen*
@@ -60,7 +60,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   [prefix] (gensym prefix))
 
 ;;this is really complicated... very skeptical of it's use, or even correctly working
-(defn cond
+(defn $cond
   "A convenience function for constructing a \"cond\"-like statement out of $if/$reify statements.
   The final \"else\" can be specified using the :else keyword.
 
@@ -99,18 +99,22 @@ In other words, if P is true, Q must be true (otherwise the whole
 
               new-statements
               (if (= clause :else)
-                [(when (apply and previous-not-clauses)
+                [($when (apply $and previous-not-clauses)
                          action)]
                 [
-                 (reify if-cond-bool clause)
-                 (reify if-bool
-                         (apply and if-cond-bool previous-not-clauses))
-                 (reify not-if-bool (not clause)) ;;option to be boolNotView
-                 (if if-bool
+                 ($reify if-cond-bool clause)
+                 ($reify if-bool
+                         (apply $and if-cond-bool previous-not-clauses))
+                 ($reify not-if-bool ($not clause)) ;;option to be boolNotView
+                 ($if if-bool
                       action
-                      (and not-if-bool))
+                      ($and not-if-bool))
                  ])
               ]
           [(conj previous-not-clauses not-if-bool), (into statements new-statements)]))
       [[] []])
      second)))
+
+(def $true [:constraint :true])
+
+(def $false [:constraint :false])

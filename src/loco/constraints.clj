@@ -1,178 +1,80 @@
 (ns loco.constraints
-  (:refer-clojure :exclude [set sort partition count min max nth])
   (:use loco.utils
-        loco.constraints.utils)
-  (:require
-   ;;loco.vars
+        loco.constraints.utils))
 
-   [loco.constraints.automata
-    regular]
-   ;;[loco.constraints.automata regular]
+(def imports
+  ["vars"
+   "constraints/sum"
 
-   loco.constraints.logic.logic
+   "constraints/arithmetic"
+   "constraints/arithm"
+   "constraints/times"
+   "constraints/mod"
+   "constraints/abs"
+   "constraints/div"
+   "constraints/all_equal"
+   "constraints/not_all_equal"
 
-   [loco.constraints.set
-    all-disjoint
-    disjoint
-    intersection
-    inverse
-    nb-empty
-    not-empty
-    off-set
-    partition
-    set-bools-channeling
-    sets-ints-channeling
-    subset-eq
-    sum-elements
-    symetric
-    union
-    ]
+   "constraints/all_different"
+   "constraints/all_different_except_0"
+   "constraints/among"
+   "constraints/at_least_n_values"
+   "constraints/at_most_n_values"
+   "constraints/bin_packing"
+   "constraints/bits_int_channeling"
+   "constraints/bools_int_channeling"
+   "constraints/cardinality"
+   "constraints/circuit"
+   "constraints/clauses_int_channeling"
+   "constraints/count"
+   "constraints/cumulative"
+   "constraints/diff_n"
 
-   [loco.constraints
-    arithmetic
-    times
-    mod
-    abs
-    div
-    all-equal
-    not-all-equal
+   ;;constraints/distance
+   "constraints/element"
+   "constraints/int_value_precede_chain"
+   "constraints/inverse_channeling"
+   "constraints/knapsack"
+   "constraints/lex_chain_less"
+   "constraints/lex_chain_less_equal"
+   "constraints/lex_less"
+   "constraints/lex_less_equal"
+   "constraints/max"
+   "constraints/member"
+   "constraints/min"
+   "constraints/n_values"
+   "constraints/not_member"
+   "constraints/nth"
+   "constraints/path"
+   "constraints/scalar"
+   "constraints/sort"
+   "constraints/square"
+   "constraints/sub_circuit"
+   "constraints/sub_path"
+   "constraints/table"
+   "constraints/tree"
 
-    ;;distance
-    all-different
-    all-different-except-0
-    among
-    at-least-n-values
-    at-most-n-values
-    bin-packing
-    bits-int-channeling
-    bools-int-channeling
-    cardinality
-    circuit
-    clauses-int-channeling
-    count
-    cumulative
-    diff-n
-    element
-    int-value-precede-chain
-    inverse-channeling
-    knapsack
-    lex-chain-less
-    lex-chain-less-equal
-    lex-less
-    lex-less-equal
-    max
-    member
-    min
-    n-values
-    not-member
-    nth
-    path
-    scalar
-    sort
-    square
-    sub-circuit
-    sub-path
-    ;;sum
-    table
-    tree
-    ]
+   "constraints/set/intersection"
+   "constraints/set/union"
+   "constraints/set/nb_empty"
+   "constraints/set/not_empty"
+   "constraints/set/off_set"
+   "constraints/set/partition"
+   "constraints/set/subset_eq"
+   "constraints/set/sum_elements"
+   "constraints/set/symetric"
+   "constraints/set/all_disjoint"
+   "constraints/set/disjoint"
+   "constraints/set/set_bools_channeling"
+   "constraints/set/sets_ints_channeling"
+   "constraints/set/inverse"
 
-   )
-)
+   "constraints/logic/logic"
+   "constraints/automata/regular"])
 
-(defn- inherit-def [prefix dep-sym var-to-inherit]
-  (let [sym (symbol (str prefix (name dep-sym)))]
-    (if (qualified-symbol? sym)
-      (println "qualified symbol error:" dep-sym)
-      (when-not (and (< 1 (.length (name dep-sym)))
-                     (.startsWith (name dep-sym) "*"))
-        (do (println "creating def" (str *ns* "/" (name sym)))
-            (->
-             (intern *ns* sym var-to-inherit)
-             (reset-meta! (meta var-to-inherit))))))))
+(doseq [import imports]
+  (load import))
 
-(def ^:private to-inherit
-  (->> [
-        ;;'loco.vars
-        'loco.constraints.arithmetic
-        ;;'loco.constraints.sum
-        'loco.constraints.arithm
-        'loco.constraints.times
-        'loco.constraints.mod
-        'loco.constraints.abs
-        'loco.constraints.div
-        'loco.constraints.all-equal
-        'loco.constraints.not-all-equal
-
-        ;;TODO: write tests
-        'loco.constraints.all-different
-        'loco.constraints.all-different-except-0
-        'loco.constraints.among
-        'loco.constraints.at-least-n-values
-        'loco.constraints.at-most-n-values
-        'loco.constraints.bin-packing
-        'loco.constraints.bits-int-channeling
-        'loco.constraints.bools-int-channeling
-        'loco.constraints.cardinality
-        'loco.constraints.circuit
-        'loco.constraints.clauses-int-channeling
-        'loco.constraints.count
-        'loco.constraints.cumulative
-        'loco.constraints.diff-n
-        ;'loco.constraints.distance
-        'loco.constraints.element
-        'loco.constraints.int-value-precede-chain
-        'loco.constraints.inverse-channeling
-        'loco.constraints.knapsack
-        'loco.constraints.lex-chain-less
-        'loco.constraints.lex-chain-less-equal
-        'loco.constraints.lex-less
-        'loco.constraints.lex-less-equal
-        'loco.constraints.max
-        'loco.constraints.member
-        'loco.constraints.min
-        'loco.constraints.n-values
-        'loco.constraints.not-member
-        'loco.constraints.nth
-        'loco.constraints.path
-        'loco.constraints.scalar
-        'loco.constraints.sort
-        'loco.constraints.square
-        'loco.constraints.sub-circuit
-        'loco.constraints.sub-path
-        'loco.constraints.table
-        'loco.constraints.tree
-
-        'loco.constraints.set.intersection
-        'loco.constraints.set.union
-        'loco.constraints.set.nb-empty
-        'loco.constraints.set.not-empty
-        'loco.constraints.set.off-set
-        'loco.constraints.set.partition
-        'loco.constraints.set.subset-eq
-        'loco.constraints.set.sum-elements
-        'loco.constraints.set.symetric
-        'loco.constraints.set.all-disjoint
-        'loco.constraints.set.disjoint
-        'loco.constraints.set.set-bools-channeling
-        'loco.constraints.set.sets-ints-channeling
-        'loco.constraints.set.inverse
-
-        'loco.constraints.logic.logic
-        'loco.constraints.automata.regular
-        ]
-       (map ns-publics)
-       (into {})))
-
-(doseq [[sym var] to-inherit]
-  (inherit-def "$" sym var))
-
-(def $true [:constraint :true])
-
-(def $false [:constraint :false])
-
-(load "vars")
-(load "constraints/sum")
 
 ;; -------------------- MDD --------------------
 ;; mddc(IntVar[] vars, MultivaluedDecisionDiagram MDD)

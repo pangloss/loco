@@ -1,10 +1,8 @@
 (ns loco.constraints.bits-int-channeling
   (:use loco.constraints.utils)
   (:require
-   [loco.vars :refer [bool]]
+   [loco.vars :refer [$bool]]
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])
   (:import
@@ -27,7 +25,7 @@
            (.bitsIntChanneling model (into-array BoolVar bits) int-var)
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 (defn bits-int-channeling
   "Creates an channeling constraint between an integer variable and a set of bit variables.
@@ -40,7 +38,8 @@
   [bits int-var]
   {:pre [(sequential? bits)]}
   (-> (concat
-       (mapv bool bits)
+       ;;TODO: use $bools?
+       (mapv $bool bits)
        [(constraint constraint-name
                     [['bits (vec bits)]
                      ['int-var int-var]]

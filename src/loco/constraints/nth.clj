@@ -1,5 +1,4 @@
 (ns loco.constraints.nth
-  (:refer-clojure :exclude [nth])
   (:use loco.constraints.utils
         loco.vars)
   (:require
@@ -48,7 +47,8 @@
    ((juxt (comp first first (p sort-by first))
           (comp last last (p sort-by second))))))
 
-(defn nth
+;;TODO: implement $nth
+#_(defn $nth
   "partial for $element"
   {:choco "element(IntVar value, IntVar[] table, IntVar index, int offset)"
    :partial true}
@@ -63,13 +63,12 @@
          body [table
                ['at index]
                ['offset (preserve-consts offset)]]
-         (partial-constraint
-          {
-
-           :name partial-name
-           :body body
-           :gen-name name-fn
-           ;;calc-domain domain-fn
-           ;;:get-deps deps-fn
-           })
-         (add-deps table)])))
+         ]
+     (partial-constraint
+      partial-name
+      body
+      name-fn
+      ;;calc-domain domain-fn
+      ;;:get-deps deps-fn
+      )
+     (add-deps table))))
