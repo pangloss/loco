@@ -6,9 +6,10 @@
   ["vars"
    "constraints/sum"
 
-   "constraints/arithmetic"
-   "constraints/arithm"
    "constraints/times"
+   "constraints/arithm"
+   "constraints/arithmetic/subtract"
+
    "constraints/mod"
    "constraints/abs"
    "constraints/div"

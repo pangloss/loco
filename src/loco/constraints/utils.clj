@@ -107,12 +107,11 @@
   (if (and (var? statement) (not (has-domain? statement)))
     (let [partial (->> statement meta :from)
           domain-fn (->> partial meta :domain-fn)
-          partial-with-replaced-var-names (walk/postwalk-replace var-index partial)
-          domain (domain-fn partial-with-replaced-var-names)
+          partial-with-replaced-var-domains (walk/postwalk-replace var-index partial)
+          domain (domain-fn partial-with-replaced-var-domains)
           statement-with-domain (vary-meta statement assoc :domain domain)
           updated-var-index (assoc var-index (get-var-name statement) domain)
           ]
-      ;; [(conj acc statement) var-index]
       [(conj acc statement-with-domain) updated-var-index])
     [(conj acc statement) var-index]))
 

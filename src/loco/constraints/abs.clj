@@ -25,8 +25,31 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
+;; -------------------- partial --------------------
+
+(def ^:private partial-name 'abs)
+
+(defn- name-fn [partial]
+  (match partial
+         [partial-name [operand]]
+         (str "|" (name operand) "|")))
+
+(defn- constraint-fn [var-name [op [operand]]]
+  ($abs var-name operand))
+
+(defn- domain-fn [[partial-name [{:keys [lb ub]}]]]
+  (let [lb (int lb)
+        ub (int ub)]
+    (-> (match (vec (sort [lb ub])) ;;why don't i trust lb and ub here?
+               [(low :guard neg?) (high :guard neg?)] [(Math/abs high) (Math/abs low)]
+               [(low :guard neg?) high] [0 (max (Math/abs high) (Math/abs low))]
+               [low high] [(Math/abs low) (Math/abs high)]))
+    (zipmap [:lb :ub])
+    (assoc :int true)))
+
 (defn $abs
   "Creates an absolute value constraint:
+  ($abs eq operand) or ($abs eq = operand)
   eq = |operand|
 
   eq      = IntVar
@@ -34,8 +57,10 @@
   {:choco "absolute(IntVar var1, IntVar var2)"
    :partial true}
   ([operand]
-   (partial-constraint [:abs [operand]]))
+   (partial-constraint partial-name [operand] name-fn constraint-fn domain-fn))
   ([eq operand]
    (constraint constraint-name
                [eq '= operand]
-               compiler)))
+               compiler))
+  ([eq _op operand]
+   ($abs eq operand)))

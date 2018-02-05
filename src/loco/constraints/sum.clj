@@ -66,17 +66,19 @@
                [summation-var (to-operator operator) vars]
                compiler)))
 
+;; -------------------- partial --------------------
+
 (def ^:private partial-name '+)
 
 (defn- name-fn [partial]
   (match partial
          [partial-name body]
-         (apply str (interpose "+" body))))
+         (apply str (interpose (name partial-name) body))))
 
 (defn- constraint-fn [var-name [op body]]
   ($sum var-name '= body))
 
-(defn domain-fn [partial]
+(defn- domain-fn [partial]
   (match partial
          [partial-name body]
          (->
@@ -85,12 +87,7 @@
              (match domain
                     ;;TODO: handle enumerated domains
                     {:int true :lb d-lb :ub d-ub} {:lb (unchecked-add lb d-lb)
-                                                   :ub (unchecked-add ub d-ub)}
-
-                    ;; should never see this, because sum can not handle naked ints
-                    ;; just for testing
-                    (num :guard int?) {:lb (unchecked-add lb num)
-                                       :ub (unchecked-add ub num)}))
+                                                   :ub (unchecked-add ub d-ub)}))
            {:lb 0 :ub 0}
            body)
           (assoc :int true)
@@ -111,16 +108,3 @@
     name-fn
     constraint-fn
     domain-fn)))
-
-
-(use 'loco.vars)
-
-;; :D
-#_(->> [($int :x 0 5)
-        ($sum :z = ($+ 2 :x))]
-       compile)
-
-;; :D
-#_(->> [($int :x 0 5)
-        ($sum :z = ($+ 1 ($+ 2 :x)))]
-       compile)

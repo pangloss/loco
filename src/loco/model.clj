@@ -51,7 +51,7 @@
                   (match [:constraint :partial more] more)
                   (match
                    [:neg dep-name] (str "-" (name dep-name))
-                   [:abs [dep]] (str "|" (name dep) "|")
+
                    [op [dep]] (str (name op) "_" (name dep))
 
                    [(op :guard #(->> % name count (= 1))) [& deps]]
@@ -99,42 +99,7 @@
       [_ [:neg dep-name]]
       [($neg (neg-var-name dep-name) dep-name)]
 
-      [var-name [:- [arg1 & more]]]
-      (let [
-            negative-vars (->> more
-                               (map (fn [var-name]
-                                      ^{:neg var-name} [:var (neg-var-name var-name) :proto])))
-            negative-var-names (map second negative-vars)
-            ]
-        (-> []
-            (into negative-vars)
-            (into [statement])
-            (into [($sum var-name = (into [arg1] negative-var-names))])))
 
-      [var-name [:+ args]]
-      (-> []
-          (into [statement])
-          (into [($sum var-name = args)]))
-
-      [var-name [:% [arg1 arg2]]]
-      (-> []
-          (into [statement])
-          (into [($mod var-name = arg1 '% arg2)]))
-
-      [var-name [:* [arg1 arg2]]]
-      (-> []
-          (into [statement])
-          (into [($times var-name = arg1 * arg2)]))
-
-      [var-name [:/ [arg1 arg2]]]
-      (-> []
-          (into [statement])
-          (into [($div var-name arg1 arg2)]))
-
-      [var-name [:abs [arg]]]
-      (-> []
-          (into [statement])
-          (into [($abs var-name arg)]))
 
       [var-name [:min args]]
       (-> []
@@ -170,37 +135,8 @@
           [[:bool 0 1]] ^:bool [0 1]
           [[:int (domain :guard vector?)]] ^{:enumerated domain} ((juxt first last) domain)))))
 
-(defn- subtract-domains [[lb1 ub1] [lb2 ub2]]
-  [(- lb1 ub2) (- ub1 lb2)])
 
-(defn- add-domains [[lb1 ub1] [lb2 ub2]]
-  [(+ lb1 lb2) (+ ub1 ub2)])
 
-(defn- multiply-domains [[lb1 ub1] [lb2 ub2]]
-  (let [possible-bounds [(* lb1 lb2) (* lb1 ub2) (* ub1 lb1) (* ub1 ub2)]]
-    [(apply min possible-bounds)
-     (apply max possible-bounds)]))
-
-(defn modulo-domains [[lb1 ub1] [lb2 ub2]]
-  [0 ub2])
-
-;;TODO: possible that there is a way to optimize this, but i was a bit lazy
-(defn divide-domains
-  "only for int domains"
-  [[lb1 ub1] [lb2 ub2]]
-  (->>
-   (for  [n [lb1 ub1]
-          d [lb2 ub2]]
-     ;;prevent div by zero by replacing zeros with 1s
-     (unchecked-divide-int n (if (zero? d) 1 d)))
-   sort
-   ((juxt first last))))
-
-(defn abs-domain [_ [lb ub]]
-  (match (vec (sort [lb ub]))
-         [(low :guard neg?) (high :guard neg?)] [(Math/abs high) (Math/abs low)]
-         [(low :guard neg?) high] [0 (max (Math/abs high) (Math/abs low))]
-         [low high] [(Math/abs low) (Math/abs high)]))
 
 (defn min-domains [[lb1 ub1] [lb2 ub2]]
   [(min lb1 lb2), (min ub1 ub2)])
@@ -260,28 +196,6 @@
 
     [:neg [[:const b]]]
     [:const (- b)]
-
-    ;;problem here is that i'm assuming int as domain, if we have
-    ;;domains that are only consts, then this will still work,
-    ;;but possibly better if we can tell if we only have booleans
-    ;;FIXME: need function to infer domain type
-    [[:- _] domains]
-    (into [:int] (->> domains lb-ub-seq (reduce subtract-domains)))
-
-    [[:+ _] domains]
-    (into [:int] (->> domains lb-ub-seq (reduce add-domains)))
-
-    [[:* _] domains]
-    (into [:int] (->> domains lb-ub-seq (reduce multiply-domains)))
-
-    [[:% _] domains]
-    (into [:int] (->> domains lb-ub-seq (reduce modulo-domains)))
-
-    [[:/ _] domains]
-    (into [:int] (->> domains lb-ub-seq (reduce divide-domains)))
-
-    [[:abs _] domains]
-    (into [:int] (->> domains lb-ub-seq (reduce abs-domain [0 0])))
 
     [[:min _] domains]
     (into [:int] (->> domains lb-ub-seq (reduce min-domains)))

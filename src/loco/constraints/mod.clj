@@ -43,5 +43,39 @@
   ([operand1 operand2]
    (partial-constraint ['% [operand1 operand2]])))
 
-(def $% $mod)
-(reset-meta! (var $%) (meta (var $mod)))
+;; -------------------- partial --------------------
+
+(def ^:private partial-name '%)
+
+(defn- name-fn [partial]
+  (match partial
+         [partial-name body]
+         (apply str (interpose (name partial-name) body))))
+
+(defn- constraint-fn [var-name [op [operand1 operand2]]]
+  ($mod var-name = operand1 '% operand2))
+
+;; TODO: delete this when $% tests are passing
+;; (defn modulo-domains [[lb1 ub1] [lb2 ub2]]
+;;   [0 ub2])
+
+(defn domain-fn [partial [_ {ub2 :ub}]]
+  (-> {:lb 0 :ub ub2}
+      (assoc :int true)
+      (update :lb int)
+      (update :ub int)))
+
+(defn $%
+  "partial of $mod
+
+  e.g.:
+  ($= :eq ($% :n1 :n2)) => ($mod :eq '% :n1 :n2)
+  "
+  {:partial true}
+  ([operand1 operand2]
+   (partial-constraint
+    partial-name
+    [operand1 operand2] ;; body
+    name-fn
+    constraint-fn
+    domain-fn)))
