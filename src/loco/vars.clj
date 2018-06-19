@@ -225,13 +225,6 @@
 (reset-meta! (var $in-) (meta (var $int)))
 (reset-meta! (var $int-) (meta (var $int)))
 
-
-(defn proto
-  "this is not meant to be used like $bool or $int, more for internal usage"
-  [var-name partial]
-  {:pre [(string? var-name)]}
-  ^{:from partial} ^:proto ^:var [:var var-name :proto])
-
 ;; -------------------- Tasks -------------------
 ;;taskVarArray,
 ;;taskVarMatrix,
@@ -242,39 +235,10 @@
   [var-name start duration end]
   {:pre [(keyword? var-name)]} ;;not supporting crazy var names yet
   ^:var [:var var-name :public [:task start duration end]])
-;; -------------------- Views --------------------
 
-;;FIXME: change neg from a var to a view
-;;maybe change ^{:neg dependency} => ^{:view [:neg dependency]}
-;;need to support offset and scale, which include arguments/modifiers
-;;e.g.: ^{:view [:offset dependency :by 5]}
-#_(defn neg
-  "takes a partial constraint and creates a negative constraint from
-  it (neg (- :x :b)) also can be used to create a neg var
-  via (neg :-i :i)
-  "
-  ([label dependency]
-   {:pre [(keyword? label) (keyword? dependency)]}
-   (proto label ['neg dependency]))
-  ([dependency]
-   (partial-constraint 'neg dependency)))
-
-;;TODO: write scale partial resolver and tests
-#_(defn scale
-  "(scale :i_scale_2 :i 2) or ($= 4 (scale :i 2))"
-  ([label dependency magnitude]
-   {:pre [(keyword? label) (keyword? dependency) (integer? magnitude)]}
-   ^{:scale dependency :magnitude magnitude} [:var label :proto])
-  ([dependency magnitude]
-   {:pre [(keyword? dependency) (integer? magnitude)]}
-   [:constraint :partial [:scale dependency magnitude]]))
-
-;;TODO: write offset partial resolver and tests
-#_(defn offset
-  "(offset :i_offset_2 :i 2) or ($= 4 (offset :i 2))"
-  ([label dependency magnitude]
-   {:pre [(keyword? label) (keyword? dependency) (integer? magnitude)]}
-   ^{:offset dependency :magnitude magnitude} [:var label :proto])
-  ([dependency magnitude]
-   {:pre [(keyword? dependency) (integer? magnitude)]}
-   [:constraint :partial [:offset dependency magnitude]]))
+;;-------------------- meta --------------------
+(defn proto
+  "this is not meant to be used like $bool or $int, more for internal usage"
+  [var-name partial]
+  {:pre [(string? var-name)]}
+  ^{:from partial} ^:proto ^:var [:var var-name :proto])

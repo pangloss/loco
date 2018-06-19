@@ -52,7 +52,6 @@
 (defn- constraint-fn [var-name [op [operand1 operand2]]]
   ($times var-name = operand1 * operand2))
 
-
 (defn- domain-fn [[partial-name [{lb1 :lb ub1 :ub} {lb2 :lb ub2 :ub}]]]
   (let [possible-bounds [(* lb1 lb2)
                          (* lb1 ub2)

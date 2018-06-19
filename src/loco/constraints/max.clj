@@ -56,8 +56,34 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn- max-partial [& vars]
-  (partial-constraint [:max (vec vars)]))
+(defn- name-fn [partial]
+  (match partial
+         [partial-name body]
+         (->> (interpose "_" (map name body))
+              (apply str (name partial-name) "_"))))
+
+(defn- constraint-fn [var-name [op args]]
+  ($max var-name args))
+
+(defn- domain-fn [partial]
+  (match partial
+         [partial-name body]
+         (->
+          (reduce
+           (fn [{:keys [lb ub] :as acc} domain]
+             (match domain
+                    ;;TODO: handle enumerated domains
+                    {:int true :lb d-lb :ub d-ub} {:lb (max lb d-lb)
+                                                   :ub (max ub d-ub)}))
+           ;;{:lb 0 :ub 0}
+           body)
+          (assoc :int true)
+          (update :lb int)
+          (update :ub int))))
+
+(defn- max-partial [vars]
+  {:pre [(sequential? vars)]}
+  (partial-constraint constraint-name (vec vars) name-fn constraint-fn domain-fn))
 
 ;;TODO: redo max and min docs, this is complicated...
 ;;TODO: replace defun with match+ or conform add bool documentation

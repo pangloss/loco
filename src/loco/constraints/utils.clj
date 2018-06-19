@@ -81,7 +81,34 @@
               (into @acc
                     [constraints-without-partials])))))))
 
-(defn partial-constraint [op-name body name-fn constraint-fn domain-fn]
+(defn partial-constraint
+  "A partial constraint is one that lacks 1 variable (the equivalence
+  variable). These are a syntactic sugar that make it easier to see
+  the equivalence variable in a constraint statement.
+
+  example: ($+ 4 = 1 3) <=> ($= 4 ($+ 1 3))
+
+  A partial constraint requires some addition functions to support
+  naming, transformation into a constraint, and determining the domain
+  of subsequent supporting variables
+
+  name-fn will create a name (string/keyword) for the hidden variable
+  created to represent the partial constraint. the name-fn takes the
+  whole body of the partial constraint, with nested partial
+  constraints being already run through their name-fns
+
+  constraint-fn will be given the output of the name-fn as the first
+  argument, and the partial constraint body as the second
+  argument. which should be enough information to create the
+  non-partial constraint from.
+
+  domain-fn will be given the partial constraint body, with all of the
+  names of the variables replaced with their declarations, which come
+  with meta data regarding their domains, which should then be used to
+  calculate the domain of the partial-constraint. the output should be
+  a map that follows domain conventions, eg: {:int true :lb 0 :ub 4} ...
+  "
+  [op-name body name-fn constraint-fn domain-fn]
   {:pre [(symbol? op-name) (vector? body)]}
   (let [partial [op-name body]
         var-name (name-fn partial)]

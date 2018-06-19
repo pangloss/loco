@@ -12,76 +12,6 @@
     (keyword (.replace str ":" ""))
     (keyword str)))
 
-(defn- neg-var-name [dep-name]
-  (keyword (str "-" (name dep-name))))
-
-
-;;TODO: attach the name making function to the constraint itself via
-;;meta from ($neg) function
-
-;;TODO: these would be better if they were part of the function that
-;;created the partial constraint (like on it's meta data)
-
-
-(defn nice-keyword-str? [str]
-  (not (or
-        (clojure.string/includes? str "[")
-        (clojure.string/includes? str "]")
-        (clojure.string/includes? str "{")
-        (clojure.string/includes? str "}")
-        (clojure.string/includes? str "(")
-        (clojure.string/includes? str ")")
-        (when (clojure.string/ends-with? str ":") true)
-        )))
-
-#_(= [(nice-keyword-str? "re")
-       (nice-keyword-str? ":re")
-       (nice-keyword-str? ":re:")
-       (nice-keyword-str? ":re[f]")
-      ]
-     [true true false false])
-
-(defn constraint-to-keyword
-  "takes an un-nested partial-constraint and tries to make a nice name
-  from it and it's arguments. this will not work with nested
-  constraints. use with postwalk"
-  [statement]
-  (let [new-name (->
-                  statement
-                  (match [:constraint :partial more] more)
-                  (match
-                   [:neg dep-name] (str "-" (name dep-name))
-
-                   [op [dep]] (str (name op) "_" (name dep))
-
-                   [(op :guard #(->> % name count (= 1))) [& deps]]
-                   (->> deps
-                        (interpose (name op))
-                        (apply str))
-
-                   [op (args :guard #(->> % flatten count (< 10)))]
-                   (->> args hash (str (name op) "_"))
-
-                   [:scalar [vars coeffs]]
-                   (->> [(map name vars) (repeat "*") coeffs]
-                        (apply map vector)
-                        (interpose "+")
-                        flatten
-                        (apply str "scalar_"))
-
-                   ;;TODO: take this concept of making a name, and put it into $nth meta
-                   ;;or the meta of the partial-constraint
-                   ;;fetch the function from $nth and run it if exists
-
-
-                   (->> (interpose "_" (map name deps))
-                        (apply str (name op) "_")))
-
-                  )]
-    (if (nice-keyword-str? new-name)
-      (keywordize new-name)
-      new-name)))
-
 (defn- constraint-from-proto-var [statement]
   ;;since preserve-const will turn a const into a wrapped const, and
   ;;we are calling functions with preserve-const, we need to insure
@@ -99,61 +29,9 @@
       [_ [:neg dep-name]]
       [($neg (neg-var-name dep-name) dep-name)]
 
-
-
-      [var-name [:min args]]
-      (-> []
-          (into [statement])
-          (into [($min var-name args)]))
-
-      [var-name [:max args]]
-      (-> []
-          (into [statement])
-          (into [($max var-name args)]))
-
-      [var-name [:scalar [vars coeffs]]]
-      (-> []
-          (into [statement])
-          (into [($scalar var-name := vars coeffs)]))
-
-      [var-name [:$nth [vars [:at index] [:offset offset]]]]
-      (-> []
-          (into [statement])
-          (into [($element var-name vars index offset)]))
-
       :else [statement]))))
 
-(defn- lb-ub-seq [domains]
-  (->>
-   domains
-   (map #(match
-          [%]
-          [(const :guard integer?)] ^:const [const const]
-          [[:const b & _]] ^:const [b b]
-          [[:int lb ub true]] ^:bounded ^:lb-ub [lb ub] ;;bounded int-var
-          [[:int lb ub]] ^:lb-ub [lb ub]
-          [[:bool 0 1]] ^:bool [0 1]
-          [[:int (domain :guard vector?)]] ^{:enumerated domain} ((juxt first last) domain)))))
 
-
-
-
-(defn min-domains [[lb1 ub1] [lb2 ub2]]
-  [(min lb1 lb2), (min ub1 ub2)])
-
-(defn max-domains [[lb1 ub1] [lb2 ub2]]
-  [(max lb1 lb2), (max ub1 ub2)])
-
-(defn element-domains
-  [list idx-lb idx-ub offset]
-  (->>
-   list
-   lb-ub-seq
-   (drop offset)
-   (drop idx-lb)
-   (take (inc idx-ub))
-   ((juxt (comp first first (p sort-by first))
-          (comp last last (p sort-by second))))))
 
 (defn within-domain [num [lb ub]]
   (and
@@ -187,28 +65,6 @@
   (->
    [statement (meta statement)]
    (match
-    [[:var _ _]      {:neg _}]                               [:neg dep-domains]
-    [[:var _ :proto] {:from [:constraint :partial partial]}] [partial dep-domains]
-    [[:var var-name :proto] {:from constraint}]              [var-name constraint dep-domains])
-   (match
-    [:neg [[:int lb ub]]]
-    [:int (- ub) (- lb)]
-
-    [:neg [[:const b]]]
-    [:const (- b)]
-
-    [[:min _] domains]
-    (into [:int] (->> domains lb-ub-seq (reduce min-domains)))
-    [[:max _] domains]
-    (into [:int] (->> domains lb-ub-seq (reduce max-domains)))
-
-    [[:scalar [_ coeffs]] domains]
-    (into [:int] (->> domains lb-ub-seq
-                      (map #(multiply-domains %2 [%1 %1]) coeffs)
-                      (reduce add-domains)))
-
-    [[:$nth [_ _ [:offset (offset :guard nat-int?)]]] [[:int index-lb index-ub] & vars]]
-    (into [:int] (element-domains vars index-lb index-ub offset))
 
     [var-name [:constraint ['cardinality [vars [values occurences] _]]] dep-domains]
     (cardinality-domain var-name values occurences dep-domains)
@@ -387,6 +243,7 @@
              (into []))
         )))
 
+;;TODO: replace these validation functions with spec
 (defn- all-var-names-are-unique? [ast]
   (if-let [duplicate-var-names (->> ast
                                     (filter var?)

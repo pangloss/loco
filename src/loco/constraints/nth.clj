@@ -19,7 +19,6 @@
                 (when (pos? offset)
                   (str 'offset "=" offset)))))
 
-
 ;;TODO: transformation fn
 ;; [var-name [:$nth [vars [:at index] [:offset offset]]]]
 ;; (-> []

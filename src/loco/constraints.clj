@@ -8,7 +8,7 @@
 
    "constraints/times"
    "constraints/arithm"
-   "constraints/arithmetic/subtract"
+   "constraints/arithmetic/subtraction"
 
    "constraints/mod"
    "constraints/abs"

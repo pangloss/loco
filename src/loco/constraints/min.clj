@@ -55,9 +55,38 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn- min-partial [& vars]
-  (partial-constraint [:min (vec vars)]))
+(defn- name-fn [partial]
+  (match partial
+         [partial-name body]
+         (->> (interpose "_" (map name body))
+              (apply str (name partial-name) "_"))))
 
+(defn- constraint-fn [var-name [op args]]
+  ($min var-name args))
+
+(defn- domain-fn [partial]
+  (match partial
+         [partial-name body]
+         (->
+          (reduce
+           (fn [{:keys [lb ub] :as acc} domain]
+             (match domain
+                    ;;TODO: handle enumerated domains
+                    {:int true :lb d-lb :ub d-ub} {:lb (min lb d-lb)
+                                                   :ub (min ub d-ub)}))
+           ;;{:lb 0 :ub 0}
+           body)
+          (assoc :int true)
+          (update :lb int)
+          (update :ub int))))
+
+(defn- min-partial [vars]
+  {:pre [(sequential? vars)]}
+  (partial-constraint constraint-name (vec vars) name-fn constraint-fn domain-fn))
+
+;;TODO: rearrange the arguments in $min away from choco, and into
+;;something more consistent, also may be good to use spec instead of
+;;defun
 (defun $min
   "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers
   Creates a constraint over the minimum element in a set: min{i | i in set} = minElementValue
@@ -68,12 +97,12 @@
     "min(SetVar set, IntVar minElementValue, boolean notEmpty)"
     "min(SetVar indices, int[] weights, int offset, IntVar minElementValue, boolean notEmpty)"]
    :arglists '([min-list]
-               [min vars]
-               [set-var min not-empty?]
-               [set-indices weights offset min not-empty?]
+               [min-var vars]
+               [set-var min-var not-empty?]
+               [set-indices weights offset min-var not-empty?]
                [& int-vars])}
 
-  ([(min-list :guard sequential?)] (apply min-partial min-list))
+  ([(min-list :guard sequential?)] (min-partial min-list))
 
   ([min (vars :guard sequential?)]
    (constraint constraint-name
@@ -100,4 +129,4 @@
                 ['not-empty? not-empty?]]
                compiler))
 
-  ([& int-vars] (apply min-partial int-vars)))
+  ([& int-vars] (min-partial int-vars)))

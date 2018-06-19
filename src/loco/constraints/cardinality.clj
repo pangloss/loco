@@ -36,6 +36,10 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
+;;TODO: i forget if cardinality is a partial or has some sort of properties of a partial, but it had a domain function in the old model.clj code.
+;; [var-name [:constraint ['cardinality [vars [values occurences] _]]] dep-domains]
+;; (cardinality-domain var-name values occurences dep-domains)
+
 (defn $cardinality
   "Takes a list of variables, and a frequency map (from numbers to
   frequencies), constrains that the frequency map is accurate. If
@@ -69,6 +73,9 @@
                                              [values occurences]
                                              ['closed closed]]
                                             compiler)]
+     ;;TODO: generating vars is more common than just for this
+     ;;function, split it out into a helper fn in utils so that this
+     ;;idea is better represented.
      (-> (concat
           (mapv (p vars/proto cardinality-constraint (vec variables)) occurences)
           [cardinality-constraint])

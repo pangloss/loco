@@ -3,7 +3,8 @@
   (:use loco.utils
         loco.constraints.utils)
   (:require [clojure.core.match :refer [match]]
-            [loco.constraints.sum :refer [$sum]]))
+            [loco.constraints.sum :refer [$sum]]
+            [loco.views.minus :refer [minus]]))
 
 (def ^:private partial-name '-)
 
@@ -12,20 +13,16 @@
          [partial-name body]
          (apply str (interpose (name partial-name) body))))
 
-[var-name [:- [arg1 & more]]]
-
-
+;;FIXME: subtract constraint-fn seems incomplete
 (defn- constraint-fn [var-name [op [operand1 & more]]]
   (let [
         negative-vars (->> more
                            (map (fn [var-name]
-                                  ;;TODO: fuck, need negative views here to make this not suck
-                                  ^{:neg var-name} [:var (neg-var-name var-name) :proto])))
+                                  (minus var-name))))
         negative-var-names (map second negative-vars)
         ]
     (-> []
         (into negative-vars)
-        (into [statement])
         (into [($sum var-name = (into [operand1] negative-var-names))]))))
 
 ;; based on this, delete when tests pass
@@ -45,6 +42,7 @@
            body)
           (assoc :int true))))
 
+;;TODO: $- should support negative view for 1 arity
 (defn $-
   "partial of $sum
 
