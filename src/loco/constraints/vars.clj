@@ -1,12 +1,12 @@
 (in-ns 'loco.constraints)
-(ns loco.vars
-  (:require [clojure.core.match :refer [match]]
-            [loco.match :refer [match+]]
-            [clojure.set :as set]
-            [loco.utils :as utils])
-  (:use loco.utils)
+(ns loco.constraints.vars
+  (:require
+   [clojure.core.match :refer [match]]
+   [loco.match :refer [match+]]
+   [clojure.set :as set]
+   [loco.utils :as utils])
+  ;;(:use loco.utils)
   (:import org.chocosolver.solver.variables.IntVar))
-
 
 ;;TODO: var methods left to be implemented:
 
@@ -50,7 +50,7 @@
   ([var-name ints-lists] ($tuples var-name ints-lists true))
   ([var-name ints-lists feasible?]
    {:pre [(sequential? ints-lists)
-          (every? (p every? int?) ints-lists)
+          (every? (partial every? int?) ints-lists)
           (apply = (map count ints-lists))
           (boolean? feasible?)
           (keyword? var-name) ;;not supporting crazy var names yet

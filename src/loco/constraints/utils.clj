@@ -1,14 +1,18 @@
 (ns loco.constraints.utils
-  (:refer-clojure :exclude [partial])
-  (:use [loco.utils])
-  (:require [clojure.core.match :refer [match]]
-            [loco.match :refer [match+]]
-            [clojure.spec.alpha :as s]
-            [clojure.walk :as walk]
-            [loco.vars :as vars])
+  (:refer-clojure :exclude [compile var?])
+  (:require
+   [loco.utils :refer [split]]
+   [clojure.core.match :refer [match]]
+   [loco.match :refer [match+]]
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.vars :as vars])
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar SetVar Task]
    org.chocosolver.solver.constraints.extension.Tuples))
+
+(def ^:private c comp)
+(def ^:private p partial)
 
 (defn ^:dynamic preserve-consts [val]
   (match [val (meta val)]
@@ -18,13 +22,18 @@
          [(val :guard sequential?) _] (vary-meta val merge {:preserve-consts true})
          :else val))
 
+(defn- var? [statement]                 (->> statement meta :var))
+(defn- constraint? [statement]          (->> statement meta :constraint))
+(defn- partial-constraint? [statement]  (->> statement meta :partial-constraint))
+(defn- view? [statement]                (->> statement meta :view))
+
 (defn constraint
   ([name input compiler]
    ^{:constraint true
      :compiler compiler}
    [name input]))
 
-(defn str+ [thing]
+(defn- str+ [thing]
   (if (or (keyword? thing) (string? thing) (symbol? thing))
     (name thing)
     (str thing)))
@@ -35,8 +44,7 @@
        (interpose "_")
        (apply str (str+ partial-name) "_")))
 
-
-(defn hasher
+(defn- hasher
   "produce a readable and short name"
   [deps-name]
   {:pre [(string? deps-name) (pos? (.length deps-name))]}
@@ -49,7 +57,7 @@
 (def ^:private has-domain? (c some? :domain meta))
 (def ^:private get-var-name (c second))
 
-(defn var-name-domain-map [problem]
+(defn- var-name-domain-map [problem]
   (let [get-name second]
     (->> problem
          (filter var?)
@@ -57,7 +65,7 @@
          (map (juxt get-name get-domain))
          (into {}))))
 
-(defn unfold-partials [problem]
+(defn- unfold-partials [problem]
   (->> problem
        (mapcat
         (fn [constraint]
@@ -119,6 +127,13 @@
       :domain-fn domain-fn
       } [op-name body]))
 
+(defn view [view-name body compile-fn domain-fn]
+  ^{
+    :view true
+    :compiler compile-fn
+    :domain-fn domain-fn
+    } [view-name body]
+  )
 
 (defn- realize-domain [[acc var-index] statement]
   ;;statement + meta looks something like
@@ -131,7 +146,9 @@
   ;;   :constraint-fn constraint-fn
   ;;   :domain-fn domain-fn
   ;;   }
-  (if (and (var? statement) (not (has-domain? statement)))
+
+  ;; possible that view and var can not work with the same code
+  (if (and (or (view? statement) (var? statement)) (not (has-domain? statement)))
     (let [partial (->> statement meta :from)
           domain-fn (->> partial meta :domain-fn)
           partial-with-replaced-var-domains (walk/postwalk-replace var-index partial)
@@ -142,7 +159,7 @@
       [(conj acc statement-with-domain) updated-var-index])
     [(conj acc statement) var-index]))
 
-(defn compile [problem]
+(defn compile-problem [problem]
   (let [problem (->> (unfold-partials problem)
                      (sort-by var?)
                      (split var?)
@@ -218,7 +235,7 @@
    :bools ::bool-vars
    :ints  ::int-vars))
 
-(defn convert-vars-to-strings
+(defn- convert-vars-to-strings
   "turn var objects into strings for easier reading/debugging"
   [obj]
   (->> obj

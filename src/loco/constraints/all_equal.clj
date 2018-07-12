@@ -48,6 +48,6 @@
   (let [morev (vec more)]
     (match [morev]
            [[x y]] ($arithm x = y)
-           :else   ($all-equal morev))))
+           [_]       ($all-equal morev))))
 
 (reset-meta! (var $=) (meta (var $all-equal)))

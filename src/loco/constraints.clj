@@ -1,9 +1,12 @@
 (ns loco.constraints
-  (:use loco.utils
+  #_(:use loco.utils
         loco.constraints.utils))
 
 (def imports
-  ["vars"
+  [
+   "constraints/vars"
+   "views/minus"
+
    "constraints/sum"
 
    "constraints/times"
@@ -31,7 +34,7 @@
    "constraints/cumulative"
    "constraints/diff_n"
 
-   ;;constraints/distance
+   ;;TODO: ;;constraints/distance
    "constraints/element"
    "constraints/int_value_precede_chain"
    "constraints/inverse_channeling"
@@ -71,9 +74,11 @@
    "constraints/set/inverse"
 
    "constraints/logic/logic"
-   "constraints/automata/regular"])
+   "constraints/automata/regular"
+   ])
 
 (doseq [import imports]
+  (println "load: " import)
   (load import))
 
 

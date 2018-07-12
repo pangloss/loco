@@ -2,7 +2,7 @@
 (ns loco.constraints.bits-int-channeling
   (:use loco.constraints.utils)
   (:require
-   [loco.vars :refer [$bool]]
+   [loco.constraints.vars :refer [$bool]]
    [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])

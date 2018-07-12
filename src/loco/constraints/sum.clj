@@ -1,8 +1,9 @@
 (in-ns 'loco.constraints)
 (ns loco.constraints.sum
-  (:use loco.constraints.utils
+  #_(:use loco.constraints.utils
         loco.utils)
   (:require
+   [loco.constraints.utils :refer [int-var? set-var? comparison-operator? constraint to-operator partial-constraint]]
    [loco.constraints.utils :as utils]
    [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]

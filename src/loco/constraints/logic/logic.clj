@@ -1,7 +1,7 @@
 (in-ns 'loco.constraints)
 (ns loco.constraints.logic.logic
   (:require
-   [loco.vars :refer [$bool-]]))
+   [loco.constraints.vars :refer [$bool-]]))
 
 (defn $and
   "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if

@@ -3,7 +3,11 @@
             [loco.model :as model])
   (:use clojure.test
         loco.model.test
-        loco.constraints)
+        loco.constraints
+        loco.constraints.vars ;;FIXME: shouldn't need this
+        loco.constraints.all-equal ;;FIXME: shouldn't need this
+        loco.views.minus ;;FIXME: shouldn't need this
+        )
   (:import org.chocosolver.solver.Model))
 
 (deftest compiling-vars-test
@@ -61,7 +65,8 @@
      [($set :a [1] [1 2 3])])
     )
 
-  (testing "neg"
+  ;;$neg doesn't make sense right now, as it's a view
+  #_(testing "neg"
     (vars-assert
      '(["i" 0 5 true "i = {0..5}"]
        ["-(i)" -5 0 true "-(i = {0..5}) = [-5,0]"])
@@ -119,7 +124,8 @@
        "ARITHM ([-(x*y) = 0])")
      [($in :x -5 5)
       ($in :y 0 2)
-      ($= 0 ($neg ($* :x :y)))])
+      ;;($= 0 ($neg ($* :x :y)))
+      ($= 0 ($minus ($* :x :y)))])
     )
 
   (testing "subtration"

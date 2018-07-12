@@ -1,10 +1,12 @@
 (in-ns 'loco.constraints.arithmetic.subtraction)
 (ns loco.constraints.arithmetic
-  (:use loco.utils
+  #_(:use loco.utils
         loco.constraints.utils)
-  (:require [clojure.core.match :refer [match]]
-            [loco.constraints.sum :refer [$sum]]
-            [loco.views.minus :refer [minus]]))
+  (:require
+   [loco.constraints.utils :refer [partial-constraint]]
+   [clojure.core.match :refer [match]]
+   [loco.constraints.sum :refer [$sum]]
+   [loco.views.minus :refer [$minus]]))
 
 (def ^:private partial-name '-)
 
@@ -18,12 +20,10 @@
   (let [
         negative-vars (->> more
                            (map (fn [var-name]
-                                  (minus var-name))))
-        negative-var-names (map second negative-vars)
+                                  ($minus var-name))))
+        ;;negative-var-names (map second negative-vars)
         ]
-    (-> []
-        (into negative-vars)
-        (into [($sum var-name = (into [operand1] negative-var-names))]))))
+    [($sum var-name = (into [operand1] negative-vars))]))
 
 ;; based on this, delete when tests pass
 ;; (defn- subtract-domains [[lb1 ub1] [lb2 ub2]]

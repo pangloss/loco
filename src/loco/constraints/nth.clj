@@ -1,7 +1,8 @@
 (in-ns 'loco.constraints)
 (ns loco.constraints.nth
   (:use loco.constraints.utils
-        loco.vars)
+        ;;loco.constraints.vars
+        )
   (:require
    [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]))

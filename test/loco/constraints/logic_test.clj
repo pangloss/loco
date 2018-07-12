@@ -1,4 +1,4 @@
-(ns ^:model loco.model.logic
+(ns ^:model loco.constraints.logic-test
   (:use clojure.test
         loco.model.test
         loco.constraints))

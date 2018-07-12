@@ -1,4 +1,5 @@
 (ns loco.utils
+  (:refer-clojure :exclude [var?])
   (:require [clojure.core.match :refer [match]]))
 
 (def p partial)
@@ -94,6 +95,8 @@
 (def constraint? (c some? :constraint meta))
 
 (def partial-constraint? (c some? :partial-constraint meta))
+
+(def view? (c some? :view meta))
 
 (defn reify? [form]
   (match form
