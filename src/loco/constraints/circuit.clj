@@ -52,7 +52,7 @@
   using a 1-based list.
 
   vars = IntVar[]
-  offset = integer
+  offset = integer, default=0
   circuit-conf of #{:all, :first, :light, :rd}
 
   Filtering algorithms:
@@ -66,7 +66,7 @@
            "circuit(IntVar[] vars, int offset)"
            "circuit(IntVar[] vars, int offset, CircuitConf conf)"]}
   ([vars]
-    (circuit vars 0))
+   ($circuit vars 0))
   ([vars offset]
    {:pre [(nat-int? offset) (sequential? vars)]}
    (constraint constraint-name

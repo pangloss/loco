@@ -1,4 +1,4 @@
-(ns loco.constraints.arithmetic.subtraction
+(ns loco.constraints.arithmetic.subtraction-test
   (:use loco.constraints clojure.test))
 
 (deftest subtraction-output-test

@@ -34,6 +34,7 @@
          [partial-name [operand]]
          (str "|" (name operand) "|")))
 
+(declare $abs)
 (defn- constraint-fn [var-name [op [operand]]]
   ($abs var-name operand))
 

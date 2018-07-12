@@ -35,15 +35,16 @@
 (defn $at-least-n-values
   "Creates an atLeastNValue constraint.
   Let N be the number of distinct values assigned to the variables of the vars collection.
-  Enforce condition N >= nValues to hold."
+  Enforce condition N >= nValues to hold.
+  AC is false by default."
   {:choco "atLeastNValues(IntVar[] vars, IntVar nValues, boolean AC)"}
   ([vars n-values]
-   (at-least-n-values vars n-values false))
+   ($at-least-n-values vars n-values false))
 
-  ([vars n-values ac]
-   {:pre [(sequential? vars) (boolean? ac)]}
+  ([vars n-values ac?]
+   {:pre [(sequential? vars) (boolean? ac?)]}
    (constraint constraint-name
                [(vec vars)
                 ['n-values n-values]
-                ['ac ac]]
+                ['ac ac?]]
                compiler)))

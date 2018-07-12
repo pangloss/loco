@@ -3,7 +3,7 @@
   (:use loco.utils)
   (:require
    [loco.vars :as vars]
-   [loco.constraints :refer [$abs $div $element $max $min $mod $neg $scalar $sum $times]]
+   ;;[loco.constraints :refer [$abs $div $element $max $min $mod $neg $scalar $sum $times]]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk]))
 

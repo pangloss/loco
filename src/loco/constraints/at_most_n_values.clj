@@ -36,7 +36,7 @@
   Let N be the number of distinct values assigned to the variables of the vars collection.
   Enforce condition N <= nValues to hold."
   {:choco "atMostNValues(IntVar[] vars, IntVar nValues, boolean STRONG)"}
-  ([vars n-values] (at-most-n-values vars n-values false))
+  ([vars n-values] ($at-most-n-values vars n-values false))
   ([vars n-values strong?]
    {:pre [(sequential? vars) (boolean? strong?)]}
    (constraint constraint-name

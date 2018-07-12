@@ -34,8 +34,11 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-;;FIXME: will this cause a problem with nested preserve-consts?
-(defn- constraint-fn [var-name [op [vars coeffs]]]
+;;TODO: write tests for this related to nested preserve-consts
+(declare $scalar)
+(defn- constraint-fn
+  "handle syntax like ($= :v ($scalar :a :b :c [100 10 1]))"
+  [var-name [op [vars coeffs]]]
   ($scalar var-name = vars coeffs))
 
 (defn- name-fn [partial]
@@ -87,5 +90,5 @@
           (comparison-operator? operator)
           (every? int? coeffs)]}
    (constraint constraint-name
-               [scalar (to-operator operator) int-vars (preserve-consts coeffs)]
+               [$scalar (to-operator operator) int-vars (preserve-consts coeffs)]
                compiler)))

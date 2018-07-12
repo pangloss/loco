@@ -34,6 +34,7 @@
          [partial-name body]
          (apply str (interpose (name partial-name) body))))
 
+(declare $div)
 (defn- constraint-fn [var-name [op [dividend, divisor]]]
   ($div var-name = dividend / divisor))
 

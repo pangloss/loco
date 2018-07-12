@@ -61,6 +61,7 @@
          (->> (interpose "_" (map name body))
               (apply str (name partial-name) "_"))))
 
+(declare $min)
 (defn- constraint-fn [var-name [op args]]
   ($min var-name args))
 
@@ -80,7 +81,9 @@
           (update :lb int)
           (update :ub int))))
 
-(defn- min-partial [vars]
+(defn- min-partial
+  "handles syntax like ($= :v ($min :a :b :c))"
+  [vars]
   {:pre [(sequential? vars)]}
   (partial-constraint constraint-name (vec vars) name-fn constraint-fn domain-fn))
 

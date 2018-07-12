@@ -60,10 +60,10 @@
    :gccat "http://sofdem.github.io/gccat/gccat/Cbin_packing_capa.html"
    :constraint-type [:resource-constraint]}
   ([item-map bin-load] {:pre [(map? item-map)]}
-   (bin-packing (keys item-map) (vals item-map) bin-load))
+   ($bin-packing (keys item-map) (vals item-map) bin-load))
 
   ([item-bin, item-size, bin-load]
-   (bin-packing item-bin item-size bin-load 0))
+   ($bin-packing item-bin item-size bin-load 0))
 
   ([item-bin, item-size, bin-load, offset]
    {:pre [(sequential? item-bin)
