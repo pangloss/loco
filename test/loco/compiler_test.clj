@@ -1,14 +1,17 @@
 (ns ^:compiler loco.compiler-test
   (:require [loco.compiler :as compiler]
             [loco.model :as model])
-  (:use clojure.test
-        loco.model.test
-        loco.constraints
-        loco.constraints.vars ;;FIXME: shouldn't need this
-        loco.constraints.all-equal ;;FIXME: shouldn't need this
-        loco.views.minus ;;FIXME: shouldn't need this
-        )
+  (:use
+   clojure.test
+   loco.model.test
+   loco.constraints
+   loco.constraints.vars ;;FIXME: shouldn't need this
+   loco.constraints.all-equal ;;FIXME: shouldn't need this
+   loco.views.minus ;;FIXME: shouldn't need this
+   )
   (:import org.chocosolver.solver.Model))
+
+(use 'loco.constraints)
 
 (deftest compiling-vars-test
 

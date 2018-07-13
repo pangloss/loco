@@ -1,6 +1,4 @@
-(ns loco.constraints
-  #_(:use loco.utils
-        loco.constraints.utils))
+(ns loco.constraints)
 
 (def imports
   [
@@ -77,10 +75,7 @@
    "constraints/automata/regular"
    ])
 
-(doseq [import imports]
-  (println "load: " import)
-  (load import))
-
+(apply load imports)
 
 ;; -------------------- MDD --------------------
 ;; mddc(IntVar[] vars, MultivaluedDecisionDiagram MDD)
