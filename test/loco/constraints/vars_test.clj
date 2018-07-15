@@ -48,8 +48,8 @@
 (deftest const-vars-test
   (testing "$const"
     (are [in out] (= out in)
-      ($const :7 7)               [:var :7 :public [:const 7]] 
-      ($const :a 1)               [:var :a :public [:const 1]] 
+      ($const :7 7)               [:var :7 :public [:const 7]]
+      ($const :a 1)               [:var :a :public [:const 1]]
       ($const [:b 10] 2)          [:var [:b 10] :public [:const 2]]
       ($const [:constraint 10] 2) [:var [:constraint 10] :public [:const 2]]
       )
@@ -60,7 +60,7 @@
       [($const :7 7)]               [[:var :7 :public [:const 7]]]
       [($const :a 1)]               [[:var :a :public [:const 1]]]
       [($const [:b 10] 2)]          [[:var "[:b 10]" :public [:const 2]]]
-      [($const [:constraint 10] 2)] [[:var "[:constraint 10]" :public [:const 2]]] 
+      [($const [:constraint 10] 2)] [[:var "[:constraint 10]" :public [:const 2]]]
       )
     )
 
@@ -80,14 +80,14 @@
 (deftest bool-vars-test
   (testing "$bool"
     (are [in out] (= out in)
-      ($bool :8)               [:var :8 :public [:bool 0 1]] 
+      ($bool :8)               [:var :8 :public [:bool 0 1]]
       ($bool [:constraint 11]) [:var [:constraint 11] :public [:bool 0 1]]
       )
     )
 
   (testing "model/compile"
     (are [in out] (= out (model/compile in))
-      [($bool :8)]               [[:var :8 :public [:bool 0 1]]] 
+      [($bool :8)]               [[:var :8 :public [:bool 0 1]]]
       [($bool [:constraint 11])] [[:var "[:constraint 11]" :public [:bool 0 1]]]
       )
     )
@@ -105,9 +105,9 @@
 (deftest int-vars-test
   (testing "$in"
     (are [in out] (= out in)
-      ($in :a 1)                 [:var :a :public [:int 1 1]] 
-      ($in :b 2 2)               [:var :b :public [:int 2 2]] 
-      ($in :c 3 4)               [:var :c :public [:int 3 4]] 
+      ($in :a 1)                 [:var :a :public [:int 1 1]]
+      ($in :b 2 2)               [:var :b :public [:int 2 2]]
+      ($in :c 3 4)               [:var :c :public [:int 3 4]]
       ($in [:constraint 12] 5)   [:var [:constraint 12] :public [:int 5 5]]
       ($in :d [6 7 8 9])         [:var :d :public [:int [6 7 8 9]]]
       ($in :f 10 20 :bounded)    [:var :f :public [:int 10 20 :bounded]]
@@ -116,9 +116,9 @@
 
   (testing "model/compile"
     (are [in out] (= out (model/compile in))
-      [($in :a 1)]                 [[:var :a :public [:int 1 1]]] 
-      [($in :b 2 2)]               [[:var :b :public [:int 2 2]]] 
-      [($in :c 3 4)]               [[:var :c :public [:int 3 4]]] 
+      [($in :a 1)]                 [[:var :a :public [:int 1 1]]]
+      [($in :b 2 2)]               [[:var :b :public [:int 2 2]]]
+      [($in :c 3 4)]               [[:var :c :public [:int 3 4]]]
       [($in [:constraint 12] 5)]   [[:var "[:constraint 12]" :public [:int 5 5]]]
       [($in :d [6 7 8 9])]         [[:var :d :public [:int [6 7 8 9]]]]
       [($in :f 10 20 :bounded)]    [[:var :f :public [:int 10 20 :bounded]]]
@@ -133,11 +133,11 @@
        "[:constraint 12] = 5"
        "d = {6..9}"
        "f = [10,20]")
-     [($in :a 1)   
-      ($in :b 2 2) 
-      ($in :c 3 4) 
+     [($in :a 1)
+      ($in :b 2 2)
+      ($in :c 3 4)
       ($in [:constraint 12] 5)
-      ($in :d [6 7 8 9])      
+      ($in :d [6 7 8 9])
       ($in :f 10 20 :bounded)]
      )
     )
@@ -175,10 +175,10 @@
        "d = [{1}, {1, 2, 3}]"
        "e = {1, 2, 3}"
        "[:constraint 2] = {1, 2, 3}")
-     [($set :a [] [])       
-      ($set :b [] [1 2 3])  
-      ($set :d [1] [1 2 3]) 
-      ($set :e [1 2 3])     
+     [($set :a [] [])
+      ($set :b [] [1 2 3])
+      ($set :d [1] [1 2 3])
+      ($set :e [1 2 3])
       ($set [:constraint 2] [1 2 3])])
     )
   )
@@ -194,6 +194,8 @@
       ($task [:my-task 1] :a :b :c) [:var [:my-task 1] :public [:task :a :b :c]]
       )
     )
+
+  (model/compile [($task :my-task [1 2] [2 3] [3 4])])
 
   (testing "model/compile"
     (are [in out] (= out (model/compile in))
@@ -240,7 +242,7 @@
 
       ($tuples :forbidden2 [[8 9] [6 7]] :forbidden)
       [:var :forbidden2 :hidden [:tuples :forbidden [[8 9] [6 7]]]]
-      
+
       ($tuples-forbidden :forbidden [[8 9] [6 7]])
       [:var :forbidden :hidden [:tuples :forbidden [[8 9] [6 7]]]]
       )
@@ -252,13 +254,13 @@
       [[:var :tuple1 :hidden [:tuples :allowed [[1 2] [0 3]]]]]
 
       [($tuples :tuple2 [[1 2] [0 3]] false)]
-      [[:var :tuple2 :hidden [:tuples :forbidden [[1 2] [0 3]]]]]      
+      [[:var :tuple2 :hidden [:tuples :forbidden [[1 2] [0 3]]]]]
 
       [($tuples [:tuple 1] [[8 9] [6 7]] false)]
       [[:var "[:tuple 1]" :hidden [:tuples :forbidden [[8 9] [6 7]]]]]
       )
     )
-  
+
   (testing "compiler/compile"
     (choco-vars-string-assert
      '("Allowed tuples: {[1, 2][3, 4]}"
@@ -271,4 +273,3 @@
       ])
     )
   )
-

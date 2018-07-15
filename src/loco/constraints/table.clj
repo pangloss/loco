@@ -18,22 +18,22 @@
                       (s/or
                        :vars-tuples      (s/tuple
                                           (s/coll-of int-var?)
-                                          (s/tuple #{'tuples}  tuples?))
+                                          (s/tuple #{'tuples}  tuples-var?))
 
                        :vars-tuples-algo  (s/tuple
                                           (s/coll-of int-var?)
-                                          (s/tuple #{'tuples}  tuples?)
+                                          (s/tuple #{'tuples}  tuples-var?)
                                           (s/tuple #{'algo} #{'CT+ 'GAC2001 'GAC2001+
                                                               'GAC3rm 'GAC3rm+ 'GACSTR+
                                                               'STR2+ 'FC 'MDD+}))
 
                        :pair-tuples      (s/tuple
                                           (s/tuple #{'pair} int-var? int-var?)
-                                          (s/tuple #{'tuples} tuples?))
+                                          (s/tuple #{'tuples} tuples-var?))
 
                        :pair-tuples-algo (s/tuple
                                           (s/tuple #{'pair} int-var? int-var?)
-                                          (s/tuple #{'tuples} tuples?)
+                                          (s/tuple #{'tuples} tuples-var?)
                                           (s/tuple #{'algo} #{'AC2001 'AC3 'AC3rm
                                                               'AC3bit+rm 'FC}))))))
 

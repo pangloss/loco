@@ -34,7 +34,7 @@
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
                       (s/tuple
-                       (s/coll-of               task?)
+                       (s/coll-of               task-var?)
                        (s/tuple #{'heights}     (s/coll-of int-var?))
                        (s/tuple #{'capacity}    int-var?)
                        (s/tuple #{'incremental} boolean?)
