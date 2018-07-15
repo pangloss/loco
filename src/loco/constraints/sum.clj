@@ -1,10 +1,7 @@
 (in-ns 'loco.constraints)
 (ns loco.constraints.sum
-  #_(:use loco.constraints.utils
-        loco.utils)
   (:require
-   [loco.constraints.utils :refer [int-var? set-var? comparison-operator? constraint to-operator partial-constraint]]
-   [loco.constraints.utils :as utils]
+   [loco.constraints.utils :refer [int-var? set-var? comparison-operator? constraint to-operator partial-constraint report-spec-error] :as utils]
    [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])
@@ -40,7 +37,7 @@
            (.sum model set-var eq-var)
 
            ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 (defn $sum
   "Creates a sum constraint.

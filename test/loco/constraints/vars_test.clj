@@ -1,0 +1,274 @@
+(ns loco.constraints.vars-test
+  (:require [loco.compiler :as compiler]
+            [loco.model :as model])
+  (:use clojure.test loco.model.test)
+  (:require
+   [loco.constraints :refer :all]
+   )
+  (:import org.chocosolver.solver.Model))
+
+#_(defmacro choco-vars-assert
+  "used for testing compile chain model/compile -> compiler/compile
+  tests properties of vars in built Model"
+  ([expected actual-input] `(vars-assert ~expected ~actual-input nil))
+  ([expected actual-input msg]
+   `(is
+     (=
+      ~expected
+      (->>
+       ~actual-input
+       model/compile
+       compiler/compile
+       :vars
+       (map (juxt
+             (memfn getName)
+             (memfn getLB)
+             (memfn getUB)
+             (memfn hasEnumeratedDomain)
+             (memfn toString)))))
+     ~msg)))
+
+(defmacro choco-vars-string-assert
+  "used for testing compile chain model/compile -> compiler/compile
+  tests properties of vars in built Model"
+  ([expected actual-input] `(choco-vars-string-assert ~expected ~actual-input nil))
+  ([expected actual-input msg]
+   `(is
+     (=
+      ~expected
+      (->>
+       ~actual-input
+       model/compile
+       compiler/compile
+       :vars
+       (map str)
+       ))
+     ~msg)))
+
+(deftest const-vars-test
+  (testing "$const"
+    (are [in out] (= out in)
+      ($const :7 7)               [:var :7 :public [:const 7]] 
+      ($const :a 1)               [:var :a :public [:const 1]] 
+      ($const [:b 10] 2)          [:var [:b 10] :public [:const 2]]
+      ($const [:constraint 10] 2) [:var [:constraint 10] :public [:const 2]]
+      )
+    )
+
+  (testing "model/compile"
+    (are [in out] (= out (model/compile in))
+      [($const :7 7)]               [[:var :7 :public [:const 7]]]
+      [($const :a 1)]               [[:var :a :public [:const 1]]]
+      [($const [:b 10] 2)]          [[:var "[:b 10]" :public [:const 2]]]
+      [($const [:constraint 10] 2)] [[:var "[:constraint 10]" :public [:const 2]]] 
+      )
+    )
+
+  (testing "compiler/compile"
+    (choco-vars-string-assert
+     '("7 = 7"
+       "a = 7"
+       "b = 4"
+       "[:constraint 10] = 2")
+     [($const :7 7)
+      ($const :a 7)
+      ($const :b 4)
+      ($const [:constraint 10] 2)])
+    )
+  )
+
+(deftest bool-vars-test
+  (testing "$bool"
+    (are [in out] (= out in)
+      ($bool :8)               [:var :8 :public [:bool 0 1]] 
+      ($bool [:constraint 11]) [:var [:constraint 11] :public [:bool 0 1]]
+      )
+    )
+
+  (testing "model/compile"
+    (are [in out] (= out (model/compile in))
+      [($bool :8)]               [[:var :8 :public [:bool 0 1]]] 
+      [($bool [:constraint 11])] [[:var "[:constraint 11]" :public [:bool 0 1]]]
+      )
+    )
+
+  (testing "compiler/compile"
+    (choco-vars-string-assert
+     '("8 = [0,1]"
+       "[:constraint 11] = [0,1]")
+     [($bool :8)
+      ($bool [:constraint 11])]
+     )
+    )
+  )
+
+(deftest int-vars-test
+  (testing "$in"
+    (are [in out] (= out in)
+      ($in :a 1)                 [:var :a :public [:int 1 1]] 
+      ($in :b 2 2)               [:var :b :public [:int 2 2]] 
+      ($in :c 3 4)               [:var :c :public [:int 3 4]] 
+      ($in [:constraint 12] 5)   [:var [:constraint 12] :public [:int 5 5]]
+      ($in :d [6 7 8 9])         [:var :d :public [:int [6 7 8 9]]]
+      ($in :f 10 20 :bounded)    [:var :f :public [:int 10 20 :bounded]]
+      )
+    )
+
+  (testing "model/compile"
+    (are [in out] (= out (model/compile in))
+      [($in :a 1)]                 [[:var :a :public [:int 1 1]]] 
+      [($in :b 2 2)]               [[:var :b :public [:int 2 2]]] 
+      [($in :c 3 4)]               [[:var :c :public [:int 3 4]]] 
+      [($in [:constraint 12] 5)]   [[:var "[:constraint 12]" :public [:int 5 5]]]
+      [($in :d [6 7 8 9])]         [[:var :d :public [:int [6 7 8 9]]]]
+      [($in :f 10 20 :bounded)]    [[:var :f :public [:int 10 20 :bounded]]]
+      )
+    )
+
+  (testing "compiler/compile"
+    (choco-vars-string-assert
+     '("a = 1"
+       "b = 2"
+       "c = {3..4}"
+       "[:constraint 12] = 5"
+       "d = {6..9}"
+       "f = [10,20]")
+     [($in :a 1)   
+      ($in :b 2 2) 
+      ($in :c 3 4) 
+      ($in [:constraint 12] 5)
+      ($in :d [6 7 8 9])      
+      ($in :f 10 20 :bounded)]
+     )
+    )
+  )
+
+(deftest set-vars-test
+  (testing "$set"
+    (are [in out] (= out in)
+      ($set :a [] [])       [:var :a :public [:set #{} #{}]]
+      ($set :b [] [1 2 3])  [:var :b :public [:set #{} #{1 2 3}]]
+      ($set :d [1] [1 2 3]) [:var :d :public [:set #{1} #{1 2 3}]]
+      ($set :e [1 2 3])     [:var :e :public [:set #{1 2 3}]]
+
+      ($set [:constraint 2] [1 2 3])
+      [:var [:constraint 2] :public [:set #{1 2 3}]]
+      )
+    )
+
+  (testing "model/compile"
+    (are [in out] (= out (model/compile in))
+      [($set :a [] [])]       [[:var :a :public [:set #{} #{}]]]
+      [($set :b [] [1 2 3])]  [[:var :b :public [:set #{} #{1 2 3}]]]
+      [($set :d [1] [1 2 3])] [[:var :d :public [:set #{1} #{1 2 3}]]]
+      [($set :e [1 2 3])]     [[:var :e :public [:set #{1 2 3}]]]
+
+      [($set [:constraint 2] [1 2 3])]
+      [[:var "[:constraint 2]" :public [:set #{1 2 3}]]]
+      )
+    )
+
+  (testing "compiler/compile"
+    (choco-vars-string-assert
+     '("a = {}"
+       "b = [{}, {1, 2, 3}]"
+       "d = [{1}, {1, 2, 3}]"
+       "e = {1, 2, 3}"
+       "[:constraint 2] = {1, 2, 3}")
+     [($set :a [] [])       
+      ($set :b [] [1 2 3])  
+      ($set :d [1] [1 2 3]) 
+      ($set :e [1 2 3])     
+      ($set [:constraint 2] [1 2 3])])
+    )
+  )
+
+(deftest task-vars-test
+  (testing "$task"
+    (are [in out] (= out in)
+      ($task :my-task [1 2] [2 3] [3 4])
+      [:var :my-task :public [:task [1 2] [2 3] [3 4]]]
+
+      ($task :my-task :a :b :c) [:var :my-task :public [:task :a :b :c]]
+
+      ($task [:my-task 1] :a :b :c) [:var [:my-task 1] :public [:task :a :b :c]]
+      )
+    )
+
+  (testing "model/compile"
+    (are [in out] (= out (model/compile in))
+      [($task :my-task [1 2] [2 3] [3 4])]
+      [[:var :my-task :public [:task [1 2] [2 3] [3 4]]]]
+
+      [($task :my-task :a :b :c)]
+      [[:var :my-task :public [:task :a :b :c]]]
+
+      [($task [:my-task 1] :a :b :c)]
+      [[:var "[:my-task 1]" :public [:task :a :b :c]]]
+      )
+    )
+
+  (testing "compiler/compile"
+    (choco-vars-string-assert
+     '("a = 1"
+       "b = 2"
+       "c = 3"
+       "Task[start=IV_1 = {1..2}, duration=IV_2 = {2..3}, end=IV_3 = {3..4}]"
+       "Task[start=a = 1, duration=b = 2, end=c = 3]"
+       "Task[start=a = 1, duration=b = 2, end=c = 3]")
+     [($in :a 1)
+      ($in :b 2)
+      ($in :c 3)
+      ($task :my-task [1 2] [2 3] [3 4])
+      ($task :my-task :a :b :c)
+      ($task [:my-task 1] :a :b :c)]
+     )
+    )
+  )
+
+(deftest tuples-test
+  (testing "$tuples"
+    (are [in out] (= out in)
+      ($tuples :tuple1 [[1 2] [0 3]])
+      [:var :tuple1 :hidden [:tuples :allowed [[1 2] [0 3]]]]
+
+      ($tuples :tuple2 [[1 2] [0 3]] false)
+      [:var :tuple2 :hidden [:tuples :forbidden [[1 2] [0 3]]]]
+
+      ($tuples [:tuple 1] [[8 9] [6 7]] false)
+      [:var [:tuple 1] :hidden [:tuples :forbidden [[8 9] [6 7]]]]
+
+      ($tuples :forbidden2 [[8 9] [6 7]] :forbidden)
+      [:var :forbidden2 :hidden [:tuples :forbidden [[8 9] [6 7]]]]
+      
+      ($tuples-forbidden :forbidden [[8 9] [6 7]])
+      [:var :forbidden :hidden [:tuples :forbidden [[8 9] [6 7]]]]
+      )
+    )
+
+  (testing "model/compile"
+    (are [in out] (= out (model/compile in))
+      [($tuples :tuple1 [[1 2] [0 3]])]
+      [[:var :tuple1 :hidden [:tuples :allowed [[1 2] [0 3]]]]]
+
+      [($tuples :tuple2 [[1 2] [0 3]] false)]
+      [[:var :tuple2 :hidden [:tuples :forbidden [[1 2] [0 3]]]]]      
+
+      [($tuples [:tuple 1] [[8 9] [6 7]] false)]
+      [[:var "[:tuple 1]" :hidden [:tuples :forbidden [[8 9] [6 7]]]]]
+      )
+    )
+  
+  (testing "compiler/compile"
+    (choco-vars-string-assert
+     '("Allowed tuples: {[1, 2][3, 4]}"
+       "Fordidden tuples: {[5, 6][7, 8]}"
+       "Fordidden tuples: {[9, 8][7, 6]}")
+     [
+      ($tuples :tuple1 [[1 2] [3 4]])
+      ($tuples :tuple2 [[5 6] [7 8]] false)
+      ($tuples-forbidden [:whatever 2] [[9 8] [7 6]])
+      ])
+    )
+  )
+

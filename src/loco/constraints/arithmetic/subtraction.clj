@@ -1,12 +1,8 @@
-(in-ns 'loco.constraints.arithmetic.subtraction)
 (ns loco.constraints.arithmetic
-  #_(:use loco.utils
-        loco.constraints.utils)
   (:require
    [loco.constraints.utils :refer [partial-constraint]]
    [clojure.core.match :refer [match]]
-   [loco.constraints.sum :refer [$sum]]
-   [loco.views.minus :refer [$minus]]))
+   [loco.constraints :refer [$sum $minus]]))
 
 (def ^:private partial-name '-)
 

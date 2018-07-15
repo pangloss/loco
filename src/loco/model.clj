@@ -2,13 +2,14 @@
   (:refer-clojure :exclude [compile])
   ;;(:use loco.utils)
   (:require
-   [loco.constraints.utils :as utils]
-   [loco.utils :refer [partial-constraint?]]
+   [loco.constraints.utils :as utils :refer []]
+   [loco.utils :refer [partial-constraint? var? reify? constraint?]]
    ;; [loco.vars :as vars]
    ;; ;;[loco.constraints :refer [$abs $div $element $max $min $mod $neg $scalar $sum $times]]
    ;; [clojure.core.match :refer [match]]
-   ;; [clojure.walk :as walk]
-   )
+    [clojure.walk :as walk]
+    [clojure.pprint :refer [pprint]]
+    )
   )
 
 (defn- all-partials-transformed? [ast]
@@ -24,9 +25,39 @@
     (assert false remaining-partials)
     true))
 
+(defn- var-name-replacement-map
+  "This is used for replacing object-var-names with strings, so the
+  names can be used with Choco."
+  [ast]
+  (let [vars (filter var? ast)
+        reifies (filter reify? ast)
+        var-names (->> (concat vars reifies) (map second))
+        name->str-pairs (->> var-names
+                             (map (fn [name]
+                                    [name
+                                     (if (keyword? name)
+                                       name
+                                       (str name))]))
+                             (remove (partial apply =)))]
+    (into {} name->str-pairs)))
+
+;;FIXME: there is a problem with this accepting malformed models. the function should only accept a vector of vectors
 (defn compile [problem]
-  {:pre [(all-partials-transformed? problem)]}
-  (utils/compile-problem problem))
+  {:pre [(all-partials-transformed? problem)
+         (vector? problem)
+         (every? #(or (var? %) (constraint? %)) problem)]}
+  (let [compiled (utils/compile-problem problem)
+        var-name-obj-to-str-mapping (->> compiled
+                                         var-name-replacement-map)
+        ;; _ (println :var-name-mapping var-name-obj-to-str-mapping)
+        ;; _ (pprint var-name-obj-to-str-mapping)
+        ;; _ (pprint compiled)
+        compiled-str-var-names (walk/prewalk-replace
+                                var-name-obj-to-str-mapping
+                                compiled)
+        ]    
+    ^{:var-name-mapping (clojure.set/map-invert var-name-obj-to-str-mapping)}
+    compiled-str-var-names))
 
 ;; (defn keywordize [str]
 ;;   (if (clojure.string/starts-with? str ":")
@@ -287,19 +318,6 @@
 ;;   (->> ast
 ;;        (every? (comp #{:constraint :var :reify} first))))
 
-;; (defn- create-variable-name-replacement-map
-;;   "This is used for replacing object-var-names with strings"
-;;   [ast]
-;;   (->>
-;;    ast
-;;    ((juxt (p filter var?) (p filter reify?)))
-;;    (apply concat)
-;;    (map second)
-;;    (map (juxt identity #(if (keyword? %)
-;;                           %
-;;                           (str %))))
-;;    (remove (p apply =))
-;;    (into {})))
 
 ;; (defn compile
 ;;   "take in a representation of a model, a list of maps created using the

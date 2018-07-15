@@ -94,8 +94,8 @@
                task)
 
              [[:var var-name _ [:tuples feasible? ints-lists]] _]
-             :guard [feasible? boolean?, ints-lists [sequential? (p every? (p every? int?))]]
-             (Tuples. (->> ints-lists (map int-array) into-array) feasible?)
+             :guard [feasible? #{:allowed :forbidden}, ints-lists [sequential? (p every? (p every? int?))]]
+             (Tuples. (->> ints-lists (map int-array) into-array) ({:allowed true :forbidden false} feasible?))
 
              )]
     [(-> vars-index

@@ -1,126 +1,13 @@
 (ns ^:compiler loco.compiler-test
   (:require [loco.compiler :as compiler]
             [loco.model :as model])
-  (:use
-   clojure.test
-   loco.model.test
-   loco.constraints
-   loco.constraints.vars ;;FIXME: shouldn't need this
-   loco.constraints.all-equal ;;FIXME: shouldn't need this
-   loco.views.minus ;;FIXME: shouldn't need this
+  (:use clojure.test loco.model.test)
+  (:require
+   [loco.constraints :refer :all]
    )
   (:import org.chocosolver.solver.Model))
 
-(use 'loco.constraints)
-
-(deftest compiling-vars-test
-
-  (testing "consts vars"
-    (vars-assert
-     '(["7" 7 7 true "7 = 7"]
-       ["a" 7 7 true "a = 7"]
-       ["b" 4 4 true "b = 4"])
-     [($const :7 7)
-      ($const :a 7)
-      ($const :b 4)]))
-
-  (testing "boolVars"
-    (vars-assert
-     '(["bool" 0 1 true "bool = [0,1]"])
-     [($in :bool 0 1)])
-
-    (vars-assert
-     '(["bool" 0 1 true "bool = [0,1]"])
-     [($bool :bool)]))
-
-  (testing "intVars"
-    (vars-assert
-     '(["min-max" -21474836 21474836 false "min-max = [-21474836,21474836]"])
-     [($in :min-max)])
-
-    (vars-assert
-     '(["7" 7 7 true "7 = 7"])
-     [($in :7 7 7)])
-
-    (vars-assert
-     '(["9" 1 13 true "9 = {1..3,5,8,13}"])
-     [($in :9 [1 2 3 5 8 13])])
-
-    (vars-assert
-     '(["7" 7 7 true "7 = 7"]
-       ["8" -1000 1000 true "8 = {-1000..1000}"]
-       ["9" 1 3 false "9 = [1,3]"])
-     [($in :7 7 7)
-      ($in :8 -1000 1000)
-      ($in :9 1 3 :bounded)]))
-
-  (testing "setVars"
-    (vars-string-assert
-     '("a = {}")
-     [($set :a [] [])])
-
-    (vars-string-assert
-     '("a = [{}, {1, 2, 3}]")
-     [($set :a [] [1 2 3])])
-
-    (vars-string-assert
-     '("a = [{1}, {1, 2, 3}]")
-     [($set :a [1] [1 2 3])])
-    )
-
-  ;;$neg doesn't make sense right now, as it's a view
-  #_(testing "neg"
-    (vars-assert
-     '(["i" 0 5 true "i = {0..5}"]
-       ["-(i)" -5 0 true "-(i = {0..5}) = [-5,0]"])
-     [($in :i 0 5)
-      ($neg :-i :i)
-      ]))
-
-  (testing "task"
-    (vars-string-assert
-     '("a = {1..2}"
-       "b = {2..3}"
-       "c = {3..4}"
-       "Task[start=a = {1..2}, duration=b = {2..3}, end=c = {3..4}]")
-     [($int :a [1 2])
-      ($int :b [2 3])
-      ($int :c [3 4])
-      ($task :my-task :a :b :c)])
-
-    (vars-string-assert
-     '("a = 1"
-       "b = 3"
-       "c = 4"
-       "Task[start=a = 1, duration=b = 3, end=c = 4]")
-     [($int :a [1 2])
-      ($int :b [3 5 8 11])
-      ($int :c [3 4])
-      ($task :my-task :a :b :c)])
-
-    (vars-string-assert
-     '("Task[start=IV_1 = {1..2}, duration=IV_2 = {2..3}, end=IV_3 = {3..4}]")
-     [($task :my-task [1 2] [2 3] [3 4])])
-
-    (vars-string-assert
-     '("Task[start=IV_1 = 1, duration=IV_2 = 3, end=IV_3 = 4]")
-     [($task :my-task [1 2] [[3 5 8]] [3 4])])
-    )
-
-  (testing "tuples"
-    (vars-string-assert
-     '("Allowed tuples: {[1, 2][0, 3]}")
-     [($tuples :tuple [[1 2] [0 3]])])
-
-    (vars-string-assert
-     '("Fordidden tuples: {[1, 2][0, 3]}")
-     [($tuples :tuple [[1 2] [0 3]] false)])
-    )
-  )
-
 (deftest compiling-constraints-test
-
-
   (testing "neg"
     (constraints-assert
      '("TABLE ([CSPLarge({x = {-5..5}, , y = {0..2}, , x*y = {-25..10}, })])"

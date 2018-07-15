@@ -1,12 +1,12 @@
 (ns loco.constraints.utils
-  (:refer-clojure :exclude [compile var?])
+  (:refer-clojure :exclude [compile var? set?])
   (:require
    [loco.utils :refer [split]]
    [clojure.core.match :refer [match]]
    [loco.match :refer [match+]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
-   [loco.constraints.vars :as vars])
+   [loco.constraints :as con])
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar SetVar Task]
    org.chocosolver.solver.constraints.extension.Tuples))
@@ -23,6 +23,9 @@
          :else val))
 
 (defn- var? [statement]                 (->> statement meta :var))
+(defn- set? [statement]                 (->> statement meta :set))
+(defn- task? [statement]                (->> statement meta :task))
+(defn- tuples? [statement]              (->> statement meta :tuples))
 (defn- constraint? [statement]          (->> statement meta :constraint))
 (defn- partial-constraint? [statement]  (->> statement meta :partial-constraint))
 (defn- view? [statement]                (->> statement meta :view))
@@ -79,7 +82,7 @@
                                           statement
                                           (let [{:keys [name-fn constraint-fn]} (meta statement)
                                                 var-name (name-fn statement)
-                                                var (vars/proto var-name statement)
+                                                var (con/proto-var var-name statement)
                                                 constraint (constraint-fn var-name statement)
                                                 ]
                                             (swap! acc
@@ -148,7 +151,11 @@
   ;;   }
 
   ;; possible that view and var can not work with the same code
-  (if (and (or (view? statement) (var? statement)) (not (has-domain? statement)))
+  (if (and (or (view? statement) (var? statement))
+           (not (set? statement))
+           (not (task? statement))
+           (not (tuples? statement))
+           (not (has-domain? statement)))
     (let [partial (->> statement meta :from)
           domain-fn (->> partial meta :domain-fn)
           partial-with-replaced-var-domains (walk/postwalk-replace var-index partial)
@@ -160,16 +167,19 @@
     [(conj acc statement) var-index]))
 
 (defn compile-problem [problem]
-  (let [problem (->> (unfold-partials problem)
-                     (sort-by var?)
-                     (split var?)
-                     (apply concat))
-        var-index (var-name-domain-map problem)
-        [problem _] (reduce realize-domain [[] var-index] problem)
+  (let [[vars constraints] (->> problem
+                                unfold-partials
+                                (sort-by var?)
+                                (split var?))
+        var-index (var-name-domain-map vars)
+        _ (println 'var-index var-index) ;; should be {:7 [:var :7 :public [:const 7]]}
+        [model _] (reduce realize-domain [[] var-index] vars)
         ]
-    [(map (juxt identity meta) problem)
-;;     var-index
-     ]))
+    (vec (concat model constraints))
+    #_[(map (juxt identity meta) problem)
+       ;;     var-index
+       ]
+    ))
 
 (def comparison-operator? #{'= '> '< '!=  '>= '<=
                             := :> :< :!= :not=  :>= :<=

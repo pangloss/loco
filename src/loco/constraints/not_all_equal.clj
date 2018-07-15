@@ -1,8 +1,8 @@
 (in-ns 'loco.constraints)
 (ns loco.constraints.not-all-equal
-  (:use loco.constraints.utils)
   (:require
-   [loco.constraints.arithm :refer [$arithm]]
+   [loco.constraints.utils :refer [constraint]]
+   [loco.constraints :refer [$arithm]]
    [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])

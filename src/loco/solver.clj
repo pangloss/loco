@@ -186,10 +186,10 @@
                  :search-monitors search-monitors
                  :model model}))))
 
-(declare parallel-portfolio)
-(declare portfolio-seq)
+#_(declare parallel-portfolio)
+#_(declare portfolio-seq)
 
-(defn parallel-solutions [problem]
+#_(defn parallel-solutions [problem]
   (let [;;args-map (apply hash-map args)
         {:keys [constraints
                 model
@@ -218,7 +218,8 @@
     (portfolio-seq portfolio models)))
 
 
-(defn- parallel-portfolio
+;;TODO: needs better understanding in order to figure out if this will work or not
+#_(defn- parallel-portfolio
   " A Portfolio helper.
 
   The ParallelPortfolio resolution of a problem is made of four steps:

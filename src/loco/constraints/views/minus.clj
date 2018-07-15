@@ -1,13 +1,12 @@
-(in-ns 'loco.constraints)
 (ns loco.views.minus
   (:require
    [clojure.walk :as walk]
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.set :as set]
-;;   [loco.constraints.vars :as vars]
+   [loco.constraints.utils :refer [view int-var? report-spec-error] :as utils]
    )
-  (:use loco.constraints.utils))
+  )
 
 (def ^:private view-name 'minus)
 

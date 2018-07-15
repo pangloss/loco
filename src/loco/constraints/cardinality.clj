@@ -1,10 +1,8 @@
 (in-ns 'loco.constraints)
 (ns loco.constraints.cardinality
-  ;;(:use loco.utils)
-  ;;(:use loco.constraints.utils)
   (:require
    [loco.constraints.utils :refer [int-var? report-spec-error preserve-consts constraint]]
-   [loco.constraints.vars :refer [proto]]
+   [loco.constraints :refer [proto-var]]
    [clojure.spec.alpha :as s]
    [loco.constraints.utils :as utils]
    [loco.match :refer [match+]]
@@ -78,6 +76,6 @@
      ;;function, split it out into a helper fn in utils so that this
      ;;idea is better represented.
      (-> (concat
-          (mapv (partial proto cardinality-constraint (vec variables)) occurences)
+          (mapv #(proto-var cardinality-constraint (vec variables) %) occurences)
           [cardinality-constraint])
          (with-meta {:generated-vars true})))))

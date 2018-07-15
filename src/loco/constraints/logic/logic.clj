@@ -1,7 +1,7 @@
 (in-ns 'loco.constraints)
 (ns loco.constraints.logic.logic
   (:require
-   [loco.constraints.vars :refer [$bool-]]))
+   [loco.constraints :refer [$bool-]]))
 
 (defn $and
   "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if
@@ -51,9 +51,9 @@ In other words, if P is true, Q must be true (otherwise the whole
   "Given a constraint C, will generate a bool-var V such that (V = 1) iff C."
   {:choco "reification(BoolVar var, Constraint cstr)"}
   [var-label, constraint]
-  (-> [($bool- var-label)
-       ^:reify [:reify var-label constraint]]
-      (with-meta {:generated-vars true})))
+  ^:generated-vars
+  [($bool- var-label)
+   ^:reify [:reify var-label constraint]])
 
 (defn ^:dynamic *cond-name-gen*
   "useful to change bindings for tests and if you want to use the

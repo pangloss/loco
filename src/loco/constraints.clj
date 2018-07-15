@@ -3,7 +3,7 @@
 (def imports
   [
    "constraints/vars"
-   "views/minus"
+   "constraints/views/minus"
 
    "constraints/sum"
 

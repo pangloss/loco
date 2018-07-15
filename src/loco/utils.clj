@@ -62,8 +62,8 @@
 
 (defn split [pred coll]
   [
-   (filter pred coll)
-   (remove pred coll)
+   (vec (filter pred coll))
+   (vec (remove pred coll))
    ]
   )
 
@@ -97,6 +97,8 @@
 (def partial-constraint? (c some? :partial-constraint meta))
 
 (def view? (c some? :view meta))
+
+(def reify? (c some? :reify meta))
 
 (defn reify? [form]
   (match form

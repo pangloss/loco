@@ -82,40 +82,4 @@
        (do-report {:type :fail,:message ~msg,:expected '~form,:actual actual#}))
      result#))
 
-(defmacro vars-assert
-  "used for testing compile chain model/compile -> compiler/compile
-  tests properties of vars in built Model"
-  ([expected actual-input] `(vars-assert ~expected ~actual-input nil))
-  ([expected actual-input msg]
-   `(is
-     (=
-      ~expected
-      (->>
-       ~actual-input
-       model/compile
-       compiler/compile
-       :vars
-       (map (juxt
-             (memfn getName)
-             (memfn getLB)
-             (memfn getUB)
-             (memfn hasEnumeratedDomain)
-             (memfn toString)))))
-     ~msg)))
 
-(defmacro vars-string-assert
-  "used for testing compile chain model/compile -> compiler/compile
-  tests properties of vars in built Model"
-  ([expected actual-input] `(vars-string-assert ~expected ~actual-input nil))
-  ([expected actual-input msg]
-   `(is
-     (=
-      ~expected
-      (->>
-       ~actual-input
-       model/compile
-       compiler/compile
-       :vars
-       (map str)
-       ))
-     ~msg)))

@@ -1,9 +1,7 @@
 (in-ns 'loco.constraints)
 (ns loco.constraints.nth
-  (:use loco.constraints.utils
-        ;;loco.constraints.vars
-        )
   (:require
+   [loco.constraints.utils :refer [constraint]]
    [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]))
 
@@ -48,8 +46,8 @@
    ((juxt (comp first first (p sort-by first))
           (comp last last (p sort-by second))))))
 
-;;TODO: implement $nth
-#_(defn $nth
+;;FIXME: $nth needs implementing
+(defn $nth
   "partial for $element"
   {:choco "element(IntVar value, IntVar[] table, IntVar index, int offset)"
    :partial true}
@@ -72,4 +70,5 @@
       ;;calc-domain domain-fn
       ;;:get-deps deps-fn
       )
-     (add-deps table))))
+     ;;(add-deps table) ;; i don't know what add deps is supposed to be >_<
+     )))

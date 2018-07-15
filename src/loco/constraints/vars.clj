@@ -4,7 +4,7 @@
    [clojure.core.match :refer [match]]
    [loco.match :refer [match+]]
    [clojure.set :as set]
-   [loco.utils :as utils])
+   [loco.utils ::refer []])
   ;;(:use loco.utils)
   (:import org.chocosolver.solver.variables.IntVar))
 
@@ -52,11 +52,18 @@
    {:pre [(sequential? ints-lists)
           (every? (partial every? int?) ints-lists)
           (apply = (map count ints-lists))
-          (boolean? feasible?)
-          (keyword? var-name) ;;not supporting crazy var names yet
+          (or (boolean? feasible?) (= :forbidden feasible?))
+          (or (vector? var-name)
+              (keyword? var-name)) ;;not supporting crazy var names yet
           ]}
-   ^:var [:var var-name :hidden [:tuples feasible? (mapv vec ints-lists)]]
+   ^:var ^:tuples
+   [:var var-name :hidden [:tuples ({true :allowed
+                                     false :forbidden
+                                     :forbidden :forbidden} feasible?)
+                           (mapv vec ints-lists)]]
    ))
+
+(def $tuples-forbidden #($tuples %1 %2 false))
 
 ;; -------------------- Sets --------------------
 
@@ -91,13 +98,15 @@
           (every? int? lb)
           (every? int? ub)]}
 
-   ^:var [:var var-name :public [:set (set lb) (set ub)]])
+   ^:var ^:set ;;^{:domain {:lb (into (sorted-set) lb) :ub (into (sorted-set) ub)}}
+   [:var var-name :public [:set (into (sorted-set) lb) (into (sorted-set) ub)]])
 
   ([var-name ints]
    {:pre [(or (set? ints) (sequential? ints))
           (every? int? ints)]}
 
-   ^:var [:var var-name :public [:set (set ints)]]))
+   ^:var ^:set ;;^{:domain {:lb #{} :ub (into (sorted-set) ints)}}
+   [:var var-name :public [:set (into (sorted-set) ints)]]))
 
 (def $set- (comp #(assoc % 2 :hidden) (partial $set)))
 (reset-meta! (var $set-) (meta (var $set)))
@@ -130,7 +139,8 @@
   "Declares that a variable must be a specific value (integer)"
   [var-name value]
   {:pre [(integer? value)]}
-  ^:var [:var var-name :public [:const value]])
+  ^:var ^:int ^{:domain {:lb (int value) :ub (int value)}}
+  [:var var-name :public [:const value]])
 
 (def $const- (comp #(assoc % 2 :hidden) (partial $const)))
 (reset-meta! (var $const-) (meta (var $const)))
@@ -143,7 +153,8 @@
   some constraints have optimizations for booleans/boolean-lists (e.g. Model.sum|and|or)"
   {:choco "boolVar(String name)"}
   [var-name]
-  (->>  ^:var [:var var-name :public [:bool 0 1]]
+  (->>  ^:var ^:bool ^{:domain {:lb 0 :ub 1}}
+        [:var var-name :public [:bool 0 1]]
         hidden-conversion))
 
 (def $bool- (comp #(assoc % 2 :hidden) (partial $bool)))
@@ -197,24 +208,22 @@
            (and
             (sequential? values)
             (every? int? values)))]}
-   (->>
-    (match (vec (dedupe (sort (flatten [values]))))
 
-           [single-value-domain :guard int?];;(const var-name single-value-domain)
-           ^:var ^:int ^{:domain {:int true
-                                  :const true
-                                  :ub (int single-value-domain)
-                                  :lb (int single-value-domain)}}
-           [:var var-name :public [:int single-value-domain]]
-
-           [0 1] ($bool var-name)
-           domain-list
-           ^:var ^:int ^{:domain {:int true
-                                  :ub (int (peek domain-list))
-                                  :lb (int (first domain-list))
-                                  :enumeration domain-list}}
-           [:var var-name :public [:int domain-list]])
-    hidden-conversion)))
+   (->> (if (int? values)
+          ^:var ^:int ^{:domain {:int true
+                                 :const true
+                                 :ub (int values)
+                                 :lb (int values)}}
+          [:var var-name :public [:int values values]]
+          (match (vec (dedupe (sort (flatten [values]))))
+                 [0 1] ($bool var-name)
+                 domain-list
+                 ^:var ^:int ^{:domain {:int true
+                                        :ub (int (peek domain-list))
+                                        :lb (int (first domain-list))
+                                        :enumeration domain-list}}
+                 [:var var-name :public [:int domain-list]]))
+        hidden-conversion)))
 
 (def $int- (comp #(assoc % 2 :hidden) $int))
 
@@ -229,12 +238,14 @@
 ;;taskVarArray,
 ;;taskVarMatrix,
 
+;;TODO: really need to make this more robust
 (defn $task
   "Container representing a task: It ensures that: start + duration = end"
   {:choco "Task(IntVar s, IntVar d, IntVar e)"}
   [var-name start duration end]
-  {:pre [(keyword? var-name)]} ;;not supporting crazy var names yet
-  ^:var [:var var-name :public [:task start duration end]])
+  {:pre [(or (keyword? var-name) (vector? var-name))]}
+  ^:var ^:task
+  [:var var-name :public [:task start duration end]])
 
 ;;-------------------- meta --------------------
 (defn proto
@@ -242,3 +253,6 @@
   [var-name partial]
   {:pre [(string? var-name)]}
   ^{:from partial} ^:proto ^:var [:var var-name :proto])
+
+(def proto-var proto)
+(reset-meta! (var proto-var) (meta (var proto)))
