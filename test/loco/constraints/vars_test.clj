@@ -1,32 +1,12 @@
 (ns loco.constraints.vars-test
   (:require [loco.compiler :as compiler]
-            [loco.model :as model])
+            [loco.model :as model]
+            [loco.solver :as solver])
   (:use clojure.test loco.model.test)
   (:require
    [loco.constraints :refer :all]
    )
   (:import org.chocosolver.solver.Model))
-
-#_(defmacro choco-vars-assert
-  "used for testing compile chain model/compile -> compiler/compile
-  tests properties of vars in built Model"
-  ([expected actual-input] `(vars-assert ~expected ~actual-input nil))
-  ([expected actual-input msg]
-   `(is
-     (=
-      ~expected
-      (->>
-       ~actual-input
-       model/compile
-       compiler/compile
-       :vars
-       (map (juxt
-             (memfn getName)
-             (memfn getLB)
-             (memfn getUB)
-             (memfn hasEnumeratedDomain)
-             (memfn toString)))))
-     ~msg)))
 
 (defmacro choco-vars-string-assert
   "used for testing compile chain model/compile -> compiler/compile
@@ -75,6 +55,15 @@
       ($const :b 4)
       ($const [:constraint 10] 2)])
     )
+
+  (testing "solutions"
+    (are [input expected] (= expected (solver/solutions input))
+      [($const :a 0)]            '({:a 0})
+      [($const- :a 0)]           '({})
+      [($const- :aa 0)
+       ($const :a 0)]            '({:a 0})
+      )
+    )
   )
 
 (deftest bool-vars-test
@@ -82,6 +71,10 @@
     (are [in out] (= out in)
       ($bool :8)               [:var :8 :public [:bool 0 1]]
       ($bool [:constraint 11]) [:var [:constraint 11] :public [:bool 0 1]]
+      ($bools :a :b)           [[:var :a :public [:bool 0 1]]
+                                [:var :b :public [:bool 0 1]]]
+      ($bools [:a 1] [:b 2])   [[:var [:a 1] :public [:bool 0 1]]
+                                [:var [:b 2] :public [:bool 0 1]]]
       )
     )
 
@@ -89,16 +82,32 @@
     (are [in out] (= out (model/compile in))
       [($bool :8)]               [[:var :8 :public [:bool 0 1]]]
       [($bool [:constraint 11])] [[:var "[:constraint 11]" :public [:bool 0 1]]]
+      [($bools :a :b)]           [[:var :a :public [:bool 0 1]]
+                                  [:var :b :public [:bool 0 1]]]
+      ($bools [:a 1] [:b 2])   [[:var "[:a 1]" :public [:bool 0 1]]
+                                [:var "[:b 2]" :public [:bool 0 1]]]
       )
     )
 
   (testing "compiler/compile"
     (choco-vars-string-assert
      '("8 = [0,1]"
-       "[:constraint 11] = [0,1]")
+       "[:constraint 11] = [0,1]"
+       "[:a 1] = [0,1]"
+       "[:b 2] = [0,1]")
      [($bool :8)
-      ($bool [:constraint 11])]
+      ($bool [:constraint 11])
+      ($bools [:a 1] [:b 2])]
      )
+    )
+
+  (testing "solutions"
+    (are [input expected] (= expected (solver/solutions input))
+      [($bool :a)]     '({:a 0} {:a 1})
+      [($bool [:a 1])] '({[:a 1] 0} {[:a 1] 1})
+      [($bool- :a)]    '({} {})
+      [($bools :a :b)] '({:a 0, :b 0} {:a 1, :b 0} {:a 0, :b 1} {:a 1, :b 1})
+      )
     )
   )
 
@@ -141,6 +150,15 @@
       ($in :f 10 20 :bounded)]
      )
     )
+
+  (testing "solutions"
+    (are [input expected] (= expected (solver/solutions input))
+      [($int :a 0)]              '({:a 0})
+      [($int :a 0 4)]            '({:a 0} {:a 1} {:a 2} {:a 3} {:a 4})
+      [($int :a [3 5 8 13])]     '({:a 3} {:a 5} {:a 8} {:a 13})
+      [($int [:a 1] 0 2)]        '({[:a 1] 0} {[:a 1] 1} {[:a 1] 2})
+      )
+    )
   )
 
 (deftest set-vars-test
@@ -181,6 +199,15 @@
       ($set :e [1 2 3])
       ($set [:constraint 2] [1 2 3])])
     )
+
+  (testing "solutions"
+    (are [input expected] (= expected (solver/solutions input))
+      [($set :a [] [])]  '({:a #{}})
+      [($set :a [] [0])] '({:a #{0}} {:a #{}})
+      [($set :a [0] [0])] '({:a #{0}})
+      [($set :a [0] [0 1])] '({:a #{0 1}} {:a #{0}})
+      )
+    )
   )
 
 (deftest task-vars-test
@@ -194,8 +221,6 @@
       ($task [:my-task 1] :a :b :c) [:var [:my-task 1] :public [:task :a :b :c]]
       )
     )
-
-  (model/compile [($task :my-task [1 2] [2 3] [3 4])])
 
   (testing "model/compile"
     (are [in out] (= out (model/compile in))
@@ -225,6 +250,30 @@
       ($task :my-task :a :b :c)
       ($task [:my-task 1] :a :b :c)]
      )
+    )
+
+  (testing "solutions"
+    (are [input expected] (= expected (solver/solutions input))
+      [($task :task [0 1] [0 1] [0 1])]
+      '({:task {:start 0, :duration 0, :end 0}}
+        {:task {:start 0, :duration 1, :end 1}}
+        {:task {:start 1, :duration 0, :end 1}})
+      [($int- :start [0 1])
+       ($int- :duration 0)
+       ($int- :end [0 1])
+       ($task :task :start :duration :end)]
+      '({:task {:start 0, :duration 0, :end 0}}
+        {:task {:start 1, :duration 0, :end 1}})
+      [($int- :start [0 1])
+       ($int- :end [0 1])
+       ($task :task :start [1] :end)]
+      '({:task {:start 0, :duration 1, :end 1}})
+      [($int- :start [0 1])
+       ($int- :end [0 3 5])
+       ($task :task :start [[1 3 5]] :end)]
+      '({:task {:start 0, :duration 3, :end 3}}
+        {:task {:start 0, :duration 5, :end 5}})
+      )
     )
   )
 
@@ -271,5 +320,17 @@
       ($tuples :tuple2 [[5 6] [7 8]] false)
       ($tuples-forbidden [:whatever 2] [[9 8] [7 6]])
       ])
+    )
+
+  (testing "solutions"
+    (are [input expected] (= expected (solver/solutions input))
+      [($in :a 0 1000)
+       ($in :b 0 1000)
+       ($tuples :tuples [[1 2] [3 4]])
+       ($table [:a :b] :tuples)
+       ]
+      '({:a 1, :b 2}
+        {:a 3, :b 4})
+      )
     )
   )

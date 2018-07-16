@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.table
   (:use loco.constraints.utils)
   (:require
@@ -55,7 +54,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $table
+(defloco $table
   "-------------------- IntVar [] --------------------
   ;; table(IntVar[] vars, Tuples tuples)
   ;; table(IntVar[] vars, Tuples tuples, String algo)

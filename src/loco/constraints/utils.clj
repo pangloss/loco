@@ -172,7 +172,6 @@
                                 (sort-by var?)
                                 (split var?))
         var-index (var-name-domain-map vars)
-        ;;_ (println 'var-index var-index) ;; should be {:7 [:var :7 :public [:const 7]]}
         [model _] (reduce realize-domain [[] var-index] vars)
         ]
     (vec (concat model constraints))
@@ -267,3 +266,11 @@
           (->> statement
                (s/explain-data spec-name)
                convert-vars-to-strings))))
+
+(defmacro defloco
+  "used for defining global loco vars (typically $name)"
+  [name & more]
+  `(do
+     (defn ~name ~@more)
+     (intern 'loco.constraints (quote ~name) ~name))
+  )
