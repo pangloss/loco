@@ -7,9 +7,9 @@
    ;; [loco.vars :as vars]
    ;; ;;[loco.constraints :refer [$abs $div $element $max $min $mod $neg $scalar $sum $times]]
    ;; [clojure.core.match :refer [match]]
-    [clojure.walk :as walk]
-    [clojure.pprint :refer [pprint]]
-    )
+   [clojure.walk :as walk]
+   [clojure.pprint :refer [pprint]]
+   )
   )
 
 (defn- all-partials-transformed? [ast]
@@ -41,23 +41,32 @@
                              (remove (partial apply =)))]
     (into {} name->str-pairs)))
 
-;;FIXME: there is a problem with this accepting malformed models. the function should only accept a vector of vectors
+(defn- generated-vars? [statement] (->> statement meta :generated-vars))
+(defn- all-statements-valid? [problem]
+  (->> problem
+       (every? (comp (some-fn var? constraint? generated-vars?)))))
+(defn- elevate-generated-vars [problem]
+  (->> problem
+       (mapcat
+        #(if (generated-vars? %)
+           %
+           [%]))))
+
 (defn compile [problem]
-  {:pre [(all-partials-transformed? problem)
-         (vector? problem)
-         (every? #(or (var? %) (constraint? %)) problem)]}
-  (let [compiled (utils/compile-problem problem)
+  {:pre [(vector? problem)
+         (all-partials-transformed? problem)
+         (all-statements-valid? problem)]}
+  (let [compiled (->> problem elevate-generated-vars utils/compile-problem)
         var-name-obj-to-str-mapping (->> compiled
                                          var-name-replacement-map)
-        ;; _ (println :var-name-mapping var-name-obj-to-str-mapping)
-        ;; _ (pprint var-name-obj-to-str-mapping)
-        ;; _ (pprint compiled)
         compiled-str-var-names (walk/prewalk-replace
                                 var-name-obj-to-str-mapping
                                 compiled)
-        ]    
-    ^{:var-name-mapping (clojure.set/map-invert var-name-obj-to-str-mapping)}
-    compiled-str-var-names))
+        return (with-meta
+                 compiled-str-var-names
+                 {:var-name-mapping (clojure.set/map-invert var-name-obj-to-str-mapping)})
+        ]
+    return))
 
 ;; (defn keywordize [str]
 ;;   (if (clojure.string/starts-with? str ":")

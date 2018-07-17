@@ -5,7 +5,8 @@
   (:require
    [loco.model :as model]
    [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]])
+   [clojure.core.match :refer [match]]
+   [clojure.pprint :refer [pprint]])
   (:import org.chocosolver.solver.Model
            org.chocosolver.solver.variables.SetVar
            org.chocosolver.solver.variables.BoolVar
@@ -13,8 +14,6 @@
            org.chocosolver.solver.variables.Task
            org.chocosolver.solver.constraints.extension.Tuples
            org.chocosolver.solver.constraints.Constraint
-
-
            ))
 
 (defn- lookup-var [vars-index name]
@@ -137,9 +136,10 @@
         all-set-vars? (p every? set-var?)
         all-bool-vars? (p every? bool-var?)
         ]
+
     (match
      [statement (meta statement)]
-     [[constraint] {:compiler compiler}] (compiler model vars-index constraint)
+     [constraint {:compiler compiler}] (compiler model vars-index constraint)
      [[?constraint] _]
      (match+
       ?constraint

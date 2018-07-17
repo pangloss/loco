@@ -164,7 +164,9 @@
   "Declares a list of booleans with given var-names.
   this is not a equivalent to a BoolVar[]"
   [& var-names]
-  ^:generated-vars (mapv $bool var-names))
+  (->
+   (mapv $bool var-names)
+   (with-meta {:generated-vars true})))
 
 ;; -------------------- Integers --------------------
 ;;TODO: change name to something else $?
