@@ -1,8 +1,8 @@
 (ns loco.model.test
-  (:require [loco.model :as model]
-            [loco.compiler :as compiler])
-  (:use clojure.test
-        loco.utils))
+  (:require
+   [loco.model :as model]
+   [loco.compiler :as compiler])
+  (:use clojure.test))
 
 ;;TODO: use clojure.test/assert-expr multi-method instead of custom macros
 
@@ -81,5 +81,3 @@
        (do-report {:type :pass,:message ~msg,:expected '~form,:actual actual#})
        (do-report {:type :fail,:message ~msg,:expected '~form,:actual actual#}))
      result#))
-
-

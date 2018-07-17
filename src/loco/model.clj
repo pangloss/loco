@@ -1,5 +1,5 @@
 (ns loco.model
-  (:refer-clojure :exclude [compile])
+  (:refer-clojure :exclude [compile var? set?])
   ;;(:use loco.utils)
   (:require
    [loco.constraints.vars :refer [$proto]]

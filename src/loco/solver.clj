@@ -1,10 +1,10 @@
 (ns loco.solver
-  (:use loco.utils)
   (:require
    [camel-snake-kebab.core :refer [->kebab-case]]
    [clojure.core.match :refer [match]]
    [loco.model :as model]
-   [loco.compiler :as compiler])
+   [loco.compiler :as compiler]
+   [loco.utils :refer [c p]])
   (:import
    org.chocosolver.solver.Model
    org.chocosolver.solver.Solver
