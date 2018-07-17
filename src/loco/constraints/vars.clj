@@ -149,8 +149,9 @@
   "Declares that a variable must be a specific value (integer)"
   [var-name value]
   {:pre [(integer? value)]}
-  ^:var ^:int ^{:domain {:lb (int value) :ub (int value)}}
-  [:var var-name :public [:const value]])
+  (-> ^:var ^:int ^:const ^{:domain {:lb (int value) :ub (int value)}}
+      [:var var-name :public [:const value]]
+      hidden-conversion))
 
 (defloco $const- [& more] (-> (apply $const more) make-hidden))
 (reset-meta! (var $const-) (meta (var $const)))

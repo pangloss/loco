@@ -33,6 +33,7 @@
       ($const [:b 10] 2)          [:var [:b 10] :public [:const 2]]
       ($const [:constraint 10] 2) [:var [:constraint 10] :public [:const 2]]
       ($const- [:constraint 20] 4) [:var [:constraint 20] :hidden [:const 4]]
+      ($const [:_constraint 30] 4) [:var [:_constraint 30] :hidden [:const 4]]
       )
     )
 
@@ -74,8 +75,8 @@
       ($bool [:constraint 11]) [:var [:constraint 11] :public [:bool 0 1]]
       ($bools :a :b)           [[:var :a :public [:bool 0 1]]
                                 [:var :b :public [:bool 0 1]]]
-      ($bools [:a 1] [:b 2])   [[:var [:a 1] :public [:bool 0 1]]
-                                [:var [:b 2] :public [:bool 0 1]]]
+      ($bools [:a 1] [:_b 2])   [[:var [:a 1] :public [:bool 0 1]]
+                                [:var [:_b 2] :hidden [:bool 0 1]]]
       )
     )
 
@@ -121,6 +122,9 @@
       ($in [:constraint 12] 5)   [:var [:constraint 12] :public [:int 5 5]]
       ($in :d [6 7 8 9])         [:var :d :public [:int [6 7 8 9]]]
       ($in :f 10 20 :bounded)    [:var :f :public [:int 10 20 :bounded]]
+      ($in :_g 10 20 :bounded)   [:var :_g :hidden [:int 10 20 :bounded]]
+      ($in :_d [6 7 8 9])         [:var :_d :hidden [:int [6 7 8 9]]]
+      ($in [:_constraint 12] 5)   [:var [:_constraint 12] :hidden [:int 5 5]]
       )
     )
 
@@ -169,9 +173,9 @@
       ($set :b [] [1 2 3])  [:var :b :public [:set #{} #{1 2 3}]]
       ($set :d [1] [1 2 3]) [:var :d :public [:set #{1} #{1 2 3}]]
       ($set :e [1 2 3])     [:var :e :public [:set #{1 2 3}]]
-
-      ($set [:constraint 2] [1 2 3])
-      [:var [:constraint 2] :public [:set #{1 2 3}]]
+      ($set [:constraint 2] [1 2 3]) [:var [:constraint 2] :public [:set #{1 2 3}]]
+      ($set [:_constraint 2] [1 2 3]) [:var [:_constraint 2] :hidden [:set #{1 2 3}]]
+      ($set :_e [1 2 3])     [:var :_e :hidden [:set #{1 2 3}]]
       )
     )
 
@@ -214,12 +218,11 @@
 (deftest task-vars-test
   (testing "$task"
     (are [in out] (= out in)
-      ($task :my-task [1 2] [2 3] [3 4])
-      [:var :my-task :public [:task [1 2] [2 3] [3 4]]]
-
+      ($task :my-task [1 2] [2 3] [3 4]) [:var :my-task :public [:task [1 2] [2 3] [3 4]]]
       ($task :my-task :a :b :c) [:var :my-task :public [:task :a :b :c]]
-
       ($task [:my-task 1] :a :b :c) [:var [:my-task 1] :public [:task :a :b :c]]
+      ($task :_my-task [1 2] [2 3] [3 4]) [:var :_my-task :hidden [:task [1 2] [2 3] [3 4]]]
+      ($task [:_my-task 1] :a :b :c) [:var [:_my-task 1] :hidden [:task :a :b :c]]
       )
     )
 
