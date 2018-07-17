@@ -28,7 +28,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $sub-circuit
+(defloco $sub-circuit
   "Creates a subCircuit constraint which ensures that
   the elements of vars define a single circuit of subcircuitSize nodes where
   vars[i] = offset+j means that j is the successor of i.

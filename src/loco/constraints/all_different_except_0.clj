@@ -24,7 +24,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $distinct-except-0
+(defloco $distinct-except-0
   "Creates an allDifferent constraint for variables that are not equal to 0.
   There can be multiple variables equal to 0."
   {:choco "allDifferentExcept0(IntVar[] vars)"

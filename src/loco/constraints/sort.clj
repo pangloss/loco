@@ -29,7 +29,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $sort
+(defloco $sort
   "Creates a sort constraint which ensures that the variables of
   sorted-vars correspond to the variables of vars according to a
   permutation. The variables of sortedVars are also sorted in increasing

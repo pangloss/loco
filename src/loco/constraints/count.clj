@@ -29,7 +29,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $count
+(defloco $count
   "Creates a count constraint. Let N be the number of variables of the
   vars collection assigned to value value;
   Enforce condition N = limit to hold. "

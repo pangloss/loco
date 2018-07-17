@@ -27,7 +27,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $lex-less
+(defloco $lex-less
   "Creates a lexLessEq constraint.
   Ensures that vars1 is lexicographically less or equal than vars2."
   {:choco "lexLess(IntVar[] vars1, IntVar[] vars2)"}

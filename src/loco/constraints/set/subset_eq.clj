@@ -25,7 +25,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $subset-equal
+(defloco $subset-equal
   ;;TODO: fix subset-equal docs
   ;; lawl, choco docs
   "Creates a constraint establishing that sets[i] is a subset of sets[j] if i"

@@ -1,28 +1,46 @@
 (ns loco.constraints.vars
   (:require
+   [loco.constraints.utils :refer :all]
    [clojure.core.match :refer [match]]
    [loco.match :refer [match+]]
    [clojure.set :as set]
    [loco.utils ::refer []])
-  ;;(:use loco.utils)
   (:import org.chocosolver.solver.variables.IntVar))
 
-;;TODO: var methods left to be implemented:
-
+;;TODO: implement real vars
 ;;realVar, realVar, realVar, realVar, realVar,
-;;boolVarArray, boolVarArray,
-;;boolVarMatrix, boolVarMatrix,
-;;checkIntDomainRange, checkRealDomainRange,
-;;generateName, generateName,
-;;intVarArray, intVarArray, intVarArray, intVarArray, intVarArray, intVarArray,
-;;intVarMatrix, intVarMatrix, intVarMatrix, intVarMatrix, intVarMatrix, intVarMatrix,
 ;;realVarArray, realVarArray, realVarMatrix, realVarMatrix,
-;;setVarArray, setVarArray,
-;;setVarMatrix, setVarMatrix,
-;;toBoolVar
+
+;; -------------------- Utils --------------------
+
+(defn- hidden-name? [keyword-name]
+  (when (keyword? keyword-name)
+    (.startsWith (name keyword-name) "_")))
+
+(defn- make-hidden [var]
+  (-> var
+      (assoc ,, 2 :hidden)
+      (vary-meta ,, assoc :hidden true)))
+
+(defn- hidden-conversion
+  "converts a var, based on it's name, to be hidden. this is for backwards compatibility
+  to be converted, the name should have an underscore at the beginning
+
+  e.g. [:var :_var-name :public [:int 0 2]]
+  e.g. [:var [:_var-name 1] :public [:int 0 2]]"
+  [var]
+  (match+ var
+          [_  [var-name & _] & _] :guard [var-name hidden-name?]
+          (make-hidden var)
+
+          [_  var-name & _] :guard [var-name hidden-name?]
+          (make-hidden var)
+
+          :else var))
 
 ;; -------------------- Tuples --------------------
-(defn $tuples
+
+(defloco $tuples
   "tuples act like a mask to be used with the table constraint.
   tuples can define the explicit arbitrary values a collection of
   variables can assume.
@@ -46,25 +64,29 @@
   Create a list of tuples which represents all allowed tuples if
   feasible=true or a set of forbidden tuples if feasible=false."
   {:choco "Tuples(int[][] values, boolean feasible)"}
-  ([var-name ints-lists] ($tuples var-name ints-lists true))
+  ([var-name ints-lists] ($tuples var-name ints-lists :allowed))
   ([var-name ints-lists feasible?]
    {:pre [(sequential? ints-lists)
           (every? (partial every? int?) ints-lists)
           (apply = (map count ints-lists))
-          (or (boolean? feasible?) (= :forbidden feasible?))
+          (some? (#{:forbidden :allowed true false} feasible?))
           (or (vector? var-name)
               (keyword? var-name)) ;;not supporting crazy var names yet
           ]}
-   ^:var ^:tuples
-   [:var var-name :hidden [:tuples ({true :allowed
-                                     false :forbidden
-                                     :forbidden :forbidden} feasible?)
+   ;;TODO: maybe tuples should have a different structure than a typical var
+   ^:var ^:tuples ^:hidden
+   [:var var-name :hidden [:tuples (get {true :allowed false :forbidden} feasible? feasible?)
                            (mapv vec ints-lists)]]
    ))
 
-(def $tuples-forbidden #($tuples %1 %2 false))
+(defloco $tuples-forbidden [var-name ints-lists] ($tuples var-name ints-lists :forbidden))
+(defloco $tuples-allowed   [var-name ints-lists] ($tuples var-name ints-lists :allowed))
+(reset-meta! (var $tuples-forbidden) (meta (var $tuples)))
+(reset-meta! (var $tuples-allowed)   (meta (var $tuples)))
 
 ;; -------------------- Sets --------------------
+
+;;TODO: setVarArray, setVarArray, setVarMatrix, setVarMatrix,
 
 ;; yet to be implemented
 ;; default SetVar[] setVarArray(int size, int[] lb, int[] ub)
@@ -81,7 +103,7 @@
   [lb ub]
   (every? (set ub) (set lb)))
 
-(defn $set
+(defloco $set
   "Creates a set variable taking its domain in [lb, ub], For
    instance [#{0,3}, #{-2,0,2,3}] means the variable must include both
    0 and 3 and can additionnaly include -2, and 2
@@ -97,57 +119,48 @@
           (every? int? lb)
           (every? int? ub)]}
 
-   ^:var ^:set ;;^{:domain {:lb (into (sorted-set) lb) :ub (into (sorted-set) ub)}}
-   [:var var-name :public [:set (into (sorted-set) lb) (into (sorted-set) ub)]])
+   ;;^{:domain {:lb (into (sorted-set) lb) :ub (into (sorted-set) ub)}}
+   (->
+    ^:var ^:set
+    [:var var-name :public [:set (into (sorted-set) lb) (into (sorted-set) ub)]]
+    hidden-conversion))
 
   ([var-name ints]
    {:pre [(or (set? ints) (sequential? ints))
           (every? int? ints)]}
 
-   ^:var ^:set ;;^{:domain {:lb #{} :ub (into (sorted-set) ints)}}
-   [:var var-name :public [:set (into (sorted-set) ints)]]))
+   ;;^{:domain {:lb #{} :ub (into (sorted-set) ints)}}
+   (->
+    ^:var ^:set
+    [:var var-name :public [:set (into (sorted-set) ints)]]
+    hidden-conversion)))
 
-(def $set- (comp #(assoc % 2 :hidden) (partial $set)))
+(defloco $set- [& more]
+  (->
+   (apply $set more)
+   make-hidden))
+
 (reset-meta! (var $set-) (meta (var $set)))
 
-;; -------------------- Utils --------------------
-
-(defn- hidden-name? [keyword-name]
-  (when (keyword? keyword-name)
-    (.startsWith (name keyword-name) "_")))
-
-(defn- hidden-conversion
-  "converts a var, based on it's name, to be hidden. this is for backwards compatibility
-  to be converted, the name should have an underscore at the beginning
-
-  e.g. [:var :_var-name :public [:int 0 2]]
-  e.g. [:var [:_var-name 1] :public [:int 0 2]]"
-  [var]
-  (match+ var
-          [_  [var-name & _] & _] :guard [var-name hidden-name?]
-          (assoc var 2 :hidden)
-
-          [_  var-name & _] :guard [var-name hidden-name?]
-          (assoc var 2 :hidden)
-
-          :else var))
-
 ;; -------------------- Constants --------------------
-;;TODO: deprecate $const
-(defn $const
+
+;;TODO: deprecate $const ... (;_;)
+(defloco $const
   "Declares that a variable must be a specific value (integer)"
   [var-name value]
   {:pre [(integer? value)]}
   ^:var ^:int ^{:domain {:lb (int value) :ub (int value)}}
   [:var var-name :public [:const value]])
 
-(def $const- (comp #(assoc % 2 :hidden) (partial $const)))
+(defloco $const- [& more] (-> (apply $const more) make-hidden))
 (reset-meta! (var $const-) (meta (var $const)))
 
-;; -------------------- booleans --------------------
+;; -------------------- Booleans --------------------
 
 ;;TODO: implement const bool?  	boolVar(String name, boolean value)
-(defn $bool
+;;TODO: boolVarArray, boolVarArray, boolVarMatrix, boolVarMatrix,
+
+(defloco $bool
   "Declares that a variable must be a boolean (true/false or [0 1])
   some constraints have optimizations for booleans/boolean-lists (e.g. Model.sum|and|or)"
   {:choco "boolVar(String name)"}
@@ -156,10 +169,10 @@
         [:var var-name :public [:bool 0 1]]
         hidden-conversion))
 
-(def $bool- (comp #(assoc % 2 :hidden) (partial $bool)))
+(defloco $bool- [& more] (-> (apply $bool more) make-hidden))
 (reset-meta! (var $bool-) (meta (var $bool)))
 
-(defn $bools
+(defloco $bools
   "Declares a list of booleans with given var-names.
   this is not a equivalent to a BoolVar[]"
   [& var-names]
@@ -170,7 +183,12 @@
 ;; -------------------- Integers --------------------
 ;;TODO: change name to something else $?
 ;;can use (load file) to import public functions, not sure if it is good solution
-(defn $int
+
+;;TODO: intVarArray, intVarArray, intVarArray, intVarArray,
+;;intVarArray, intVarArray, intVarMatrix, intVarMatrix, intVarMatrix,
+;;intVarMatrix, intVarMatrix, intVarMatrix
+
+(defloco $int
   "Declares that a variable must be in a certain domain.
    Possible arglist examples:
    (in :x)   => (in :x IntVar/MIN_INT_BOUND IntVar/MAX_INT_BOUND)
@@ -226,34 +244,36 @@
                  [:var var-name :public [:int domain-list]]))
         hidden-conversion)))
 
-(def $int- (comp #(assoc % 2 :hidden) $int))
+(defloco $int- [& more] (-> (apply $int more) make-hidden))
 
-(def $in $int)
-(def $in- $int-)
+(defloco $in [& more] (apply $int more))
+(defloco $in- [& more] (apply $int- more))
 
 (reset-meta! (var $in) (meta (var $int)))
 (reset-meta! (var $in-) (meta (var $int)))
 (reset-meta! (var $int-) (meta (var $int)))
 
 ;; -------------------- Tasks -------------------
-;;taskVarArray,
-;;taskVarMatrix,
+;;TODO: taskVarArray,taskVarMatrix,
 
 ;;TODO: really need to make this more robust
-(defn $task
+(defloco $task
   "Container representing a task: It ensures that: start + duration = end"
   {:choco "Task(IntVar s, IntVar d, IntVar e)"}
   [var-name start duration end]
   {:pre [(or (keyword? var-name) (vector? var-name))]}
-  ^:var ^:task
-  [:var var-name :public [:task start duration end]])
+  (->
+   ^:var ^:task
+   [:var var-name :public [:task start duration end]]
+   hidden-conversion))
+
+(defloco $task- [& more] (-> (apply $task more) make-hidden))
+(reset-meta! (var $task-) (meta (var $task)))
 
 ;;-------------------- meta --------------------
-(defn proto
+(defloco $proto
   "this is not meant to be used like $bool or $int, more for internal usage"
   [var-name partial]
   {:pre [(string? var-name)]}
-  ^{:from partial} ^:proto ^:var [:var var-name :proto])
-
-(def proto-var proto)
-(reset-meta! (var proto-var) (meta (var proto)))
+  (-> ^{:from partial} ^:proto ^:var [:var var-name :proto]
+      hidden-conversion))

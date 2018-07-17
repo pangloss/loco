@@ -27,7 +27,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $regular
+(defloco $regular
   "Takes a Choco automaton object constructed by the loco.automata
   namespace, and constrains that a list of variables represents an
   input string accepted by the automaton."

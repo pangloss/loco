@@ -36,7 +36,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;;TODO: find knapsack on GCCAT
-(defn $knapsack
+(defloco $knapsack
   "Creates a knapsack constraint. Ensures that :
   - occurrences[i] * weight[i] = weightSum
   - occurrences[i] * energy[i] = energySum

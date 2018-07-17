@@ -28,7 +28,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $tree
+(defloco $tree
   "Creates a tree constraint.
   Partition succs variables into nbTrees (anti) arborescences
   succs[i] = j means that j is the successor of i.

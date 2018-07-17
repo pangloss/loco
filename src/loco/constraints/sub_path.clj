@@ -29,7 +29,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $sub-path
+(defloco $sub-path
   "Creates a subPath constraint which ensures that
   the elements of vars define a path of SIZE vertices, leading from start to end
   where vars[i] = offset+j means that j is the successor of i.

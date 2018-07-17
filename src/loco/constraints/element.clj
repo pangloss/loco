@@ -35,7 +35,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $element
+(defloco $element
   "-------------------- IntVar --------------------
   Given a list of int-vars L, an int-var i, and an optional offset
   number (default 0), returns a new int-var constrained to equal L[i],

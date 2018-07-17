@@ -35,7 +35,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 
-(defn $bin-packing
+(defloco $bin-packing
   "Creates a BinPacking constraint. Bin Packing formulation:
   forall b in [0, binLoad.length - 1],
   binLoad[b] = sum(itemSize[i] |

@@ -26,7 +26,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $symetric
+(defloco $symetric
   "Creates a constraint stating that sets are symmetric sets: x in sets[y] <=> y in sets[x]
   Creates a constraint stating that sets are symmetric sets: x in sets[y-offset] <=> y in sets[x-offset]"
   {:choco ["symmetric(SetVar... sets)"

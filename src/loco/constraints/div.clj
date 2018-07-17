@@ -58,7 +58,7 @@
      sort
      ((juxt first last)))))
 
-(defn $div
+(defloco $div
   "Creates an euclidean division constraint.
 
   Ensures eq = dividend / divisor

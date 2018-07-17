@@ -47,7 +47,7 @@
     (zipmap [:lb :ub])
     (assoc :int true)))
 
-(defn $abs
+(defloco $abs
   "Creates an absolute value constraint:
   ($abs eq operand) or ($abs eq = operand)
   eq = |operand|

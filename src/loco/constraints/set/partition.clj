@@ -26,7 +26,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $partition
+(defloco $partition
   "Creates a constraint stating that partitions universe into sets: union(sets) = universe intersection(sets) = {}"
   {:choco "partition(SetVar[] sets, SetVar universe)"}
   [universe collection]

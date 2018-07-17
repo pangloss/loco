@@ -55,7 +55,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $cumulative
+(defloco $cumulative
   "Creates a cumulative constraint:
   Enforces that at each point in time,
   the cumulated height of the set of tasks that overlap that point does not exceed a given limit.

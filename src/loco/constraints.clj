@@ -87,7 +87,7 @@
 ;;TODO: figure out how to convert a function into a Condition object
 ;;http://www.choco-solver.org/apidocs/org/chocosolver/solver/constraints/nary/alldifferent/conditions/Condition.html
 ;;possibly need to use reify
-#_(defn $distinct-under-condidiont
+#_(defloco $distinct-under-condidiont
     "Creates an allDifferent constraint subject to the given
   condition. More precisely: IF singleCondition for all X,Y in vars,
   condition(X) => X != Y ELSE for all X,Y in vars, condition(X) AND
@@ -101,7 +101,7 @@
 
 
 ;;TODO: key-sort implementation requires int-var[][]
-#_(defn $key-sort
+#_(defloco $key-sort
     "Creates a keySort constraint which ensures that the variables of
   SORTEDvars correspond to the variables of vars according to a
   permutation stored in PERMvars (optional, can be null). The variables

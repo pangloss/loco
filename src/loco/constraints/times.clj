@@ -23,7 +23,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $times
+(defloco $times
   "Creates a multiplication constraint:
 
   eq = operand1 * operand2
@@ -60,7 +60,7 @@
      :lb (-> (apply min possible-bounds) int)
      :ub (-> (apply max possible-bounds) int)}))
 
-(defn $*
+(defloco $*
   "partial of $times
 
   allows for unlimited args (will create recursive constraint to support args)

@@ -1,6 +1,6 @@
 (ns loco.constraints.all-equal
   (:require
-   [loco.constraints.utils :refer []]
+   [loco.constraints.utils :refer :all]
    [loco.constraints :refer [$arithm]]
    [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
@@ -29,7 +29,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $all-equal
+(defloco $all-equal
   "Constrains that all vars are equal to each other
 
   Creates a constraint stating that ints should be all equal.
@@ -42,7 +42,7 @@
               compiler))
 
 ;;TODO: partial implementation
-(defn $=
+(defloco $=
   [& more]
   (let [morev (vec more)]
     (match [morev]

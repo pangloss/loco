@@ -24,7 +24,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $not-empty
+(defloco $not-empty
   "Creates a constraint preventing set to be empty"
   {:choco "notEmpty(SetVar set)"}
   [set-var]

@@ -28,7 +28,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $path
+(defloco $path
   "Creates a path constraint which ensures that
   the elements of vars define a covering path from start to end
   where vars[i] = j means that j is the successor of i.

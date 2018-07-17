@@ -75,7 +75,7 @@
   (partial-constraint constraint-name body name-fn constraint-fn domain-fn))
 
 ;;TODO: scalar can accept a list of [[int-var coeff] ...] tuples
-(defn $scalar
+(defloco $scalar
   "Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i]) operator scalar"
   {:choco "scalar(IntVar[] vars, int[] coeffs, String operator, IntVar scalar)"
    :partial true}

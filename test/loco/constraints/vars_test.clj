@@ -32,6 +32,7 @@
       ($const :a 1)               [:var :a :public [:const 1]]
       ($const [:b 10] 2)          [:var [:b 10] :public [:const 2]]
       ($const [:constraint 10] 2) [:var [:constraint 10] :public [:const 2]]
+      ($const- [:constraint 20] 4) [:var [:constraint 20] :hidden [:const 4]]
       )
     )
 
@@ -52,7 +53,7 @@
        "[:constraint 10] = 2")
      [($const :7 7)
       ($const :a 7)
-      ($const :b 4)
+      ($const- :b 4)
       ($const [:constraint 10] 2)])
     )
 
@@ -61,7 +62,7 @@
       [($const :a 0)]            '({:a 0})
       [($const- :a 0)]           '({})
       [($const- :aa 0)
-       ($const :a 0)]            '({:a 0})
+       ($const :aaa 0)]          '({:aaa 0})
       )
     )
   )
@@ -291,6 +292,9 @@
 
       ($tuples :forbidden2 [[8 9] [6 7]] :forbidden)
       [:var :forbidden2 :hidden [:tuples :forbidden [[8 9] [6 7]]]]
+
+      ($tuples-allowed :allowed [[8 9] [6 7]])
+      [:var :allowed :hidden [:tuples :allowed [[8 9] [6 7]]]]
 
       ($tuples-forbidden :forbidden [[8 9] [6 7]])
       [:var :forbidden :hidden [:tuples :forbidden [[8 9] [6 7]]]]

@@ -28,7 +28,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $intersection
+(defloco $intersection
   "Creates a constraint which ensures that the intersection of sets is equal to intersectionSet
   Creates a constraint which ensures that the intersection of sets is equal to intersectionSet"
   {:choco ["intersection(SetVar[] sets, SetVar intersectionSet)"

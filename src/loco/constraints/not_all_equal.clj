@@ -1,6 +1,6 @@
 (ns loco.constraints.not-all-equal
   (:require
-   [loco.constraints.utils :refer [constraint]]
+   [loco.constraints.utils :refer :all]
    [loco.constraints :refer [$arithm]]
    [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
@@ -24,14 +24,14 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $not-all-equal
+(defloco $not-all-equal
   "Constrains that all vars are not equal to each other (different from distinct)"
   {:choco "notAllEqual(IntVar... vars)"}
   [vars]
   {:pre [(sequential? vars)]}
   (constraint constraint-name (vec vars) compiler))
 
-(defn $not=
+(defloco $not=
   [& more]
   (let [morev (vec more)]
     (match [morev]

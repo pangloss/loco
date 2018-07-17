@@ -41,7 +41,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $not-member
+(defloco $not-member
   "-------------------- IntVar --------------------
   Creates a member constraint. Ensures var does not take its values in [LB, UB]
   Creates a member constraint. Ensures var does not take its values in table

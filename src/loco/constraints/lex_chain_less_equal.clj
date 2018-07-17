@@ -29,7 +29,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;;TODO: lex-chain-less-equal is sort?
-(defn $lex-chain-less-equal
+(defloco $lex-chain-less-equal
   "Creates a lexChainLessEq constraint.
   For each pair of consecutive vectors varsi and varsi+1 of the vars collection
   varsi is lexicographically less or equal than than varsi+1"

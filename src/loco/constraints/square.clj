@@ -25,7 +25,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $square
+(defloco $square
   "Creates a square constraint: result = dependency^2"
   {:choco "square(IntVar var1, IntVar var2)"}
   [squared int-var]

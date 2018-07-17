@@ -29,7 +29,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;;TODO: can do partial for sum-elements
-(defn $sum-elements
+(defloco $sum-elements
   "Creates a constraint summing weights given by a set of indices:
   sum{weights[i-offset] | i in indices} = sum Also ensures that
   elements in indices belong to [offset, offset+weights.length-1]

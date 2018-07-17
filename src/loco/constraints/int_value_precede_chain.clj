@@ -38,7 +38,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;;TODO: find better names for  int-value-precede-chain arguments
-(defn $int-value-precede-chain
+(defloco $int-value-precede-chain
   "Creates an intValuePrecedeChain constraint.
   Ensure that, for each pair of V[k] and V[l] of values in V,
   such that k < l, if there exists j such that X[j] = V[l], then,

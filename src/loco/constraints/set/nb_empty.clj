@@ -27,7 +27,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $nb-empty
+(defloco $nb-empty
   "Creates a constraint counting the number of empty sets sets |{s in sets where |s|=0}| = nbEmpty"
   {:choco ["nbEmpty(SetVar[] sets, int nbEmpty)"
            "nbEmpty(SetVar[] sets, IntVar nbEmpty)"]}

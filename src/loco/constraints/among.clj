@@ -32,7 +32,7 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 
-(defn $among
+(defloco $among
   "Creates an among constraint.
   nb-var is the number of variables of the collection vars that take their value in values."
   {:choco "among(IntVar nbVar, IntVar[] vars, int[] values)"

@@ -29,7 +29,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $bools-int-channeling
+(defloco $bools-int-channeling
   "Creates an channeling constraint between an integer variable and a
   set of boolean variables.
   Maps the boolean assignments variables bVars with the standard assignment variable var.

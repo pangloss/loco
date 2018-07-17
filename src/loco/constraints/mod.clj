@@ -24,7 +24,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $mod
+(defloco $mod
   "Creates a modulo constraint.
 
   eq = operand1 % operand2
@@ -64,7 +64,7 @@
       (update :lb int)
       (update :ub int)))
 
-(defn $%
+(defloco $%
   "partial of $mod
 
   e.g.:

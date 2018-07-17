@@ -1,6 +1,6 @@
 (ns loco.constraints.arithmetic
   (:require
-   [loco.constraints.utils :refer [partial-constraint]]
+   [loco.constraints.utils :refer :all]
    [clojure.core.match :refer [match]]
    [loco.constraints :refer [$sum $minus]]))
 
@@ -39,7 +39,7 @@
           (assoc :int true))))
 
 ;;TODO: $- should support negative view for 1 arity
-(defn $-
+(defloco $-
   "partial of $sum
 
   e.g.:

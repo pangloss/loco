@@ -31,7 +31,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $sets-ints-channeling
+(defloco $sets-ints-channeling
   "Creates a constraint channeling set variables and integer variables :
   x in sets[y] <=> ints[x] = y
 

@@ -39,7 +39,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $distinct
+(defloco $distinct
   "-------------------- Ints --------------------
   Creates an allDifferent constraint.
   Ensures that all variables from vars take a different value.

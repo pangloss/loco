@@ -26,7 +26,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $off-set
+(defloco $off-set
   "Creates a constraint linking set1 and set2
   with an index offset : x in set1 <=> x+offset in set2"
   {:choco "offSet(SetVar set1, SetVar set2, int offset)"}

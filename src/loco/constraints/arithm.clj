@@ -37,7 +37,7 @@
            ::s/invalid
            (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $arithm
+(defloco $arithm
   "Creates an arithmetic constraint:
   eq op1 operand1 op2 operand2,
 
@@ -66,22 +66,22 @@
                  [a compare b op (preserve-consts c)]
                  compiler))))
 
-(defn $<
+(defloco $<
   "Constrains that X < Y"
   [x y]
   ($arithm x < y))
 
-(defn $>
+(defloco $>
   "Constrains that X > Y"
   [x y]
   ($arithm x > y))
 
-(defn $<=
+(defloco $<=
   "Constrains that X <= Y"
   [x y]
   ($arithm x <= y))
 
-(defn $>=
+(defloco $>=
   "Constrains that X >= Y"
   [x y]
   ($arithm x >= y))

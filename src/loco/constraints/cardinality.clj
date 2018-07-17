@@ -1,7 +1,7 @@
 (ns loco.constraints.cardinality
   (:require
-   [loco.constraints.utils :refer [int-var? report-spec-error preserve-consts constraint]]
-   [loco.constraints :refer [proto-var]]
+   [loco.constraints.utils :refer :all]
+   [loco.constraints.vars :refer [$proto]]
    [clojure.spec.alpha :as s]
    [loco.constraints.utils :as utils]
    [loco.match :refer [match+]]
@@ -38,7 +38,7 @@
 ;; [var-name [:constraint ['cardinality [vars [values occurences] _]]] dep-domains]
 ;; (cardinality-domain var-name values occurences dep-domains)
 
-(defn $cardinality
+(defloco $cardinality
   "Takes a list of variables, and a frequency map (from numbers to
   frequencies), constrains that the frequency map is accurate. If
   the :closed flag is set to true, any keys that aren't in the
@@ -75,6 +75,6 @@
      ;;function, split it out into a helper fn in utils so that this
      ;;idea is better represented.
      (-> (concat
-          (mapv #(proto-var cardinality-constraint (vec variables) %) occurences)
+          (mapv #($proto cardinality-constraint (vec variables) %) occurences)
           [cardinality-constraint])
          (with-meta {:generated-vars true})))))

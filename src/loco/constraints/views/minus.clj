@@ -4,7 +4,7 @@
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.set :as set]
-   [loco.constraints.utils :refer [view int-var? report-spec-error] :as utils]
+   [loco.constraints.utils :refer :all]
    )
   )
 
@@ -44,7 +44,7 @@
 ;; a proto
 
 ;;TODO: fix up docs
-(defn $minus
+(defloco $minus
   "takes a partial constraint and creates a negative constraint from
   it (neg (- :x :b)) also can be used to create a neg var
   via (neg :-i :i)

@@ -44,7 +44,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $circuit
+(defloco $circuit
   "Given a list of int-vars L, and an optional offset number (default
   0), the elements of L define a circuit, where (L[i] = j + offset)
   means that j is the successor of i.  Hint: make the offset 1 when

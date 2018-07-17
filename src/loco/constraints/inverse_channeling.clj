@@ -30,7 +30,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $inverse-channeling
+(defloco $inverse-channeling
   "Creates an inverse channeling between vars1 and vars2:
   vars1[i-offset2] = j <=> vars2[j-offset1] = i Performs AC if domains are enumerated.
   If not, then it works on bounds without guaranteeing BC

@@ -5,8 +5,7 @@
    [clojure.core.match :refer [match]]
    [loco.match :refer [match+]]
    [clojure.spec.alpha :as s]
-   [clojure.walk :as walk]
-   [loco.constraints :as con])
+   [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar SetVar Task]
    org.chocosolver.solver.constraints.extension.Tuples))
@@ -60,37 +59,7 @@
 (def ^:private has-domain? (c some? :domain meta))
 (def ^:private get-var-name (c second))
 
-(defn- var-name-domain-map [problem]
-  (let [get-name second]
-    (->> problem
-         (filter var?)
-         (filter has-domain?)
-         (map (juxt get-name get-domain))
-         (into {}))))
 
-(defn- unfold-partials [problem]
-  (->> problem
-       (mapcat
-        (fn [constraint]
-          (if-not (constraint? constraint)
-            [constraint]
-            (let [acc (atom [])
-                  constraints-without-partials
-                  (->> constraint
-                       (walk/postwalk (fn [statement]
-                                        (if-not (partial-constraint? statement)
-                                          statement
-                                          (let [{:keys [name-fn constraint-fn]} (meta statement)
-                                                var-name (name-fn statement)
-                                                var (con/proto-var var-name statement)
-                                                constraint (constraint-fn var-name statement)
-                                                ]
-                                            (swap! acc
-                                                   into [var constraint])
-                                            var-name)))))
-                  ]
-              (into @acc
-                    [constraints-without-partials])))))))
 
 (defn partial-constraint
   "A partial constraint is one that lacks 1 variable (the equivalence
@@ -138,47 +107,9 @@
     } [view-name body]
   )
 
-(defn- realize-domain [[acc var-index] statement]
-  ;;statement + meta looks something like
-  ;;[:var "2+:x" :proto] {:var true, :proto true, :from [+ [2 :x]]}
 
-  ;; :from has it's own meta too
-  ;; ^{
-  ;;   :partial-constraint true
-  ;;   :name-fn name-fn
-  ;;   :constraint-fn constraint-fn
-  ;;   :domain-fn domain-fn
-  ;;   }
 
-  ;; possible that view and var can not work with the same code
-  (if (and (or (view? statement) (var? statement))
-           (not (set? statement))
-           (not (task? statement))
-           (not (tuples? statement))
-           (not (has-domain? statement)))
-    (let [partial (->> statement meta :from)
-          domain-fn (->> partial meta :domain-fn)
-          partial-with-replaced-var-domains (walk/postwalk-replace var-index partial)
-          domain (domain-fn partial-with-replaced-var-domains)
-          statement-with-domain (vary-meta statement assoc :domain domain)
-          updated-var-index (assoc var-index (get-var-name statement) domain)
-          ]
-      [(conj acc statement-with-domain) updated-var-index])
-    [(conj acc statement) var-index]))
 
-(defn compile-problem [problem]
-  (let [[vars constraints] (->> problem
-                                unfold-partials
-                                (sort-by var?)
-                                (split var?))
-        var-index (var-name-domain-map vars)
-        [model _] (reduce realize-domain [[] var-index] vars)
-        ]
-    (vec (concat model constraints))
-    #_[(map (juxt identity meta) problem)
-       ;;     var-index
-       ]
-    ))
 
 (def comparison-operator? #{'= '> '< '!=  '>= '<=
                             := :> :< :!= :not=  :>= :<=
@@ -270,6 +201,7 @@
 (defmacro defloco
   "used for defining global loco vars (typically $name)"
   [name & more]
+  {:pre [(symbol? name)]}
   `(do
      (defn ~name ~@more)
      (intern 'loco.constraints (quote ~name) ~name))

@@ -31,7 +31,7 @@
            ::s/invalid
            (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $at-least-n-values
+(defloco $at-least-n-values
   "Creates an atLeastNValue constraint.
   Let N be the number of distinct values assigned to the variables of the vars collection.
   Enforce condition N >= nValues to hold.

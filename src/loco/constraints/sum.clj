@@ -1,6 +1,6 @@
 (ns loco.constraints.sum
   (:require
-   [loco.constraints.utils :refer [int-var? set-var? comparison-operator? constraint to-operator partial-constraint report-spec-error] :as utils]
+   [loco.constraints.utils :refer :all :as utils]
    [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])
@@ -38,7 +38,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $sum
+(defloco $sum
   "Creates a sum constraint.
 
   constrain a var to be compared to the sum of a set or list of integers or booleans
@@ -91,7 +91,7 @@
           (update :lb int)
           (update :ub int))))
 
-(defn $+
+(defloco $+
   "partial of $sum
 
   e.g.:

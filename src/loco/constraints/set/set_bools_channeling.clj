@@ -27,7 +27,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $set-bools-channeling
+(defloco $set-bools-channeling
   "Creates a constraint channeling a set variable with boolean variables :
   i in set <=> bools[i] = TRUE.
 

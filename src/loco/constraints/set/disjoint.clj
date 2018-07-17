@@ -25,7 +25,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $disjoint
+(defloco $disjoint
   "Creates a constraint stating that the intersection of set1 and set2 should be empty Note that they can be both empty"
   {:choco "disjoint(SetVar set1, SetVar set2)"}
   ([[set1 set2 :as set-pair]]

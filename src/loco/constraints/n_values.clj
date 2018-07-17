@@ -25,7 +25,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defn $n-values
+(defloco $n-values
   "Creates an nValue constraint. Let N be the number of distinct values
   assigned to the variables of the vars collection. Enforce condition
   N = nValues to hold."

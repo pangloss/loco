@@ -1,6 +1,6 @@
 (ns loco.constraints.nth
   (:require
-   [loco.constraints.utils :refer [constraint]]
+   [loco.constraints.utils :refer :all]
    [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]))
 
@@ -46,7 +46,7 @@
           (comp last last (p sort-by second))))))
 
 ;;FIXME: $nth needs implementing
-(defn $nth
+(defloco $nth
   "partial for $element"
   {:choco "element(IntVar value, IntVar[] table, IntVar index, int offset)"
    :partial true}
