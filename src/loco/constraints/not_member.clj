@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.not-member
   (:refer-clojure :exclude [set])
   (:use loco.constraints.utils)

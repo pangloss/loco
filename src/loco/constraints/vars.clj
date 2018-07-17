@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.vars
   (:require
    [clojure.core.match :refer [match]]

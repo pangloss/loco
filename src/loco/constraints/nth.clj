@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.nth
   (:require
    [loco.constraints.utils :refer [constraint]]

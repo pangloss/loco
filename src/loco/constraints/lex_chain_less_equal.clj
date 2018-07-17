@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.lex-chain-less-equal
   (:use loco.constraints.utils)
   (:require

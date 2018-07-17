@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.set.sets-ints-channeling
   (:use loco.constraints.utils)
   (:require

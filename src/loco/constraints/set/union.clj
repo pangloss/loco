@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.set.union
   (:use loco.constraints.utils)
   (:require

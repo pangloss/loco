@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 ;; (ns loco.constraints.or)
 
 ;; ;; handle boolean lists

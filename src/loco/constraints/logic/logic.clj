@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.logic.logic
   (:require
    [loco.constraints :refer [$bool-]]))

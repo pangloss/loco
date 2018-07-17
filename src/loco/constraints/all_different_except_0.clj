@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.all-different-except-0
   (:use loco.constraints.utils)
   (:require

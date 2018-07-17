@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.cardinality
   (:require
    [loco.constraints.utils :refer [int-var? report-spec-error preserve-consts constraint]]

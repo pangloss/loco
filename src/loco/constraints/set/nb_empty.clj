@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.set.nb-empty
   (:use loco.constraints.utils)
   (:require

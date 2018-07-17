@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.int-value-precede-chain
   (:use loco.constraints.utils)
   (:require

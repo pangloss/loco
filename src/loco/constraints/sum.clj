@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.sum
   (:require
    [loco.constraints.utils :refer [int-var? set-var? comparison-operator? constraint to-operator partial-constraint report-spec-error] :as utils]

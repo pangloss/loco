@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.at-most-n-values
   (:use loco.constraints.utils)
   (:require

@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.bin-packing
     (:use loco.constraints.utils)
     (:require

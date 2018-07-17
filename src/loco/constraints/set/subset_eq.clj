@@ -1,4 +1,3 @@
-(in-ns 'loco.constraints)
 (ns loco.constraints.set.subset-eq
   (:use loco.constraints.utils)
   (:require
