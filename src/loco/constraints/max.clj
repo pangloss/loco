@@ -6,8 +6,7 @@
    [loco.constraints.utils :as utils]
    [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk]
-   [defun.core :refer [defun]])
+   [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
 
@@ -90,7 +89,8 @@
 ;;TODO: redo max and min docs, this is complicated...
 ;;TODO: replace defun with match+ or conform add bool documentation
 ;;TODO: fix arglists
-(defun $max
+
+(defloco $max
   "The maximum of several arguments.
   The arguments can be a mixture of int-vars and numbers
   Creates a constraint over the maximum element in a set: max{i | i in set} = maxElementValue
@@ -100,27 +100,31 @@
     "max(BoolVar max, BoolVar[] vars)"
     "max(SetVar set, IntVar maxElementValue, boolean notEmpty)"
     "max(SetVar indices, int[] weights, int offset, IntVar maxElementValue, boolean notEmpty)"]
+   :partial true
    :arglists '([max-list]
                [max vars]
                [set-var max not-empty?]
-               [set-indices weights offset max not-empty?]
+               [set-indices weights<int[]> offset<int> max<int-var> not-empty?]
                [& int-vars])}
+  [& more]
+  (match
+   (vec more)
 
-  ([(max-list :guard sequential?)] (apply max-partial max-list))
+   [(max-list :guard sequential?)] (apply max-partial max-list)
 
-  ([max (vars :guard sequential?)]
+   [max (vars :guard sequential?)]
    (constraint constraint-name
                [max
-                ['of (vec vars)]] compiler))
+                ['of (vec vars)]] compiler)
 
-  ([set-var max (not-empty? :guard boolean?)]
+   [set-var max (not-empty? :guard boolean?)]
    (constraint constraint-name
                [max
                 ['of set-var]
                 ['not-empty? not-empty?]]
-               compiler))
+               compiler)
 
-  ([set-indices,
+   [set-indices,
     (weights :guard [sequential? (p every? int?)])
     (offset :guard integer?)
     max,
@@ -131,6 +135,6 @@
                 ['indices    set-indices]
                 ['offset     (preserve-consts offset)]
                 ['not-empty? not-empty?]]
-               compiler))
+               compiler)
 
-  ([& int-vars] (apply max-partial int-vars)))
+   [& int-vars] (apply max-partial int-vars)))

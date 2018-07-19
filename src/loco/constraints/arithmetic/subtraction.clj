@@ -1,8 +1,10 @@
-(ns loco.constraints.arithmetic
+(ns loco.constraints.arithmetic.subtraction
   (:require
    [loco.constraints.utils :refer :all]
    [clojure.core.match :refer [match]]
-   [loco.constraints :refer [$sum $minus]]))
+   [loco.constraints :refer [$arithm $sum]]
+   [loco.constraints.views.minus :refer [$minus]]
+   ))
 
 (def ^:private partial-name '-)
 
@@ -13,13 +15,15 @@
 
 ;;FIXME: subtract constraint-fn seems incomplete
 (defn- constraint-fn [var-name [op [operand1 & more]]]
-  (let [
-        negative-vars (->> more
-                           (map (fn [var-name]
-                                  ($minus var-name))))
-        ;;negative-var-names (map second negative-vars)
-        ]
-    [($sum var-name = (into [operand1] negative-vars))]))
+  (if (empty? more)
+    [($arithm var-name = ($minus operand1))]
+    (let [
+          negative-vars (->> more
+                             (map (fn [var-name]
+                                    ($minus var-name))))
+          ;;negative-var-names (map second negative-vars)
+          ]
+      [($sum var-name = (into [operand1] negative-vars))])))
 
 ;; based on this, delete when tests pass
 ;; (defn- subtract-domains [[lb1 ub1] [lb2 ub2]]
@@ -46,6 +50,10 @@
   ($= :eq ($- :n1 :n2 :n3 4)) => ($sum :eq := :n1 -:n2 -:n3 -4)
   "
   {:partial true}
+
   ([& args]
-   (partial-constraint
-    partial-name (vec args) name-fn constraint-fn domain-fn)))
+   {:pre [(not-empty args)]}
+   (if (= 1 (count args))
+     ($minus (first args))
+     (partial-constraint
+      partial-name (vec args) name-fn constraint-fn domain-fn))))

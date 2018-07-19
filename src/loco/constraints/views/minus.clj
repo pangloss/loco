@@ -1,4 +1,4 @@
-(ns loco.views.minus
+(ns loco.constraints.views.minus
   (:require
    [clojure.walk :as walk]
    [clojure.core.match :refer [match]]
@@ -26,7 +26,7 @@
            ::s/invalid
            (report-spec-error view-name ::compile-spec var-subed-statement))))
 
-(defn- domain-fn [partial]
+#_(defn- domain-fn [partial]
   (match partial
          [view-name [dependency]]
          (-> (match dependency
@@ -43,6 +43,15 @@
 ;; completely treat this like a partial-constraint, as it just outputs
 ;; a proto
 
+(defn- view-fn [name statement]
+  (match statement
+         [view-name dep] [:view name statement]))
+
+(defn- name-fn [statement]
+  (println 'name-fn statement)
+  (match statement
+         [view-name dep] (str "-" (name dep))))
+
 ;;TODO: fix up docs
 (defloco $minus
   "takes a partial constraint and creates a negative constraint from
@@ -56,9 +65,11 @@
   {:view true}
   ([dependency-name]
    (view view-name
-         [dependency-name]
-         compiler-fn
-         domain-fn)))
+         dependency-name
+         name-fn
+         view-fn
+         compiler-fn)))
 
 ;;TODO: add meta data
-(def $neg (partial $minus))
+(defloco $neg [& more] (apply $minus more))
+(reset-meta! (var $neg) (meta (var $minus)))

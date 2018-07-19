@@ -38,6 +38,6 @@
            [[x y]] ($arithm x '!= y)
            :else   ($not-all-equal morev))))
 
-(def $!= $not=)
+(defloco $!= [& more] (apply $not= more))
 (reset-meta! (var $!=) (meta (var $not-all-equal)))
 (reset-meta! (var $not=) (meta (var $not-all-equal)))

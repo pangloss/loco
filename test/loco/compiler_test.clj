@@ -1,10 +1,7 @@
 (ns ^:compiler loco.compiler-test
   (:require [loco.compiler :as compiler]
             [loco.model :as model])
-  (:use clojure.test loco.model.test)
-  (:require
-   [loco.constraints :refer :all]
-   )
+  (:use clojure.test loco.model.test loco.constraints)
   (:import org.chocosolver.solver.Model))
 
 (deftest compiling-constraints-test

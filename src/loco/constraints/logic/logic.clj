@@ -116,6 +116,6 @@ In other words, if P is true, Q must be true (otherwise the whole
       [[] []])
      second)))
 
-(def $true [:constraint :true])
+(defloco $true []  (constraint 'true nil identity))
 
-(def $false [:constraint :false])
+(defloco $false [] (constraint 'false nil identity))

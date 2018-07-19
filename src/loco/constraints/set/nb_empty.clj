@@ -38,5 +38,5 @@
                ['of (vec collection)]]
               compiler))
 
-(def $count-empty $nb-empty)
+(defloco $count-empty [& more] (apply $nb-empty more))
 (reset-meta! (var $count-empty) (meta (var $nb-empty)))

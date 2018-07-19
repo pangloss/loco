@@ -99,17 +99,14 @@
       :domain-fn domain-fn
       } [op-name body]))
 
-(defn view [view-name body compile-fn domain-fn]
+(defn view [view-name body name-fn view-fn compile-fn]
   ^{
     :view true
     :compiler compile-fn
-    :domain-fn domain-fn
+    :name-fn name-fn
+    :view-fn view-fn
     } [view-name body]
   )
-
-
-
-
 
 (def comparison-operator? #{'= '> '< '!=  '>= '<=
                             := :> :< :!= :not=  :>= :<=

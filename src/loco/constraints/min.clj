@@ -6,8 +6,7 @@
    [loco.constraints.utils :as utils]
    [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk]
-   [defun.core :refer [defun]])
+   [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
 
@@ -89,7 +88,7 @@
 ;;TODO: rearrange the arguments in $min away from choco, and into
 ;;something more consistent, also may be good to use spec instead of
 ;;defun
-(defun $min
+(defloco $min
   "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers
   Creates a constraint over the minimum element in a set: min{i | i in set} = minElementValue
   Creates a constraint over the minimum element induces by a set: min{weights[i-offset] | i in indices} = minElementValue"
@@ -104,21 +103,24 @@
                [set-indices weights offset min-var not-empty?]
                [& int-vars])}
 
-  ([(min-list :guard sequential?)] (min-partial min-list))
+  [& more]
+  (match
+   (vec more)
+   [(min-list :guard sequential?)] (min-partial min-list)
 
-  ([min (vars :guard sequential?)]
+   [min (vars :guard sequential?)]
    (constraint constraint-name
                [min
-                ['of (vec vars)]] compiler))
+                ['of (vec vars)]] compiler)
 
-  ([set-var min (not-empty? :guard boolean?)]
+   [set-var min (not-empty? :guard boolean?)]
    (constraint constraint-name
                [min
                 ['of set-var]
                 ['not-empty? not-empty?]]
-               compiler))
+               compiler)
 
-  ([set-indices,
+   [set-indices,
     (weights :guard [sequential? (p every? int?)])
     (offset :guard integer?)
     min,
@@ -129,6 +131,6 @@
                 ['indices    set-indices]
                 ['offset     (preserve-consts offset)]
                 ['not-empty? not-empty?]]
-               compiler))
+               compiler)
 
-  ([& int-vars] (min-partial int-vars)))
+   [& int-vars] (min-partial int-vars)))

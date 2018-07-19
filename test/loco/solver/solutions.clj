@@ -103,7 +103,9 @@
     (solver/optimal-solutions model :minimize :y)))
   )
 
-(deftest parallel-solutions-test
+;;FIXME: solver/parallel-solutions is currently disabled and requires
+;;research and collaboration with the choco team
+#_(deftest parallel-solutions-test
   (->> (solver/parallel-solutions model)
        (take 10))
 

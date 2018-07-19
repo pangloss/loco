@@ -1,7 +1,9 @@
-(ns ^:model loco.model.set
-  (:require [loco.model :as model]
-            [loco.compiler :as compiler]
-            [loco.solver :as solver])
+(ns ^:model loco.model.set-test
+  (:require
+   [loco.model :as model]
+   [loco.compiler :as compiler]
+   [loco.solver :as solver]
+   [loco.constraints.test-utils :refer :all])
   (:use clojure.test
         loco.model.test
         loco.constraints))
@@ -21,15 +23,15 @@
   )
 
 (deftest set-var-compile-test
-  (vars-string-assert
+  (choco-vars-string-assert
    '("a = {1, 2, 3}")
    [($set :a [1 2 3])])
 
-  (vars-string-assert
+  (choco-vars-string-assert
    '("a = [{0, 3}, {-2, 0, 2, 3}]")
    [($set :a [0 3] [-2 0 2 3])])
 
-  (vars-string-assert
+  (choco-vars-string-assert
    '("a = [{0, 3}, {-2, 0, 2, 3}]")
    [($set :a #{0,3}, #{-2,0,2,3})])
 

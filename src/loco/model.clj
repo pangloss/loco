@@ -47,8 +47,15 @@
                   constraints-without-partials
                   (->> constraint
                        (walk/postwalk (fn [statement]
-                                        (if-not (partial-constraint? statement)
-                                          statement
+                                        (cond
+                                          (view? statement)
+                                          (let [{:keys [name-fn view-fn]} (meta statement)
+                                                var-name (name-fn statement)
+                                                view (view-fn var-name statement)
+                                                ]
+                                            (swap! acc into [view])
+                                            var-name)
+                                          (partial-constraint? statement)
                                           (let [{:keys [name-fn constraint-fn]} (meta statement)
                                                 var-name (name-fn statement)
                                                 var ($proto var-name statement)
@@ -56,7 +63,9 @@
                                                 ]
                                             (swap! acc
                                                    into [var constraint])
-                                            var-name)))))
+                                            var-name)
+                                          :else statement)
+                                        )))
                   ]
               (into @acc
                     [constraints-without-partials])))))))
