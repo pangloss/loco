@@ -272,9 +272,16 @@
 (reset-meta! (var $task-) (meta (var $task)))
 
 ;;-------------------- meta --------------------
+(defn- upgrade-proto [statement {:keys [int lb ub] :as domain}]
+  {:pre [(true? int)]}
+  (-> statement
+      (conj [:int lb ub])
+      (vary-meta assoc :domain domain))
+  )
+
 (defloco $proto
   "this is not meant to be used like $bool or $int, more for internal usage"
   [var-name partial]
   {:pre [(string? var-name)]}
-  (-> ^{:from partial} ^:proto ^:var [:var var-name :proto]
+  (-> ^{:from partial :upgrade-fn upgrade-proto} ^:proto ^:var [:var var-name :proto]
       hidden-conversion))

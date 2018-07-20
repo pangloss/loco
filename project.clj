@@ -15,4 +15,5 @@
                  [defun "0.3.0-RC1"]
                  [camel-snake-kebab "0.4.0"]
                  [org.choco-solver/choco-solver "4.0.6"]
+                 [expound "0.7.1"] ;; better error messages for clojure spec
                  ])

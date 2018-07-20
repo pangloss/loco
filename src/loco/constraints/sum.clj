@@ -73,7 +73,7 @@
          (apply str (interpose (name partial-name) body))))
 
 (defn- constraint-fn [var-name [op body]]
-  ($sum var-name '= body))
+  [($sum var-name '= body)])
 
 (defn- domain-fn [partial]
   (match partial
@@ -83,13 +83,13 @@
            (fn [{:keys [lb ub] :as acc} domain]
              (match domain
                     ;;TODO: handle enumerated domains
-                    {:int true :lb d-lb :ub d-ub} {:lb (unchecked-add lb d-lb)
-                                                   :ub (unchecked-add ub d-ub)}))
-           {:lb 0 :ub 0}
+                    {:int true :lb d-lb :ub d-ub}
+                    (do
+                      ;;(println 'add-lbub [lb ub] [d-lb d-ub])
+                      {:lb (unchecked-add (int lb) (int d-lb))
+                       :ub (unchecked-add (int ub) (int d-ub))})))
            body)
-          (assoc :int true)
-          (update :lb int)
-          (update :ub int))))
+          (assoc :int true))))
 
 (defloco $+
   "partial of $sum

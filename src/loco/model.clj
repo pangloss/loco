@@ -28,6 +28,7 @@
 (defn- constraint? [statement]          (->> statement meta :constraint))
 (defn- partial-constraint? [statement]  (->> statement meta :partial-constraint))
 (defn- view? [statement]                (->> statement meta :view))
+(defn- proto? [statement]               (->> statement meta :proto))
 
 (defn- var-name-domain-map [problem]
   (let [get-name second]
@@ -46,34 +47,42 @@
             (let [acc (atom [])
                   constraints-without-partials
                   (->> constraint
-                       (walk/postwalk (fn [statement]
-                                        (cond
-                                          (view? statement)
-                                          (let [{:keys [name-fn view-fn]} (meta statement)
-                                                var-name (name-fn statement)
-                                                view (view-fn var-name statement)
-                                                ]
-                                            (swap! acc into [view])
-                                            var-name)
-                                          (partial-constraint? statement)
-                                          (let [{:keys [name-fn constraint-fn]} (meta statement)
-                                                var-name (name-fn statement)
-                                                var ($proto var-name statement)
-                                                constraint (constraint-fn var-name statement)
-                                                ]
-                                            (swap! acc
-                                                   into [var constraint])
-                                            var-name)
-                                          :else statement)
-                                        )))
+                       (walk/postwalk
+                        (fn [statement]
+                          ;;(println 'walk statement (meta statement))
+                          (cond
+                            (view? statement) (let [{:keys [name-fn view-fn]} (meta statement)
+                                                    var-name (name-fn statement)
+                                                    view (view-fn var-name statement)]
+                                                (swap! acc into [view])
+                                                var-name)
+                            (partial-constraint? statement) (let [{:keys [name-fn constraint-fn]} (meta statement)
+                                                                  var-name (name-fn statement)
+                                                                  var ($proto var-name statement)
+                                                                  constraint (constraint-fn var-name statement)
+                                                                  children (unfold-partials constraint)
+                                                                  constraint (if (not= children constraint)
+                                                                               children constraint)]
+                                                              ;; (println 'unfold-partials
+                                                              ;;          (into @acc (concat [var] constraint)))
+                                                              (swap! acc into (concat [var] constraint))
+                                                              var-name)
+                            :else statement)
+                          )))
                   ]
               (into @acc
                     [constraints-without-partials])))))))
 
+;; (into [] (concat [[:var :y-:z :proto]] [['sum [:y-:z '= [:y ['minus :z []]]]]]))
+;; (into [] [[:var :y-:z :proto] ['sum [:y-:z '= [:y ['minus :z []]]]]])
+;; (-> []
+;;     (into [[:var :y-:z :proto]])
+;;     (into [['sum [:y-:z '= [:y ['minus :z []]]]]]))
+
 (defn- realize-domain [[acc var-index] statement]
+  ;;(println 'realize-domain statement (meta statement))
   ;;statement + meta looks something like
   ;;[:var "2+:x" :proto] {:var true, :proto true, :from [+ [2 :x]]}
-
   ;; :from has it's own meta too
   ;; ^{
   ;;   :partial-constraint true
@@ -81,36 +90,28 @@
   ;;   :constraint-fn constraint-fn
   ;;   :domain-fn domain-fn
   ;;   }
-
-  ;; possible that view and var can not work with the same code
-  (if (and (or (view? statement) (var? statement))
+  (cond
+    (view? statement) (let [{:keys [from domain-fn]} (meta statement)
+                            partial-with-replaced-var-domains (walk/postwalk-replace var-index from)
+                            statement-with-domain (domain-fn statement partial-with-replaced-var-domains)
+                            {:keys [domain]} (meta statement-with-domain)
+                            updated-var-index (assoc var-index (get-var-name statement) domain)]
+                        [(conj acc statement-with-domain) updated-var-index])
+    ;;maybe i should just check if it's a proto var?
+    #_(and (var?  statement)
            (not (set? statement))
            (not (task? statement))
            (not (tuples? statement))
            (not (has-domain? statement)))
-    (let [partial (->> statement meta :from)
-          domain-fn (->> partial meta :domain-fn)
-          partial-with-replaced-var-domains (walk/postwalk-replace var-index partial)
-          domain (domain-fn partial-with-replaced-var-domains)
-          statement-with-domain (vary-meta statement assoc :domain domain)
-          updated-var-index (assoc var-index (get-var-name statement) domain)
-          ]
-      [(conj acc statement-with-domain) updated-var-index])
-    [(conj acc statement) var-index]))
-
-(defn compile-problem [problem]
-  (let [[vars constraints] (->> problem
-                                unfold-partials
-                                (sort-by var?)
-                                (split var?))
-        var-index (var-name-domain-map vars)
-        [model _] (reduce realize-domain [[] var-index] vars)
-        ]
-    (vec (concat model constraints))
-    #_[(map (juxt identity meta) problem)
-       ;;     var-index
-       ]
-    ))
+    (proto? statement) (let [{:keys [from upgrade-fn]} (meta statement)
+                             {:keys [domain-fn]} (meta from)
+                             partial-with-replaced-var-domains (walk/postwalk-replace var-index from)
+                             domain (domain-fn partial-with-replaced-var-domains)
+                             statement-with-domain (upgrade-fn statement domain)
+                             ;; (vary-meta statement assoc :domain domain)
+                             updated-var-index (assoc var-index (get-var-name statement) domain)]
+                         [(conj acc statement-with-domain) updated-var-index])
+    :else [(conj acc statement) var-index]))
 
 (defn- all-partials-transformed? [ast]
   (if-let [remaining-partials
@@ -151,6 +152,24 @@
         #(if (generated-vars? %)
            %
            [%]))))
+
+(defn compile-problem [problem]
+  (let [[vars constraints] (->> problem
+                                unfold-partials
+                                ;;(sort-by var?)
+                                (split (some-fn var? view?)))
+        var-index (var-name-domain-map vars)
+        [model _] (reduce realize-domain [[] var-index] vars)
+        ]
+    ;; (println 'vars 'constraints 'model)
+    ;; (pprint vars)
+    ;; (pprint constraints)
+    ;; (pprint model)
+    (vec (concat model constraints))
+    #_[(map (juxt identity meta) problem)
+       ;;     var-index
+       ]
+    ))
 
 (defn compile [problem]
   {:pre [(vector? problem)

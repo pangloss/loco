@@ -6,7 +6,9 @@
    [loco.constraints.utils :as utils]
    [clojure.core.match :refer [match]]
    [loco.match :refer [match+]]
-   [clojure.walk :as walk])
+   [clojure.walk :as walk]
+   [clojure.pprint :refer [pprint]]
+   )
   (:import
    [org.chocosolver.solver.variables BoolVar IntVar]))
 
@@ -25,6 +27,8 @@
                                :operand2 int-or-intvar?))))
 
 (defn- compiler [model vars-index statement]
+  ;;(println 'compiler-fn constraint-name )
+  ;;(pprint {'model model 'vars-index vars-index 'statement statement})
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [:compare {:eq-var eq-var :compare-op op, :operand var}]}

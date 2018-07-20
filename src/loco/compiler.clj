@@ -1,10 +1,10 @@
 (ns loco.compiler
   (:refer-clojure :exclude [compile ints var?])
-  (:use loco.constraints
-        loco.utils)
   (:require
    [loco.model :as model]
    [loco.match :refer [match+]]
+   [loco.constraints :refer []]
+   [loco.utils :refer [p c view? var? constraint? reify? public-var?]]
    [clojure.core.match :refer [match]]
    [clojure.pprint :refer [pprint]])
   (:import org.chocosolver.solver.Model
@@ -28,84 +28,6 @@
     var
     (when (number? name)
       name)))
-
-;;this is a bit annoying, maybe ok to move it into the
-;;compile-var-statement, but currently only used by Task
-(defn- anon-int-var
-  ([model domain]
-   {:pre [(or (and (sequential? domain) (every? integer? domain))
-              (integer? domain))]}
-   (if (integer? domain)
-     (.intVar model domain)
-     (.intVar model (int-array domain))))
-  ([model lb ub]
-   {:pre [(integer? lb) (integer? ub)]}
-   (.intVar model (min lb ub) (max lb ub)))
-  ([model lb ub bounded?]
-   {:pre [(integer? lb) (integer? ub) (boolean? bounded?)]}
-   (.intVar model (min lb ub) (max lb ub) bounded?)))
-
-(defn compile-var-statement [[vars-index vars model] statement]
-  (let [lookup-var (partial lookup-var vars-index)
-        var (match+
-             [statement (meta statement)]
-
-             [[:var var-name _ _] {:neg dep-name}]
-             (.intMinusView model (lookup-var dep-name))
-
-             [[:var var-name _ [:bool _ _]] _]
-             (.boolVar model (name var-name))
-
-             [[:var var-name _ [:int lb ub]] _] :guard [[lb ub] integer?]
-             (.intVar model (name var-name) lb ub)
-
-             [[:var var-name _ [:int lb ub :bounded]] _] :guard [[lb ub] integer?]
-             (.intVar model (name var-name) lb ub true)
-
-             [[:var var-name _ [:int enumeration]] _] :guard [enumeration vector?]
-             (.intVar model (name var-name) (int-array enumeration))
-
-             [[:var var-name _ [:const value]] _] :guard [value integer?]
-             (.intVar model (name var-name) value)
-
-             [[:var var-name _ [:set constants]] _] :guard [constants set?]
-             (.setVar model (name var-name) (into-array Integer/TYPE constants))
-
-             [[:var var-name _ [:set lb ub]] _] :guard [[lb ub] [set? (p every? integer?)]]
-             (.setVar model (name var-name)
-                      (into-array Integer/TYPE lb)
-                      (into-array Integer/TYPE ub))
-
-             [[:var var-name _ [:task start duration end]] _]
-             (let [task
-                   (.taskVar
-                    model
-                    (if (keyword? start)
-                      (lookup-var start)
-                      (apply anon-int-var model start))
-                    (if (keyword? duration)
-                      (lookup-var duration)
-                      (apply anon-int-var model duration))
-                    (if (keyword? end)
-                      (lookup-var end)
-                      (apply anon-int-var model end)))]
-               (.ensureBoundConsistency task)
-               task)
-
-             [[:var var-name _ [:tuples feasible? ints-lists]] _]
-             :guard [feasible? #{:allowed :forbidden}, ints-lists [sequential? (p every? (p every? int?))]]
-             (Tuples. (->> ints-lists (map int-array) into-array) ({:allowed true :forbidden false} feasible?))
-
-             )]
-    [(-> vars-index
-         (with-meta {:ast-statement statement})
-         (assoc (second statement) var))
-     (conj vars var)
-     model]))
-
-
-
-
 
 ;;TODO: use prewalk-replace?
 (defn compile-constraint-statement [vars-index model statement]
@@ -199,8 +121,6 @@
 
       ))))
 
-
-
 (defn compile-reify-statement [vars-index model statement]
   (match statement
          [:reify (var-name :guard (c (p instance? BoolVar)
@@ -215,9 +135,93 @@
    (map (partial compile-reify-statement vars-index model))
    doall))
 
+;;this is a bit annoying, maybe ok to move it into the
+;;compile-var-statement, but currently only used by Task
+(defn- anon-int-var
+  ([model domain]
+   {:pre [(or (and (sequential? domain) (every? integer? domain))
+              (integer? domain))]}
+   (if (integer? domain)
+     (.intVar model domain)
+     (.intVar model (int-array domain))))
+  ([model lb ub]
+   {:pre [(integer? lb) (integer? ub)]}
+   (.intVar model (min lb ub) (max lb ub)))
+  ([model lb ub bounded?]
+   {:pre [(integer? lb) (integer? ub) (boolean? bounded?)]}
+   (.intVar model (min lb ub) (max lb ub) bounded?)))
+
+(defn- compile-var-statement-helper
+  "these should be replaced by compile functions that are assigned where the vars are created"
+  {:deprecated true}
+  [vars-index vars model statement]
+  (match+
+   [statement (meta statement)]
+
+   [[:var var-name _ _] {:neg dep-name}]
+   (.intMinusView model (lookup-var dep-name))
+
+   [[:var var-name _ [:bool _ _]] _]
+   (.boolVar model (name var-name))
+
+   [[:var var-name _ [:int lb ub]] _] :guard [[lb ub] integer?]
+   (.intVar model (name var-name) lb ub)
+
+   [[:var var-name _ [:int lb ub :bounded]] _] :guard [[lb ub] integer?]
+   (.intVar model (name var-name) lb ub true)
+
+   [[:var var-name _ [:int enumeration]] _] :guard [enumeration vector?]
+   (.intVar model (name var-name) (int-array enumeration))
+
+   [[:var var-name _ [:const value]] _] :guard [value integer?]
+   (.intVar model (name var-name) value)
+
+   [[:var var-name _ [:set constants]] _] :guard [constants set?]
+   (.setVar model (name var-name) (into-array Integer/TYPE constants))
+
+   [[:var var-name _ [:set lb ub]] _] :guard [[lb ub] [set? (p every? integer?)]]
+   (.setVar model (name var-name)
+            (into-array Integer/TYPE lb)
+            (into-array Integer/TYPE ub))
+
+   [[:var var-name _ [:task start duration end]] _]
+   (let [task
+         (.taskVar
+          model
+          (if (keyword? start)
+            (lookup-var start)
+            (apply anon-int-var model start))
+          (if (keyword? duration)
+            (lookup-var duration)
+            (apply anon-int-var model duration))
+          (if (keyword? end)
+            (lookup-var end)
+            (apply anon-int-var model end)))]
+     (.ensureBoundConsistency task)
+     task)
+
+   [[:var var-name _ [:tuples feasible? ints-lists]] _]
+   :guard [feasible? #{:allowed :forbidden}, ints-lists [sequential? (p every? (p every? int?))]]
+   (Tuples. (->> ints-lists (map int-array) into-array) ({:allowed true :forbidden false} feasible?))
+   ))
+
+(defn- compile-var-statement [[vars-index vars model] statement]
+  (let [var-name (second statement)
+        var (if-let [compile-fn (-> statement meta :compiler)]
+              (compile-fn model vars-index statement)
+              (compile-var-statement-helper vars-index vars model statement)
+              )]
+    [(-> vars-index
+         (with-meta {:ast-statement statement})
+         (assoc var-name var))
+     (conj vars var)
+     model]))
+
 (defn compile-vars [model ast]
+  ;;(println 'compile-vars (filter (some-fn view? var?) ast))
   (->>
    ast
+   (filter (some-fn view? var?))
    (reduce compile-var-statement [{} [] model])))
 
 (defn compile-constraints [model vars-index ast]
@@ -230,11 +234,10 @@
   ([ast] (compile (Model.) ast))
   ([model ast]
    (let [
-         uncompiled-vars        (->> ast (filter var?))
          uncompiled-constraints (->> ast (filter constraint?))
          uncompiled-reifies     (->> ast (filter reify?))
-         [vars-index vars _]    (compile-vars model uncompiled-vars)
-         public-var-names       (->> uncompiled-vars (filter public-var?) (map second))
+         [vars-index vars _]    (compile-vars model ast)
+         public-var-names       (->> ast (filter public-var?) (map second))
          public-vars-index      (select-keys vars-index public-var-names)
          _reifies               (compile-reifies model vars-index uncompiled-reifies)
          constraints (->>
@@ -244,13 +247,14 @@
                       (map (juxt identity #(when % (.post %))))
                       (map first)
                       doall)]
+     ;;(println 'vars-map (map vector vars-index vars))
      {
       :ast ast
       :var-name-mapping (:var-name-mapping (meta ast))
       :constraints constraints
       :model model
       :vars vars
-      :vars-map (map vector uncompiled-vars vars)
+      :vars-map (map vector vars-index vars)
       :public-vars-index public-vars-index
       :vars-index vars-index
       })))

@@ -93,19 +93,25 @@
   (let [partial [op-name body]
         var-name (name-fn partial)]
     ^{
-      :partial-constraint true
-      :name-fn name-fn
       :constraint-fn constraint-fn
       :domain-fn domain-fn
+      :name-fn name-fn
+      :partial-constraint true
       } [op-name body]))
 
-(defn view [view-name body name-fn view-fn compile-fn]
+(defn view [view-name dependency modifiers name-fn view-fn domain-fn compile-fn]
+  {:pre [(symbol? view-name)
+         (vector? modifiers)
+         (every? fn? [name-fn view-fn domain-fn compile-fn])]}
   ^{
-    :view true
     :compiler compile-fn
+    :domain-fn domain-fn
+    :from dependency
+    :modifiers modifiers
     :name-fn name-fn
+    :view true
     :view-fn view-fn
-    } [view-name body]
+    } [view-name dependency modifiers]
   )
 
 (def comparison-operator? #{'= '> '< '!=  '>= '<=
@@ -171,6 +177,8 @@
   (s/or
    :bools ::bool-vars
    :ints  ::int-vars))
+
+(s/def ::int-domain (s/tuple #{:int} int? int?))
 
 (defn- convert-vars-to-strings
   "turn var objects into strings for easier reading/debugging"
