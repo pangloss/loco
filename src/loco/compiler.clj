@@ -155,55 +155,56 @@
   "these should be replaced by compile functions that are assigned where the vars are created"
   {:deprecated true}
   [vars-index vars model statement]
-  (match+
-   [statement (meta statement)]
+  (let [lookup-var (partial lookup-var vars-index)]
+    (match+
+     [statement (meta statement)]
 
-   [[:var var-name _ _] {:neg dep-name}]
-   (.intMinusView model (lookup-var dep-name))
+     [[:var var-name _ _] {:neg dep-name}]
+     (.intMinusView model (lookup-var dep-name))
 
-   [[:var var-name _ [:bool _ _]] _]
-   (.boolVar model (name var-name))
+     [[:var var-name _ [:bool _ _]] _]
+     (.boolVar model (name var-name))
 
-   [[:var var-name _ [:int lb ub]] _] :guard [[lb ub] integer?]
-   (.intVar model (name var-name) lb ub)
+     [[:var var-name _ [:int lb ub]] _] :guard [[lb ub] integer?]
+     (.intVar model (name var-name) lb ub)
 
-   [[:var var-name _ [:int lb ub :bounded]] _] :guard [[lb ub] integer?]
-   (.intVar model (name var-name) lb ub true)
+     [[:var var-name _ [:int lb ub :bounded]] _] :guard [[lb ub] integer?]
+     (.intVar model (name var-name) lb ub true)
 
-   [[:var var-name _ [:int enumeration]] _] :guard [enumeration vector?]
-   (.intVar model (name var-name) (int-array enumeration))
+     [[:var var-name _ [:int enumeration]] _] :guard [enumeration vector?]
+     (.intVar model (name var-name) (int-array enumeration))
 
-   [[:var var-name _ [:const value]] _] :guard [value integer?]
-   (.intVar model (name var-name) value)
+     [[:var var-name _ [:const value]] _] :guard [value integer?]
+     (.intVar model (name var-name) value)
 
-   [[:var var-name _ [:set constants]] _] :guard [constants set?]
-   (.setVar model (name var-name) (into-array Integer/TYPE constants))
+     [[:var var-name _ [:set constants]] _] :guard [constants set?]
+     (.setVar model (name var-name) (into-array Integer/TYPE constants))
 
-   [[:var var-name _ [:set lb ub]] _] :guard [[lb ub] [set? (p every? integer?)]]
-   (.setVar model (name var-name)
-            (into-array Integer/TYPE lb)
-            (into-array Integer/TYPE ub))
+     [[:var var-name _ [:set lb ub]] _] :guard [[lb ub] [set? (p every? integer?)]]
+     (.setVar model (name var-name)
+              (into-array Integer/TYPE lb)
+              (into-array Integer/TYPE ub))
 
-   [[:var var-name _ [:task start duration end]] _]
-   (let [task
-         (.taskVar
-          model
-          (if (keyword? start)
-            (lookup-var start)
-            (apply anon-int-var model start))
-          (if (keyword? duration)
-            (lookup-var duration)
-            (apply anon-int-var model duration))
-          (if (keyword? end)
-            (lookup-var end)
-            (apply anon-int-var model end)))]
-     (.ensureBoundConsistency task)
-     task)
+     [[:var var-name _ [:task start duration end]] _]
+     (let [task
+           (.taskVar
+            model
+            (if (keyword? start)
+              (lookup-var start)
+              (apply anon-int-var model start))
+            (if (keyword? duration)
+              (lookup-var duration)
+              (apply anon-int-var model duration))
+            (if (keyword? end)
+              (lookup-var end)
+              (apply anon-int-var model end)))]
+       (.ensureBoundConsistency task)
+       task)
 
-   [[:var var-name _ [:tuples feasible? ints-lists]] _]
-   :guard [feasible? #{:allowed :forbidden}, ints-lists [sequential? (p every? (p every? int?))]]
-   (Tuples. (->> ints-lists (map int-array) into-array) ({:allowed true :forbidden false} feasible?))
-   ))
+     [[:var var-name _ [:tuples feasible? ints-lists]] _]
+     :guard [feasible? #{:allowed :forbidden}, ints-lists [sequential? (p every? (p every? int?))]]
+     (Tuples. (->> ints-lists (map int-array) into-array) ({:allowed true :forbidden false} feasible?))
+     )))
 
 (defn- compile-var-statement [[vars-index vars model] statement]
   (let [var-name (second statement)

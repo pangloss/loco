@@ -3,8 +3,7 @@
    [loco.constraints.utils :refer :all]
    [clojure.core.match :refer [match]]
    [loco.match :refer [match+]]
-   [clojure.set :as set]
-   [loco.utils ::refer []])
+   )
   (:import org.chocosolver.solver.variables.IntVar))
 
 ;;TODO: implement real vars

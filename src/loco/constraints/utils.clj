@@ -207,7 +207,13 @@
   "used for defining global loco vars (typically $name)"
   [name & more]
   {:pre [(symbol? name)]}
-  `(do
-     (defn ~name ~@more)
-     (intern 'loco.constraints (quote ~name) ~name))
+  (let [cur-ns (ns-name *ns*)]
+    `(do
+       (defn ~name ~@more)
+       (in-ns 'loco.constraints) ;;need to do this shit because
+                                 ;;sometimes the ns loco.constraints
+                                 ;;isn't made, and we refer to it in
+                                 ;;the intern! :(
+       (in-ns '~cur-ns)
+       (intern 'loco.constraints (quote ~name) ~name)))
   )

@@ -1,8 +1,7 @@
 (ns loco.constraints.table
-  (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
+   [loco.constraints.utils :refer :all :as utils]
    [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])

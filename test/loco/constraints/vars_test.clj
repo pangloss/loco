@@ -1,12 +1,13 @@
 (ns loco.constraints.vars-test
-  (:require [loco.compiler :as compiler]
-            [loco.model :as model]
-            [loco.solver :as solver])
-  (:use clojure.test loco.model.test)
   (:require
+   [loco.compiler :as compiler]
+   [loco.model :as model]
+   [loco.solver :as solver]
    [loco.constraints :refer :all]
-   [loco.constraints.test-utils :refer :all]
-   )
+   [loco.constraints.test-utils :refer :all])
+  (:use
+   clojure.test
+   loco.model.test)
   (:import org.chocosolver.solver.Model))
 
 (deftest const-vars-test
