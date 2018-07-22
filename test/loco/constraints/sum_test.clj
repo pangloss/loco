@@ -37,45 +37,44 @@
 
 (deftest ^:model sum-model-test
   (are [expected input] (= expected (->> input model/compile))
-    [[:var :x :public [:int 0 5]]
-     [:var :y :public [:int 0 5]]
-     [:var :10 :hidden [:const 10]]
-     [:var :5 :hidden [:const 5]]
-     [:constraint ['sum [:10 '= [:x :y :5]]]]
-     [:constraint ['sum [:10 '> [:x :y :5]]]]
-     [:constraint ['sum [:10 '< [:x :y :5]]]]
-     [:constraint ['sum [:10 '>= [:x :y :5]]]]
-     [:constraint ['sum [:10 '<= [:x :y :5]]]]
-     [:constraint ['sum [:10 '!= [:x :y :5]]]]]
-   [($in :x 0 5)
-    ($in :y 0 5)
-    ($sum 10 := [:x :y 5])
-    ($sum 10 :> [:x :y 5])
-    ($sum 10 :< [:x :y 5])
-    ($sum 10 :>= [:x :y 5])
-    ($sum 10 :<= [:x :y 5])
-    ($sum 10 :!= [:x :y 5])]
+    '[[:var :x :public [:int 0 5]]
+      [:var :y :public [:int 0 5]]
+      [sum [10 = [:x :y 5]]]
+      [sum [10 > [:x :y 5]]]
+      [sum [10 < [:x :y 5]]]
+      [sum [10 >= [:x :y 5]]]
+      [sum [10 <= [:x :y 5]]]
+      [sum [10 != [:x :y 5]]]]
+    [($in :x 0 5)
+     ($in :y 0 5)
+     ($sum 10 := [:x :y 5])
+     ($sum 10 :> [:x :y 5])
+     ($sum 10 :< [:x :y 5])
+     ($sum 10 :>= [:x :y 5])
+     ($sum 10 :<= [:x :y 5])
+     ($sum 10 :!= [:x :y 5])]
 
-   [[:var :x :public [:bool 0 1]]
-    [:var :y :public [:bool 0 1]]
-    [:var :z :public [:bool 0 1]]
-    [:var :1 :hidden [:const 1]]
-    [:constraint ['sum [:1 '= [:x :y :z]]]]]
-   [($bool :x)
-    ($bool :y)
-    ($bool :z)
-    ($sum 1 := [:x :y :z])]
+    '[[:var :x :public [:bool 0 1]]
+      [:var :y :public [:bool 0 1]]
+      [:var :z :public [:bool 0 1]]
+      [sum [1 = [:x :y :z]]]]
+    [($bool :x)
+     ($bool :y)
+     ($bool :z)
+     ($sum 1 := [:x :y :z])]
 
-   [[:var :sum :public [:int 0 10]]
-    [:var :set :public [:set #{0 1 2} #{0 7 1 4 6 3 2 5}]]
-    [:constraint ['sum [:sum '= :set]]]]
-   [($in :sum 0 10)
-    ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
-    ($sum :sum :set)])
+    '[[:var :sum :public [:int 0 10]]
+      [:var :set :public [:set #{0 1 2} #{0 7 1 4 6 3 2 5}]]
+      [sum [:sum = :set]]]
+    [($in :sum 0 10)
+     ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
+     ($sum :sum :set)]
+
+    )
   )
 
 (deftest ^:compiler sum-compile-test
-  (are [expected input] (= expected (utils/constraints-strings input))
+  (are [expected input] (= expected (utils/compiled-constraints-strings input))
     '("SUM ([z + y + x = 1])")
     [($bool :x)
      ($bool :y)
@@ -87,6 +86,10 @@
      ($in :y 1 2)
      ($in :z 1 2)
      ($sum 2 := [:x :y :z])]
+
+    '("ARITHM ([a = 5])")
+    [($in :a 0 9)
+     ($sum 0 = [0 -5 :a])]
 
     '("SUM ([z + y + x = 2])")
     [($in :x 1 2)
@@ -133,5 +136,6 @@
     [($in :sum 0 10)
      ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
      ($sum :sum :set)]
+
     )
   )

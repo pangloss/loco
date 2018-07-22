@@ -59,8 +59,6 @@
 (def ^:private has-domain? (c some? :domain meta))
 (def ^:private get-var-name (c second))
 
-
-
 (defn partial-constraint
   "A partial constraint is one that lacks 1 variable (the equivalence
   variable). These are a syntactic sugar that make it easier to see
@@ -169,9 +167,23 @@
 (def tuples-var?    (p instance? Tuples))
 ;;(def int-or-bool? #(or (bool-var? %) (int-var? %)))
 
-(s/def ::int-vars (s/coll-of int-var?))
+(defn coerce-int-var [model [coerced-int-var-type val]]
+  {:pre [(instance? org.chocosolver.solver.Model model)]}
+  (case coerced-int-var-type
+    :int-var val
+    :int (.intVar model val) ;;create int-var constant
+    )
+  )
+
+(s/def ::comparison-operator? comparison-operator?)
+(s/def ::arithmetic-operator? arithmetic-operator?)
+(s/def ::comparison-symbol? comparison-symbol?)
+(s/def ::arithmetic-symbol? arithmetic-symbol?)
+(s/def ::int-var? (p instance? IntVar))
+(s/def ::coerce-intvar? (s/or :int-var ::int-var? :int int?))
+(s/def ::int-or-intvar? (some-fn int? int-var?))
+(s/def ::int-vars (s/coll-of ::int-var?))
 (s/def ::bool-vars (s/coll-of bool-var?))
-;;(s/def ::mixed-ints-bools (s/coll-of int-or-bool?))
 
 (s/def ::list-type
   (s/or
@@ -209,11 +221,25 @@
   {:pre [(symbol? name)]}
   (let [cur-ns (ns-name *ns*)]
     `(do
-       (defn ~name ~@more)
+       #_(defn ~name ~@more)
        (in-ns 'loco.constraints) ;;need to do this shit because
                                  ;;sometimes the ns loco.constraints
                                  ;;isn't made, and we refer to it in
                                  ;;the intern! :(
        (in-ns '~cur-ns)
-       (intern 'loco.constraints (quote ~name) ~name)))
+       #_(when (= (name '$arithm) (name '~name))
+         (println '$arithm)
+         (println)
+         (println (meta #'loco.constraints.arithm/$arithm)))
+       (let [defn# (defn ~name ~@more)
+             v# (intern 'loco.constraints '~name defn#)]
+         (reset-meta! v# (meta #'~name))
+         )
+
+       #_(intern 'loco.constraints '~name ~name)
+       #_(when (= (name '$arithm) (name '~name))
+         (println)
+         (println (meta #'loco.constraints/$arithm)))
+       )
+    )
   )

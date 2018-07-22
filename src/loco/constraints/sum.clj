@@ -1,5 +1,6 @@
 (ns loco.constraints.sum
   (:require
+   [loco.utils :refer [p c]]
    [loco.constraints.utils :refer :all :as utils]
    [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
@@ -16,18 +17,18 @@
                  :set   (s/cat :eq-var int-var?
                                :op #{'=}
                                :var set-var?)
-                 :bools (s/cat :eq-var int-var?
-                               :op comparison-operator?
+                 :bools (s/cat :eq-var ::utils/int-or-intvar?
+                               :op ::utils/comparison-operator?
                                :vars (s/spec ::utils/bool-vars))
-                 :ints  (s/cat :eq-var int-var?
-                               :op comparison-operator?
-                               :vars (s/spec ::utils/int-vars))))))
+                 :ints  (s/cat :eq-var ::utils/int-or-intvar?
+                               :op ::utils/comparison-operator?
+                               :vars (s/spec (s/coll-of ::utils/coerce-intvar?)))))))
 
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [:ints {:eq-var eq-var :op op, :vars vars}]}
-           (.sum model (into-array IntVar vars) (name op) eq-var)
+           (.sum model (into-array IntVar (map (p coerce-int-var model) vars)) (name op) eq-var)
 
            {:args [:bools {:eq-var eq-var :op op, :vars vars}]}
            (.sum model (into-array BoolVar vars) (name op) eq-var)

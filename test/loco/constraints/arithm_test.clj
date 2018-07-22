@@ -1,12 +1,12 @@
 (ns loco.constraints.arithm-test
   (:require
-   [loco.model :as model]
+   [clojure.test :refer :all]
    [loco.compiler :as compiler]
+   [loco.constraints :refer :all]
+   [loco.constraints.test-utils :refer :all]
+   [loco.model :as model]
    [loco.solver :as solver]
-   [loco.constraints.test-utils :as utils])
-  (:use
-   loco.constraints
-   clojure.test))
+   ))
 
 (deftest ^:model arithm-model-test
   (are [expected input] (= expected (->> input model/compile))
@@ -76,7 +76,7 @@
   )
 
 (deftest ^:compiler arithm-compile-test
-  (are [expected input] (= expected (utils/constraints-strings input))
+  (are [expected input] (= expected (compiled-constraints-strings input))
     '("DIVISION ([PropDivXYZ(x, cste -- 10, IV_1, ..., IV_1)])"
       "ARITHM ([prop(y.EQ.IV_1)])")
     [($in :x 0 100)
@@ -87,6 +87,14 @@
     [($in :x 0 100)
      ($in :y 0 10)
      ($arithm :y := :x)]
+
+    '("ARITHM ([y = {0..10} + x = {0..100} = 0])")
+    [($in :x 0 100)
+     ($in :y 0 10)
+     ($arithm 0 := :x + :y)]
+
+    '("ARITHM ([prop(cste -- 6.EQ.cste -- 5+1)])")
+    [($arithm 6 := 5 + 1)]
     )
   )
 
@@ -99,7 +107,7 @@
       {:x 11, :y 1})
     [($in :x [0 2 5 10 11])
      ($in :y 0 10)
-     ($arithm :y := :x :/ 10)]
+     ($arithm :y = :x / 10)]
 
     '({:x 0, :y 0}
       {:x 1, :y 1}

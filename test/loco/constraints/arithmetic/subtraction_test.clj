@@ -5,14 +5,8 @@
    [loco.compiler :as compiler]
    [loco.solver :as solver]
    [clojure.test :refer :all]
-   [loco.constraints.test-utils :refer :all]))
-
-(defn multi-test [input]
-  [input
-   (model/compile input)
-   (compiled-constraints-strings input)
-   (compiled-vars-strings input)
-   (solver/solutions input)])
+   [loco.constraints.test-utils :refer :all]
+   ))
 
 (deftest subtraction-test
   (testing "$subtration"
@@ -27,6 +21,7 @@
                      expected-compiled-vars
                      expected-solutions]
                     (multi-test input))
+
       '[[:var :x :public [:int 0 5]]
         [:var :y :public [:int 0 5]]
         [arithm [:x = [minus :y []]]]]
@@ -99,49 +94,41 @@
        ($in :z 1 2)
        ($= :x ($- :y ($- :x :z)))]
 
-            '[[:var :x :public [:int 0 5]]
-        [:var :y :public [:int 0 5]]
-        [:var :z :public [:int 1 2]]
-        [arithm [:x = [- [:y [- [:x :z]]]]]]]
-      '[[:var :x :public [:int 0 5]]
-        [:var :y :public [:int 0 5]]
-        [:var :z :public [:int 1 2]]
-        [:var ":x-:z" :proto [:int -2 4]]
-        [:view "-z" [minus :z []] [:int -2 -1]]
-        [:var ":y-:x-:z" :proto [:int -4 7]]
-        [:view "-:x-:z" [minus ":x-:z" []] [:int -4 2]]
-        [sum [":x-:z" = [:x "-z"]]]
-        [sum [":y-:x-:z" = [:y "-:x-:z"]]]
-        [arithm [:x = ":y-:x-:z"]]]
-      '("SUM ([PropXplusYeqZ(x, -(z), :x-:z)])"
-        "SUM ([PropXplusYeqZ(y, -(:x-:z), :y-:x-:z)])"
-        "ARITHM ([prop(x.EQ.:y-:x-:z)])")
-      '("x = {0..5}"
-        "y = {0..5}"
-        "z = {1..2}"
-        ":x-:z = {-2..4}"
-        "-(z = {1..2}) = [-2,-1]"
-        ":y-:x-:z = {-4..7}"
-        "-(:x-:z = {-2..4}) = [-4,2]")
-      '({:x 1, :y 0, :z 2}
-        {:x 2, :y 2, :z 2}
-        {:x 3, :y 4, :z 2}
-        {:x 1, :y 1, :z 1}
-        {:x 2, :y 3, :z 1}
-        {:x 3, :y 5, :z 1})
+
+      '[[:var :g :public [:int 0 5]]
+        [:var :h :public [:int 0 5]]
+        [:var :j :public [:int 1 2]]
+        [arithm [0 = [- [:g :h :j]]]]]
+      '[[:var :g :public [:int 0 5]]
+        [:var :h :public [:int 0 5]]
+        [:var :j :public [:int 1 2]]
+        [:var ":g-:h-:j" :proto [:int -7 4]]
+        [:view "-h" [minus :h []] [:int -5 0]]
+        [:view "-j" [minus :j []] [:int -2 -1]]
+        [sum [":g-:h-:j" = [:g "-h" "-j"]]]
+        [arithm [0 = ":g-:h-:j"]]]
+      '("SUM ([-(j) + -(h) + g - :g-:h-:j = 0])"
+        "ARITHM ([:g-:h-:j = 0])")
+      '("g = {0..5}"
+        "h = {0..5}"
+        "j = {1..2}"
+        ":g-:h-:j = {-7..4}"
+        "-(h = {0..5}) = [-5,0]"
+        "-(j = {1..2}) = [-2,-1]")
+      '({:g 2, :h 0, :j 2}
+        {:g 3, :h 1, :j 2}
+        {:g 5, :h 3, :j 2}
+        {:g 4, :h 2, :j 2}
+        {:g 5, :h 4, :j 1}
+        {:g 4, :h 3, :j 1}
+        {:g 3, :h 2, :j 1}
+        {:g 1, :h 0, :j 1}
+        {:g 2, :h 1, :j 1})
       [($in :g 0 5)
        ($in :h 0 5)
        ($in :j 1 2)
        ($= 0 ($- :g :h :j))]
+
       ))
 
   )
-
-
-(->> [($in :g 0 5)
-      ($in :h 0 5)
-      ($in :j 1 2)
-      ($= 0 ($- :g :h :j))]
-     model/compile
-     ;;compiler/compile
-     )

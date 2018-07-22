@@ -1,8 +1,10 @@
 (ns loco.constraints.test-utils
   (:require
-   [loco.model :as model]
+   [clojure.test :refer :all]
    [loco.compiler :as compiler]
-   [clojure.test :refer :all]))
+   [loco.model :as model]
+   [loco.solver :as solver]
+   ))
 
 (defn compiled-constraints-strings [input]
   (->> input
@@ -18,6 +20,13 @@
        compiler/compile
        :vars
        (map str)))
+
+(defn multi-test [input]
+  [input
+   (model/compile input)
+   (compiled-constraints-strings input)
+   (compiled-vars-strings input)
+   (solver/solutions input)])
 
 (defmacro choco-vars-string-assert
   "used for testing compile chain model/compile -> compiler/compile
