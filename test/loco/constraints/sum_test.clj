@@ -7,6 +7,34 @@
    loco.constraints
    clojure.test))
 
+
+      ;; [[:var :x :public [:int 0 5]]
+      ;;  [:var :y :public [:int 0 5]]
+      ;;  [:var :10 :hidden [:const 10]]
+      ;;  [:var :5 :hidden [:const 5]]
+      ;;  [:constraint ['sum [:10 '= [:x :y :5]]]]]
+      ;; [($in :x 0 5)
+      ;;  ($in :y 0 5)
+      ;;  ($= 10 ($- :y :x 5))]
+
+      ;;TODO: maybe it's better to make a boolean namespace instead of doing crazy overloading
+      ;;not converted, not sure if it should be...
+      ;; [[:var :x :public [:bool 0 1]]
+      ;;  [:var :y :public [:bool 0 1]]
+      ;;  [:var :z :public [:bool 0 1]]
+      ;;  [:var :1 :hidden [:const 1]]
+      ;;  [:constraint ['sum [:1 '= [:x :y :z]]]]]
+      ;; [($bool :x)
+      ;;  ($bool :y)
+      ;;  ($bool :z)
+      ;;  ($sum 1 := [:x :y :z])]
+
+      ;;TODO: maybe it's better to put this into a set namespace, and not do crazy overloading like this. it would make for better documentation, at the least... maybe
+      ;; [($in :sum 0 10)
+      ;;  ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
+      ;;  ($sum :sum :set)]
+
+
 (deftest ^:model sum-model-test
   (are [expected input] (= expected (->> input model/compile))
     [[:var :x :public [:int 0 5]]
@@ -106,65 +134,4 @@
      ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
      ($sum :sum :set)]
     )
-  )
-
-(deftest ^:spec sum-spec-test
-  (try
-    (->>
-     [($in   :r 0 10)
-      ($in   :x 1 2)
-      ($bool :y)
-      ($set  :z [] [1 2])
-      ($sum :r := [:x :y :z])]
-     solver/solutions)
-
-    (catch RuntimeException e
-      (is
-       (=
-        #:clojure.spec.alpha
-        {:problems
-         '({:path [:args :set :var],
-            :pred loco.constraints.utils/set-var?,
-            :val
-            ["x = {1..2}"
-             "y = [0,1]"
-             "z = [{}, {1, 2}]"],
-            :via
-            [:loco.constraints.sum/compile-spec],
-            :in [1 2]}
-           {:path [:args :bools :vars],
-            :pred bool-var?,
-            :val "x = {1..2}",
-            :via
-            [:loco.constraints.sum/compile-spec
-             :loco.constraints.utils/bool-vars
-             :loco.constraints.utils/bool-vars],
-            :in [1 2 0]}
-           {:path [:args :bools :vars],
-            :pred bool-var?,
-            :val "z = [{}, {1, 2}]",
-            :via
-            [:loco.constraints.sum/compile-spec
-             :loco.constraints.utils/bool-vars
-             :loco.constraints.utils/bool-vars],
-            :in [1 2 2]}
-           {:path [:args :ints :vars],
-            :pred int-var?,
-            :val "z = [{}, {1, 2}]",
-            :via
-            [:loco.constraints.sum/compile-spec
-             :loco.constraints.utils/int-vars
-             :loco.constraints.utils/int-vars],
-            :in [1 2 2]}),
-         :spec
-         :loco.constraints.sum/compile-spec,
-         :value
-         ['sum
-          ["r = {0..10}"
-           '=
-           ["x = {1..2}"
-            "y = [0,1]"
-            "z = [{}, {1, 2}]"]]]}
-
-        (.getData e)))))
   )

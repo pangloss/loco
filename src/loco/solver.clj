@@ -76,20 +76,22 @@
   ;;
   ;;{:y #object[org.chocosolver.solver.variables.impl.BitsetIntVarImpl 0x56881196 y = {1..3}}
   (->> var-map
-       (reduce (fn [acc [var-name var]]
-                 (assoc acc
-                        (var-key-name-fn var-name)
-                        (cond
-                          (instance? Task var)
-                          {
-                           :start    (->> var .getStart (.getIntVal solution))
-                           :duration (->> var .getDuration (.getIntVal solution))
-                           :end      (->> var .getEnd (.getIntVal solution))
-                           }
-                          (instance? IntVar var) (.getIntVal solution var)
-                          (instance? SetVar var) (set (.getSetVal solution var)))
-                        ))
-               {})))
+       (reduce
+        (fn [acc [var-name var]]
+          (assoc! acc
+                 (var-key-name-fn var-name)
+                 (cond
+                   (instance? Task var)
+                   {
+                    :start    (->> var .getStart (.getIntVal solution))
+                    :duration (->> var .getDuration (.getIntVal solution))
+                    :end      (->> var .getEnd (.getIntVal solution))
+                    }
+                   (instance? IntVar var) (.getIntVal solution var)
+                   (instance? SetVar var) (set (.getSetVal solution var)))
+                 ))
+        (transient {}))
+       persistent!))
 
 (defn solutions
   "Solves the problem using the specified constraints and returns a map from variable names to their values (or nil if there is no solution).

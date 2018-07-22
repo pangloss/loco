@@ -105,3 +105,6 @@
     name-fn
     constraint-fn
     domain-fn)))
+
+;;FIXME: preserve consts can be done like this
+(meta (with-meta (symbol (str 1)) {:const true :value 1}))

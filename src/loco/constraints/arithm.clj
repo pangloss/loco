@@ -30,6 +30,7 @@
   ;;(println 'compiler-fn constraint-name )
   ;;(pprint {'model model 'vars-index vars-index 'statement statement})
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+    (clojure.pprint/pprint var-subed-statement)
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [:compare {:eq-var eq-var :compare-op op, :operand var}]}
            (.arithm model eq-var (name op) var)

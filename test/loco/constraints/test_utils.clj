@@ -4,12 +4,19 @@
    [loco.compiler :as compiler]
    [clojure.test :refer :all]))
 
-(defn constraints-strings [input]
+(defn compiled-constraints-strings [input]
   (->> input
        model/compile
        compiler/compile
        :model
        .getCstrs
+       (map str)))
+
+(defn compiled-vars-strings [input]
+  (->> input
+       model/compile
+       compiler/compile
+       :vars
        (map str)))
 
 (defmacro choco-vars-string-assert

@@ -161,13 +161,13 @@
        ((clojure.set/union arithmetic-operator? comparison-operator?) op)))
 
 (def int-var?       (p instance? IntVar))
+;;FIXME: should be (def const-or-intvar? ...)
 (def int-or-intvar? #(or (int? %) (int-var? %)))
 (def bool-var?      (p instance? BoolVar))
 (def set-var?       (p instance? SetVar))
 (def task-var?      (p instance? Task))
 (def tuples-var?    (p instance? Tuples))
 ;;(def int-or-bool? #(or (bool-var? %) (int-var? %)))
-
 
 (s/def ::int-vars (s/coll-of int-var?))
 (s/def ::bool-vars (s/coll-of bool-var?))
