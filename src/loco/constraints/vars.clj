@@ -12,6 +12,8 @@
 
 ;; -------------------- Utils --------------------
 
+(def ^:private valid-variable-name? (some-fn vector? string? keyword?))
+
 (defn- hidden-name? [keyword-name]
   (when (keyword? keyword-name)
     (.startsWith (name keyword-name) "_")))
@@ -65,7 +67,8 @@
   {:choco "Tuples(int[][] values, boolean feasible)"}
   ([var-name ints-lists] ($tuples var-name ints-lists :allowed))
   ([var-name ints-lists feasible?]
-   {:pre [(sequential? ints-lists)
+   {:pre [(valid-variable-name? var-name)
+          (sequential? ints-lists)
           (every? (partial every? int?) ints-lists)
           (apply = (map count ints-lists))
           (some? (#{:forbidden :allowed true false} feasible?))
@@ -112,7 +115,9 @@
            "setVar(String name, int... value)"]}
   ([var-name lb ub]
    ;;TODO: possible that lb should be subset of ub
-   {:pre [(or (set? lb) (sequential? lb)) (or (set? ub) (sequential? ub))
+   {:pre [(valid-variable-name? var-name)
+          (or (set? lb) (sequential? lb))
+          (or (set? ub) (sequential? ub))
           ;;all elements from lb must be in ub
           (upper-bound-contains-lower-bound? lb ub)
           (every? int? lb)
@@ -147,7 +152,8 @@
 (defloco $const
   "Declares that a variable must be a specific value (integer)"
   [var-name value]
-  {:pre [(integer? value)]}
+  {:pre [(integer? value)
+         (valid-variable-name? var-name)]}
   (-> ^:var ^:int ^:const ^{:domain {:lb (int value) :ub (int value)}}
       [:var var-name :public [:const value]]
       hidden-conversion))
@@ -165,6 +171,7 @@
   some constraints have optimizations for booleans/boolean-lists (e.g. Model.sum|and|or)"
   {:choco "boolVar(String name)"}
   [var-name]
+  {:pre [(valid-variable-name? var-name)]}
   (->>  ^:var ^:bool ^{:domain {:lb 0 :ub 1}}
         [:var var-name :public [:bool 0 1]]
         hidden-conversion))
@@ -204,7 +211,11 @@
    ($int var-name IntVar/MIN_INT_BOUND IntVar/MAX_INT_BOUND))
 
   ([var-name lb ub bounded?]
-   {:pre [(< lb ub) (int? lb) (int? ub) (some? (#{true false :bounded} bounded?))]}
+   {:pre [(valid-variable-name? var-name)
+          (< lb ub)
+          (int? lb)
+          (int? ub)
+          (some? (#{true false :bounded} bounded?))]}
    (->>
     (if bounded?
       ^:var ^:int ^{:domain {:int true :bounded true :ub (int ub) :lb (int lb)}}
@@ -213,7 +224,7 @@
     hidden-conversion))
 
   ([var-name lb ub]
-   {:pre [(int? lb) (int? ub)]}
+   {:pre [(valid-variable-name? var-name) (int? lb) (int? ub)]}
    (->>
     (match (sort [lb ub])
            [0 1] ($bool var-name)
@@ -222,7 +233,8 @@
     hidden-conversion))
 
   ([var-name values]
-   {:pre [(or
+   {:pre [(valid-variable-name? var-name)
+          (or
            (int? values)
            (and
             (sequential? values)
@@ -261,7 +273,7 @@
   "Container representing a task: It ensures that: start + duration = end"
   {:choco "Task(IntVar s, IntVar d, IntVar e)"}
   [var-name start duration end]
-  {:pre [(or (keyword? var-name) (vector? var-name))]}
+  {:pre [(valid-variable-name? var-name)]}
   (->
    ^:var ^:task
    [:var var-name :public [:task start duration end]]
@@ -279,7 +291,7 @@
   )
 
 (defloco $proto
-  "this is not meant to be used like $bool or $int, more for internal usage"
+  "this is not meant to be used like $bool or $int, more for internal usage. var-name must be a string"
   [var-name partial]
   {:pre [(string? var-name)]}
   (-> ^{:from partial :upgrade-fn upgrade-proto} ^:proto ^:var [:var var-name :proto]
