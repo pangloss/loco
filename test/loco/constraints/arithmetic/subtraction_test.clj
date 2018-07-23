@@ -1,7 +1,7 @@
 (ns loco.constraints.arithmetic.subtraction-test
   (:require
-   [loco.constraints :refer :all]
    [clojure.test :refer :all]
+   [loco.constraints :refer :all]
    [loco.constraints.test-utils :refer :all]
    ))
 

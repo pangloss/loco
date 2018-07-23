@@ -1,8 +1,9 @@
 (ns loco.constraints.vars-test
   (:require
+   [clojure.test :refer :all]
    [loco.constraints :refer :all]
    [loco.constraints.test-utils :refer :all]
-   [clojure.test :refer :all])  
+   )  
   (:import org.chocosolver.solver.Model))
 
 (deftest const-vars-test
