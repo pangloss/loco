@@ -35,17 +35,14 @@
 
 (declare $abs)
 (defn- constraint-fn [var-name [op [operand]]]
-  ($abs var-name operand))
+  [($abs var-name operand)])
 
 (defn- domain-fn [[partial-name [{:keys [lb ub]}]]]
   (let [lb (int lb)
-        ub (int ub)]
-    (-> (match (vec (sort [lb ub])) ;;why don't i trust lb and ub here?
-               [(low :guard neg?) (high :guard neg?)] [(Math/abs high) (Math/abs low)]
-               [(low :guard neg?) high] [0 (max (Math/abs high) (Math/abs low))]
-               [low high] [(Math/abs low) (Math/abs high)]))
-    (zipmap [:lb :ub])
-    (assoc :int true)))
+        ub (int ub)
+        return (-> (->> [(Math/abs lb) (Math/abs ub)] sort (zipmap [:lb :ub]))
+                   (assoc :int true))]
+    return))
 
 (defloco $abs
   "Creates an absolute value constraint:

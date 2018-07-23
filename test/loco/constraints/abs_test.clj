@@ -1,64 +1,58 @@
 (ns loco.constraints.abs-test
   (:require
-   [loco.model :as model]
-   [loco.compiler :as compiler]
-   [loco.solver :as solver]
-   [loco.constraints.test-utils :as utils])
-  (:use
-   loco.constraints
-   clojure.test))
+   [clojure.test :refer :all]
+   [loco.constraints :refer :all]
+   [loco.constraints.test-utils :refer :all]
+   ))
 
-(deftest ^:model abs-model-test
-  (are [expected input] (= expected (->> input model/compile))
-    [[:var :y :public [:int 0 10]]
-     [:var :z :public [:int -5 0]]
-     [:constraint ['abs [:y '= :z]]]]
+(deftest abs-test
+  (is
+   (loco?
     [($in :y 0 10)
      ($in :z -5 0)
-     ($abs :y :z)]
+     ;;($abs :y = :z)
+     ($abs :y :z)
+     ]
+    {:identity '[[:var :y :public [:int 0 10]]
+                [:var :z :public [:int -5 0]]
+                [abs [:y = :z]]],
+     :model '[[:var :y :public [:int 0 10]]
+             [:var :z :public [:int -5 0]]
+             [abs [:y = :z]]],
+     :compiled [["y = {0..10}" "z = {-5..0}"]
+                ["ABSOLUTE ([y = {0..10} = |z = {-5..0}|])"]],
+     :solutions #{{:y 4, :z -4}
+                  {:y 3, :z -3}
+                  {:y 1, :z -1}
+                  {:y 2, :z -2}
+                  {:y 0, :z 0}
+                  {:y 5, :z -5}}}))
 
-    [[:var :y :public [:int 0 10]]
-     [:var :z :public [:int -5 0]]
-     [:var :|z| :proto [:int 0 5]]
-     [:constraint ['abs [:|z| '= :z]]]
-     [:constraint ['arithm [:y '= :|z|]]]]
+  (is
+   (loco?
     [($in :y 0 10)
      ($in :z -5 0)
-     ($= :y ($abs :z))]
-
-    [[:var :x :public [:int -5 5]]
-     [:var :|x| :proto [:int 0 5]]
-     [:constraint ['abs [:|x| '= :x]]]
-     [:constraint ['arithm [:|x| '= 2]]]]
-    [($in :x -5 5)
-     ($= ($abs :x) 2)]
-
-    )
+     ($= :y ($abs :z))
+     ]
+    {:identity '[[:var :y :public [:int 0 10]]
+                 [:var :z :public [:int -5 0]]
+                 [arithm [:y = [abs [:z]]]]],
+     :model '[[:var :y :public [:int 0 10]]
+              [:var :z :public [:int -5 0]]
+              [:var "|z|" :proto [:int 0 5]]
+              [abs ["|z|" = :z]]
+              [arithm [:y = "|z|"]]],
+     :compiled [["y = {0..10}" "z = {-5..0}" "|z| = {0..5}"]
+                ["ABSOLUTE ([|z| = {0..5} = |z = {-5..0}|])"
+                 "ARITHM ([prop(y.EQ.|z|)])"]],
+     :solutions #{{:y 4, :z -4}
+                  {:y 3, :z -3}
+                  {:y 1, :z -1}
+                  {:y 2, :z -2}
+                  {:y 0, :z 0}
+                  {:y 5, :z -5}}})
+   "partial should be supported")
+  
   )
 
-(deftest ^:compiler abs-compile-test
-  (are [expected input] (= expected (utils/constraints-strings input))
-    '("ABSOLUTE ([y = {0..10} = |z = {-5..0}|])")
-    [($in :y 0 10)
-     ($in :z -5 0)
-     ($abs :y :z)]
 
-    '("ABSOLUTE ([|x| = {0..5} = |x = {-5..5}|])"
-      "ARITHM ([|x| = 2])")
-    [($in :x -5 5)
-     ($= ($abs :x) 2)]
-    )
-  )
-
-(deftest ^:solutions abs-solution-test
-  (are [expected input] (= expected (solver/solutions input))
-    '({:x 5, :y -5}
-      {:x 4, :y -4}
-      {:x 1, :y -1}
-      {:x 3, :y -3}
-      {:x 2, :y -2})
-    [($in :x 1 5)
-     ($in :y -5 -1)
-     ($abs :x :y)]
-    )
-  )

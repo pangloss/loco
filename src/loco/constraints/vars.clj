@@ -284,11 +284,10 @@
 
 ;;-------------------- meta --------------------
 (defn- upgrade-proto [statement {:keys [int lb ub] :as domain}]
-  {:pre [(true? int)]}
+  {:pre [(true? int) (int? lb) (int? ub)]}
   (-> statement
       (conj [:int lb ub])
-      (vary-meta assoc :domain domain))
-  )
+      (vary-meta assoc :domain domain)))
 
 (defloco $proto
   "this is not meant to be used like $bool or $int, more for internal usage. var-name must be a string"
