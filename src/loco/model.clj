@@ -183,7 +183,9 @@
                                 compiled)
         return (with-meta
                  compiled-str-var-names
-                 {:var-name-mapping (clojure.set/map-invert var-name-obj-to-str-mapping)})
+                 {:model? true
+                  :var-name-mapping
+                  (clojure.set/map-invert var-name-obj-to-str-mapping)})
         ]
     return))
 

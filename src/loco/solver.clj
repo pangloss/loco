@@ -31,6 +31,14 @@
         (.set (:csolver s) (into-array AbstractStrategy [strategy])))
     (compiler/compile problem-ast)))
 
+(defn- get-compiled-model [problem]
+  (let [{:keys [model? compiled?]} (meta problem)]
+    (cond
+      model? (->> problem compiler/compile)
+      compiled? problem
+      :else (->> problem model/compile compiler/compile)))
+  )
+
 (def implemented-search-monitor-methods
   (->>
    #{
@@ -124,7 +132,7 @@
                 public-vars-index
                 vars-index
                 var-name-mapping]
-         } (problem->Model problem)
+         } (get-compiled-model problem)
         solver (.getSolver model)
         var-key-name-fn (if (empty? var-name-mapping)
                           identity
@@ -161,7 +169,7 @@
                 public-vars-index
                 vars-index
                 var-name-mapping]
-         } (problem->Model problem)
+         } (get-compiled-model problem)
         solver (.getSolver model)
         var-key-name-fn (if (empty? var-name-mapping)
                           identity

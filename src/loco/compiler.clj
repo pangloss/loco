@@ -249,13 +249,15 @@
                       (map first)
                       doall)]
      ;;(println 'vars-map (map vector vars-index vars))
-     {
-      :ast ast
-      :var-name-mapping (:var-name-mapping (meta ast))
-      :constraints constraints
-      :model model
-      :vars vars
-      :vars-map (map vector vars-index vars)
-      :public-vars-index public-vars-index
-      :vars-index vars-index
-      })))
+     (with-meta
+       {
+        :ast ast
+        :var-name-mapping (:var-name-mapping (meta ast))
+        :constraints constraints
+        :model model
+        :vars vars
+        :vars-map (map vector vars-index vars)
+        :public-vars-index public-vars-index
+        :vars-index vars-index
+        }
+       {:compiled? true}))))
