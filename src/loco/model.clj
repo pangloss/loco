@@ -73,12 +73,6 @@
               (into @acc
                     [constraints-without-partials])))))))
 
-;; (into [] (concat [[:var :y-:z :proto]] [['sum [:y-:z '= [:y ['minus :z []]]]]]))
-;; (into [] [[:var :y-:z :proto] ['sum [:y-:z '= [:y ['minus :z []]]]]])
-;; (-> []
-;;     (into [[:var :y-:z :proto]])
-;;     (into [['sum [:y-:z '= [:y ['minus :z []]]]]]))
-
 (defn- realize-domain [[acc var-index] statement]
   ;;(println 'realize-domain statement (meta statement))
   ;;statement + meta looks something like
@@ -116,6 +110,7 @@
 (defn- all-partials-transformed? [ast]
   (if-let [remaining-partials
            (->> ast
+                (filter identity)
                 (filter partial-constraint?)
                 (map (fn [partial]
                        (str "Error: partial constraint "
@@ -143,9 +138,12 @@
     (into {} name->str-pairs)))
 
 (defn- generated-vars? [statement] (->> statement meta :generated-vars))
+
 (defn- all-statements-valid? [problem]
   (->> problem
+       (filter identity)
        (every? (comp (some-fn var? constraint? generated-vars?)))))
+
 (defn- elevate-generated-vars [problem]
   (->> problem
        (mapcat
@@ -156,20 +154,18 @@
 (defn compile-problem [problem]
   (let [[vars constraints] (->> problem
                                 unfold-partials
-                                ;;(sort-by var?)
+                                (filter identity)
                                 (split (some-fn var? view?)))
+        vars (vec (distinct vars))
         var-index (var-name-domain-map vars)
         [model _] (reduce realize-domain [[] var-index] vars)
         ]
-    ;; (println 'vars 'constraints 'model)
+    ;; (println 'vars 'vars-index 'constraints 'model)
     ;; (pprint vars)
+    ;; (pprint var-index)
     ;; (pprint constraints)
     ;; (pprint model)
-    (vec (concat model constraints))
-    #_[(map (juxt identity meta) problem)
-       ;;     var-index
-       ]
-    ))
+    (vec (concat model constraints))))
 
 (defn compile [problem]
   {:pre [(vector? problem)
