@@ -167,6 +167,17 @@
 (def tuples-var?    (p instance? Tuples))
 ;;(def int-or-bool? #(or (bool-var? %) (int-var? %)))
 
+(defn domainize
+  "turn non-domain things into domains, eg: numbers. useful for partial
+  constraints who have a domain-fn."
+  [obj]
+  (cond
+    (int? obj) {:int true :lb obj :ub obj}
+    (and (find obj :lb)
+         (find obj :ub)) obj
+    )
+  )
+
 (defn coerce-int-var [model [coerced-int-var-type val]]
   {:pre [(instance? org.chocosolver.solver.Model model)]}
   (case coerced-int-var-type
