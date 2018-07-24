@@ -1,11 +1,9 @@
 (ns loco.constraints.sum-test
-  (:require [loco.model :as model]
-            [loco.compiler :as compiler]
-            [loco.solver :as solver]
-            [loco.constraints.test-utils :as utils])
-  (:use
-   loco.constraints
-   clojure.test))
+  (:require
+   [clojure.test :refer :all]
+   [loco.constraints :refer :all]
+   [loco.constraints.test-utils :refer :all]
+   ))
 
 
       ;; [[:var :x :public [:int 0 5]]
@@ -35,107 +33,94 @@
       ;;  ($sum :sum :set)]
 
 
-(deftest ^:model sum-model-test
-  (are [expected input] (= expected (->> input model/compile))
-    '[[:var :x :public [:int 0 5]]
-      [:var :y :public [:int 0 5]]
-      [sum [10 = [:x :y 5]]]
-      [sum [10 > [:x :y 5]]]
-      [sum [10 < [:x :y 5]]]
-      [sum [10 >= [:x :y 5]]]
-      [sum [10 <= [:x :y 5]]]
-      [sum [10 != [:x :y 5]]]]
-    [($in :x 0 5)
-     ($in :y 0 5)
-     ($sum 10 := [:x :y 5])
-     ($sum 10 :> [:x :y 5])
-     ($sum 10 :< [:x :y 5])
-     ($sum 10 :>= [:x :y 5])
-     ($sum 10 :<= [:x :y 5])
-     ($sum 10 :!= [:x :y 5])]
+(deftest sum-test
 
-    '[[:var :x :public [:bool 0 1]]
-      [:var :y :public [:bool 0 1]]
-      [:var :z :public [:bool 0 1]]
-      [sum [1 = [:x :y :z]]]]
-    [($bool :x)
-     ($bool :y)
-     ($bool :z)
-     ($sum 1 := [:x :y :z])]
+  (testing "$sum constructors"
+    (is
+     (loco?
+      [($in :x 0 5)
+       ($in :y 0 5)
+       ($sum 10 := [10 10])
+       ($sum 10 := [])
+       ($sum 10 := [:x])
+       ($sum 10 := [:x 4])
+       ($sum 10 := [:x :y])
+       ($sum 10 := [:x :y 5 4])
+       ]
+      {:model
+       '[[:var :x :public [:int 0 5]]
+         [:var :y :public [:int 0 5]]
+         [:view "x+4" [offset :x [4]] [:int 0 5]]
+         [arithm [10 = 20]]
+         [arithm [10 = :x]]
+         [arithm [10 = "x+4"]]
+         [sum [10 = [:x :y]]]
+         [sum [10 = [:x :y 9]]]]}
+      ))
 
-    '[[:var :sum :public [:int 0 10]]
-      [:var :set :public [:set #{0 1 2} #{0 7 1 4 6 3 2 5}]]
-      [sum [:sum = :set]]]
-    [($in :sum 0 10)
-     ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
-     ($sum :sum :set)]
+    (is
+     (loco?
+      [($in :x 0 5)
+       ($in :y 0 5)
+       ($sum 10 := [:x :y 5])
+       ($sum 10 :> [:x :y 5])
+       ($sum 10 :< [:x :y 5])
+       ($sum 10 :>= [:x :y 5])
+       ($sum 10 :<= [:x :y 5])
+       ($sum 10 :!= [:x :y 5])]
+      {:model
+       '[[:var :x :public [:int 0 5]]
+         [:var :y :public [:int 0 5]]
+         [sum [10 = [:x :y 5]]]
+         [sum [10 > [:x :y 5]]]
+         [sum [10 < [:x :y 5]]]
+         [sum [10 >= [:x :y 5]]]
+         [sum [10 <= [:x :y 5]]]
+         [sum [10 != [:x :y 5]]]]}
+      )))
 
-    )
-  )
-
-(deftest ^:compiler sum-compile-test
-  (are [expected input] (= expected (utils/compiled-constraints-strings input))
-    '("SUM ([z + y + x = 1])")
-    [($bool :x)
-     ($bool :y)
-     ($bool :z)
-     ($sum 1 := [:x :y :z])]
-
-    '("SUM ([z + y + x = 2])")
-    [($in :x 1 2)
-     ($in :y 1 2)
-     ($in :z 1 2)
-     ($sum 2 := [:x :y :z])]
-
-    '("ARITHM ([a = 5])")
-    [($in :a 0 9)
-     ($sum 0 = [0 -5 :a])]
-
-    '("SUM ([z + y + x = 2])")
-    [($in :x 1 2)
-     ($bool :y)
-     ($in :z 1 2)
-     ($sum 2 := [:x :y :z])]
-
-    '("SETSUM ([PropSumOfElements(set, sum)])")
-    [($in :sum 0 10)
-     ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
-     ($sum :sum :set)]
-    )
-  )
-
-(deftest ^:solutions sum-solution-test
-  (are [expected input] (= expected (->> input solver/solutions))
-    '({:x 0, :y 1, :z 0}
-      {:x 0, :y 0, :z 1}
-      {:x 1, :y 0, :z 0})
-    [($bool :x)
-     ($bool :y)
-     ($bool :z)
-     ($sum 1 := [:x :y :z])]
-
-    '({:x 1, :y 1, :z 1})
-    [($in :x 1 2)
-     ($in :y 1 2)
-     ($in :z 1 2)
-     ($sum 3 := [:x :y :z])]
-
-    '({:x 1, :y 0, :z 1})
-    [($in :x 1 2)
-     ($bool :y)
-     ($in :z 1 2)
-     ($sum 2 := [:x :y :z])]
-
-    '({:sum 3,  :set #{0 1 2}}
-      {:sum 6,  :set #{0 1 3 2}}
-      {:sum 7,  :set #{0 1 4 2}}
-      {:sum 8,  :set #{0 1 2 5}}
-      {:sum 9,  :set #{0 1 6 2}}
-      {:sum 10, :set #{0 1 4 3 2}}
-      {:sum 10, :set #{0 7 1 2}})
-    [($in :sum 0 10)
-     ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
-     ($sum :sum :set)]
+  (testing "booleans"
+    ;;TODO: test with bool-ish constraints via reify
+    (is
+     (loco?
+      [($bool :x)
+       ($bool :y)
+       ($bool :z)
+       ($sum 1 := [:x :y :z])]
+      {:model
+       '[[:var :x :public [:bool 0 1]]
+         [:var :y :public [:bool 0 1]]
+         [:var :z :public [:bool 0 1]]
+         [sum [1 = [:x :y :z]]]],
+       :compiled
+       [["x = [0,1]" "y = [0,1]" "z = [0,1]"]
+        ["SUM ([z + y + x = 1])"]],
+       :solutions
+       #{{:x 1, :y 0, :z 0} {:x 0, :y 1, :z 0} {:x 0, :y 0, :z 1}}}
+      ))
 
     )
   )
+
+(testing "$sum set"
+  (is
+   (loco?
+    [($in :sum 0 10)
+     ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
+     ($sum :sum :set)]
+    {:model
+     '[[:var :sum :public [:int 0 10]]
+       [:var :set :public [:set #{0 1 2} #{0 1 2 3 4 5 6 7}]]
+       [sum [:sum = :set]]],
+     :compiled
+     [["sum = {0..10}"
+       "set = [{0, 1, 2}, {0, 1, 2, 3, 4, 5, 6, 7}]"]
+      ["SETSUM ([PropSumOfElements(set, sum)])"]],
+     :solutions
+     #{{:sum 9, :set #{0 1 6 2}} {:sum 7, :set #{0 1 4 2}}
+       {:sum 8, :set #{0 1 2 5}} {:sum 10, :set #{0 7 1 2}}
+       {:sum 10, :set #{0 1 4 3 2}} {:sum 6, :set #{0 1 3 2}}
+       {:sum 3, :set #{0 1 2}}}}
+    ))
+  )
+

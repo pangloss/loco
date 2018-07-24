@@ -56,6 +56,8 @@
            "sum(IntVar[]  vars, String operator, IntVar sum)"
            "sum(SetVar set, IntVar sum)"]}
   ([summation-var set-var]
+   {:pre [(not (comparison-operator? set-var))]}
+   ;;FIXME: this is so ugly, the set variation shouldn't use the same name, this could lead to bugs
    (constraint constraint-name
                [summation-var '= set-var]
                compiler))
@@ -70,6 +72,9 @@
       [[] nums] ($= summation-var (apply + nums))
       [[only-var] []] ($= summation-var only-var)
       [[only-var] nums] ($= summation-var ($offset only-var (apply + nums)))
+      [vars []] (constraint constraint-name
+                              [summation-var (to-operator operator) vars]
+                              compiler)
       [vars nums] (constraint constraint-name
                               [summation-var (to-operator operator)
                                (conj vars (apply + nums))]
