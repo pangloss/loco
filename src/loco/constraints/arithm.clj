@@ -58,9 +58,12 @@
   ([a compare b]
    {:pre [(comparison-operator? compare)]}
    (let [compare (to-operator compare)]
-     (constraint constraint-name
-                 [a compare b]
-                 compiler)))
+     (cond
+       (and (= a b)
+            (= '= compare)) nil
+       :else (constraint constraint-name
+                         [a compare b]
+                         compiler))))
 
   ([a compare b op c]
    {:pre [(comparison-operator? compare)

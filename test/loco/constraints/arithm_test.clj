@@ -6,6 +6,20 @@
    ))
 
 (deftest arithm-test
+  (testing "things equal to themselves should not create constraints"
+    (is
+     (loco?
+      [
+       ($in :y 0 10)
+       ($arithm :y = :y)
+       ($arithm 3 = 3)
+       ]
+      {
+       :identity [[:var :y :public [:int 0 10]] nil nil],
+       :model    [[:var :y :public [:int 0 10]]],
+       :compiled [["y = {0..10}"] []]
+       })))
+
   (is
    (loco?
     [($in :x 0 100)
