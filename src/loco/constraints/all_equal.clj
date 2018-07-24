@@ -1,10 +1,11 @@
 (ns loco.constraints.all-equal
   (:require
-   [loco.constraints.utils :refer :all]
-   [loco.constraints :refer [$arithm]]
-   [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.arithm :refer [$arithm]]
+   [loco.constraints.utils :refer :all]
+   )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar SetVar]))
 
