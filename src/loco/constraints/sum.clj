@@ -80,16 +80,17 @@
   (match partial
          [partial-name body]
          (->
-          (reduce
-           (fn [{:keys [lb ub] :as acc} domain]
-             (match domain
-                    ;;TODO: handle enumerated domains
-                    {:int true :lb d-lb :ub d-ub}
-                    (do
-                      ;;(println 'add-lbub [lb ub] [d-lb d-ub])
-                      {:lb (unchecked-add (int lb) (int d-lb))
-                       :ub (unchecked-add (int ub) (int d-ub))})))
-           body)
+          (->>
+           body
+           (map domainize) ;;FIXME: leaky abstration
+           (reduce
+            (fn [{:keys [lb ub] :as acc} domain]
+              (match
+               domain
+               ;;TODO: handle enumerated domains
+               {:int true :lb d-lb :ub d-ub} {:lb (unchecked-add (int lb) (int d-lb))
+                                              :ub (unchecked-add (int ub) (int d-ub))}))
+            ))
           (assoc :int true))))
 
 (defloco $+
@@ -106,6 +107,3 @@
     name-fn
     constraint-fn
     domain-fn)))
-
-;;FIXME: preserve consts can be done like this
-(meta (with-meta (symbol (str 1)) {:const true :value 1}))
