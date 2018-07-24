@@ -1,10 +1,13 @@
 (ns loco.constraints.sum
   (:require
-   [loco.utils :refer [p c]]
-   [loco.constraints.utils :refer :all :as utils]
-   [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.all-equal :refer [$=]]
+   [loco.constraints.views.offset :refer [$offset]]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.utils :refer [p c split]]
+   )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar]))
 
@@ -60,38 +63,57 @@
   ([summation-var operator vars]
    {:pre [(sequential? vars)
           (comparison-operator? operator)]}
-   (constraint constraint-name
-               [summation-var (to-operator operator) vars]
-               compiler)))
+   (let [[numbers vars] (split int? vars)]
+     (match
+      [vars numbers]
+      [[] []] nil
+      [[] nums] ($= summation-var (apply + nums))
+      [[only-var] []] ($= summation-var only-var)
+      [[only-var] nums] ($= summation-var ($offset only-var (apply + nums)))
+      [vars nums] (constraint constraint-name
+                              [summation-var (to-operator operator)
+                               (conj vars (apply + nums))]
+                              compiler)
+      )
+     )))
 
 ;; -------------------- partial --------------------
 
 (def ^:private partial-name '+)
 
-(defn- name-fn [partial]
-  (match partial
-         [partial-name body]
-         (apply str (interpose (name partial-name) body))))
+(defn- constraint-fn [& partial]
+  (let [[var-name [op body]] partial]
+    (let [[numbers vars] (split int? body)
+          return (match
+                  [vars numbers]
+                  [[] []] nil
+                  [[] nums] (apply + nums)
+                  [[only-var] []] only-var
+                  [[only-var] nums] ($offset only-var (apply + nums))
+                  [_ _] ($sum var-name '= body)
+                  )]
+      [return]
+      )
+    ))
 
-(defn- constraint-fn [var-name [op body]]
-  [($sum var-name '= body)])
-
-(defn- domain-fn [partial]
-  (match partial
-         [partial-name body]
-         (->
-          (->>
-           body
-           (map domainize) ;;FIXME: leaky abstration
-           (reduce
-            (fn [{:keys [lb ub] :as acc} domain]
-              (match
-               domain
-               ;;TODO: handle enumerated domains
-               {:int true :lb d-lb :ub d-ub} {:lb (unchecked-add (int lb) (int d-lb))
-                                              :ub (unchecked-add (int ub) (int d-ub))}))
-            ))
-          (assoc :int true))))
+(defn- domain-fn
+  ([partial]
+   (->
+    (match partial
+           [partial-name []] {:lb 0 :ub 0}
+           [partial-name body]
+           (->>
+            body
+            (map domainize) ;;FIXME: leaky abstration
+            (reduce
+             (fn [{:keys [lb ub] :as acc} domain]
+               (match
+                domain
+                ;;TODO: handle enumerated domains
+                {:int true :lb d-lb :ub d-ub} {:lb (unchecked-add (int lb) (int d-lb))
+                                               :ub (unchecked-add (int ub) (int d-ub))}))
+             )))
+    (assoc :int true))))
 
 (defloco $+
   "partial of $sum
@@ -100,10 +122,9 @@
   ($= :eq ($+ :n1 :n2 :n3 4)) => ($sum :eq := :n1 :n2 :n3 4)
   "
   {:partial true}
-  ([& args]
-   (partial-constraint
-    partial-name
-    (vec args)
-    name-fn
-    constraint-fn
-    domain-fn)))
+  [& args]
+  (partial-constraint
+   partial-name
+   (vec args)
+   :constraint-fn constraint-fn
+   :domain-fn domain-fn))

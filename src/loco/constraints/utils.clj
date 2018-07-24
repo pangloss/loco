@@ -35,12 +35,12 @@
      :compiler compiler}
    [name input]))
 
-(defn- str+ [thing]
+#_(defn- str+ [thing]
   (if (or (keyword? thing) (string? thing) (symbol? thing))
     (name thing)
     (str thing)))
 
-(defn- default-partial-name-fn [[partial-name [& partial-contents]]]
+#_(defn- default-partial-name-fn [[partial-name [& partial-contents]]]
   (->> partial-contents
        (map str+)
        (interpose "_")
@@ -58,6 +58,23 @@
 (def ^:private get-domain (c :domain meta))
 (def ^:private has-domain? (c some? :domain meta))
 (def ^:private get-var-name (c second))
+
+(defn- stringize [obj]
+  (cond
+    (string? obj) obj
+    (ident? obj) (name obj)
+    (vector? obj) (str (mapv stringize obj))
+    :else (str obj) ;; mainly for numebrs
+    ))
+
+(defn- default-name-fn [partial]
+  ;;(println 'default-name-fn partial)
+  (match partial
+         [partial-name body]
+         (->> body
+              (map stringize)
+              (interpose (name partial-name))
+              (apply str))))
 
 (defn partial-constraint
   "A partial constraint is one that lacks 1 variable (the equivalence
@@ -86,16 +103,17 @@
   calculate the domain of the partial-constraint. the output should be
   a map that follows domain conventions, eg: {:int true :lb 0 :ub 4} ...
   "
-  [op-name body name-fn constraint-fn domain-fn]
-  {:pre [(symbol? op-name) (vector? body)]}
-  (let [partial [op-name body]
-        var-name (name-fn partial)]
-    ^{
-      :constraint-fn constraint-fn
-      :domain-fn domain-fn
-      :name-fn name-fn
-      :partial-constraint true
-      } [op-name body]))
+  ([op-name body & {:keys [name-fn constraint-fn domain-fn]
+                    :or {name-fn default-name-fn}}]
+   {:pre [(ident? op-name) (vector? body)]}
+   nil
+   ^{
+     :constraint-fn constraint-fn
+     :domain-fn domain-fn
+     :name-fn name-fn
+     :partial-constraint true
+     } [op-name body]
+   ))
 
 (defn view [view-name dependency modifiers name-fn view-fn domain-fn compile-fn]
   {:pre [(symbol? view-name)
@@ -226,6 +244,9 @@
                (s/explain-data spec-name)
                convert-vars-to-strings))))
 
+;;FIXME: defloco doesn't work well with fdef (spec), so i think this
+;;should be turned into a function that just does the intern, no defn
+;;stuff.
 (defmacro defloco
   "used for defining global loco vars (typically $name)"
   [name & more]
