@@ -3,10 +3,7 @@
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
-   [loco.constraints.utils
-    :refer [constraint defloco comparison-operator? comparison-symbol? to-operator
-            arithmetic-symbol? int-var? int-or-intvar? coerce-int-var arithmetic-operator?]
-    :as utils]
+   [loco.constraints.utils :refer :all :as utils]
    [loco.match :refer [match+]]
    [loco.utils :refer [p c]]
    )
