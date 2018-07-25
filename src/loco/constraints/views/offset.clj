@@ -46,7 +46,9 @@
         (vary-meta assoc :domain {:int true :lb lb :ub ub}))))
 
 (defloco $offset
-  "creates a offset view."
+  "creates a offset view.
+
+Creates a view based on var, equal to var+cste."
   {:view true}
   ([dependency magnitude]
    {:pre [(int? magnitude)]}
