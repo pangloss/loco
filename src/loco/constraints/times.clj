@@ -1,9 +1,13 @@
 (ns loco.constraints.times
   (:use loco.constraints.utils)
   (:require
-   [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.math.combinatorics :as combo]
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.views.scale :refer [$scale]]
+   [loco.utils :refer [c p split]]
+   )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar]))
 
@@ -43,22 +47,28 @@
 
 (def ^:private partial-name '*)
 
-(defn- name-fn [partial]
-  (match partial
-         [partial-name body]
-         (apply str (interpose (name partial-name) body))))
+(defn- constraint-fn [& partial]
+  (let [[var-name [op operands]] partial
+        [numbers vars] (split int? operands)]
+    (match [vars numbers]
+           [[] []] [nil]
+           [[] nums] [(apply * nums)]
+           [[only-var] []] [nil]
+           [[only-var] [0]] [0]
+           [[only-var] [1]] [only-var]
+           [[only-var] nums] [($scale only-var (apply * nums))]
+           [[operand1 operand2] []] [($times var-name = operand1 * operand2)]
+           )))
 
-(defn- constraint-fn [var-name [op [operand1 operand2]]]
-  ($times var-name = operand1 * operand2))
-
-(defn- domain-fn [[partial-name [{lb1 :lb ub1 :ub} {lb2 :lb ub2 :ub}]]]
-  (let [possible-bounds [(* lb1 lb2)
-                         (* lb1 ub2)
-                         (* ub1 lb1)
-                         (* ub1 ub2)]]
+(defn- domain-fn [& partial]
+  (let [[[partial-name domains]] partial
+        [{lb1 :lb ub1 :ub} {lb2 :lb ub2 :ub}] (map domainize domains)
+        possible-bounds (->>  [[lb1 ub1] [lb2 ub2]]
+                              (apply combo/cartesian-product)
+                              (map #(apply * %)))]
     {:int true
-     :lb (-> (apply min possible-bounds) int)
-     :ub (-> (apply max possible-bounds) int)}))
+     :lb (apply min possible-bounds)
+     :ub (apply max possible-bounds)}))
 
 (defloco $*
   "partial of $times
@@ -69,7 +79,12 @@
   ($= :eq ($* :n1 :n2)) => ($times :eq = :n1 * :n2)"
   {:partial true}
   [& args]
-  (match (vec args)
-         [x y] (partial-constraint partial-name [x y] name-fn constraint-fn domain-fn)
-         [x & more] (partial-constraint
-                     partial-name [x (apply $* more)] name-fn constraint-fn domain-fn)))
+  (let [[numbers vars] (split int? args)]
+    (match
+     (vec (concat vars numbers))
+     [] nil
+     [one] one
+     [& more] (partial-constraint
+                 partial-name [(first more) (apply $* (rest more))]
+                 :constraint-fn constraint-fn
+                 :domain-fn domain-fn))))

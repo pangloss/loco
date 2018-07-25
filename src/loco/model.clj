@@ -68,21 +68,24 @@
                           (cond
                             (and (constraint? statement) (search-nil? statement)) nil
                             (view? statement) (view-transform statement acc)
-                            (partial-constraint? statement) (let [{:keys [name-fn constraint-fn]} (meta statement)
-                                                                  var-name (name-fn statement)
-                                                                  var ($proto var-name statement)
-                                                                  constraint (constraint-fn var-name statement)
-                                                                  children (unfold-partials constraint)
-                                                                  constraint (if (not= children constraint)
-                                                                               children constraint)
-                                                                  return (match constraint
-                                                                                [nil] nil
-                                                                                [(view :guard view?)] (view-transform view acc)
-                                                                                (constraints :guard (p some (some-fn constraint?))) (do
-                                                                                                                               (swap! acc into (concat [var] constraints))
-                                                                                                                               var-name)
-                                                                                [unwrap] unwrap)]
-                                                              return)
+                            
+                            (partial-constraint? statement)
+                            (let [{:keys [name-fn constraint-fn]} (meta statement)
+                                  var-name (name-fn statement)
+                                  var ($proto var-name statement)
+                                  constraint (constraint-fn var-name statement)
+                                  children (unfold-partials constraint)
+                                  constraint (if (not= children constraint)
+                                               children constraint)
+                                  return (match constraint
+                                                [nil] nil
+                                                [(num :guard int?)] num
+                                                [(view :guard view?)] (view-transform view acc)
+                                                (constraints :guard (p some (some-fn constraint?))) (do
+                                                                                                      (swap! acc into (concat [var] constraints))
+                                                                                                      var-name)
+                                                [unwrap] unwrap)]
+                              return)
                             :else statement))))
                   ]
               (into @acc
@@ -159,7 +162,7 @@
            %
            [%]))))
 
-(defn compile-problem [problem]
+(defn- compile-problem [problem]
   (let [[vars constraints] (->> problem
                                 unfold-partials
                                 (filter identity)
@@ -168,7 +171,7 @@
         var-index (var-name-domain-map vars)
         [model _] (reduce realize-domain [[] var-index] vars)
         ]
-    (vec (concat model constraints))))
+    (vec (distinct (concat model constraints)))))
 
 (defn compile [problem]
   {:pre [(vector? problem)
