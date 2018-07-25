@@ -8,13 +8,14 @@
                    :model :model
                    :compiler :compiler
                    :solutions :solutions
+                   :loco :loco
                    }
   :dependencies [
                  [org.clojure/clojure "1.9.0"]
                  [org.clojure/core.match "0.3.0-alpha5"]
                  [defun "0.3.0-RC1"]
                  [camel-snake-kebab "0.4.0"]
-                 [org.choco-solver/choco-solver "4.0.6"]
+                 [org.choco-solver/choco-solver "4.0.8"]
                  [org.clojure/math.combinatorics "0.1.4"]
                  [expound "0.7.1"] ;; better error messages for clojure spec
                  ])
