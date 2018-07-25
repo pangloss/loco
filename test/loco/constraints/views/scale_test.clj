@@ -9,8 +9,7 @@
   (is
    (loco?
     [($in :a -5 10)
-     ($= :a ($scale 2 3))
-     ]
+     ($= :a ($scale 2 3))]
     {:identity
      '[[:var :a :public [:int -5 10]]
        [arithm [:a = [scale 2 [3]]]]],
