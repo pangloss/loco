@@ -87,7 +87,7 @@
         '[[:var :x :public [:int 0 5]]
           [:var :y :public [:int -5 0]]
           [:var "y+y" :proto [:int -10 0]]
-          [sum ["y+y" = [:y :y 0]]]
+          [sum ["y+y" = [:y :y]]]
           [arithm [:x = "y+y"]]]}
        ))
 
@@ -159,8 +159,8 @@
        [:var :z :public [:int 1 2]]
        [:var "x+z" :proto [:int 1 7]]
        [:var "y+x+z" :proto [:int 1 12]]
-       [sum ["x+z" = [:x :z 0]]]
-       [sum ["y+x+z" = [:y "x+z" 0]]]
+       [sum ["x+z" = [:x :z]]]
+       [sum ["y+x+z" = [:y "x+z"]]]
        [arithm [10 = "y+x+z"]]],
      :compiled
      [["x = {0..5}"

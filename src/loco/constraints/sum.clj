@@ -4,8 +4,8 @@
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.all-equal :refer [$=]]
-   [loco.constraints.views.offset :refer [$offset]]
    [loco.constraints.utils :refer :all :as utils]
+   [loco.constraints.views.offset :refer [$offset]]
    [loco.utils :refer [p c split]]
    )
   (:import
