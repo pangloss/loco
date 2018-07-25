@@ -37,7 +37,7 @@
          {:model
           '[[:var :x :public [:int 0 5]]
             [:var :y :public [:int -5 0]]
-            [:view "y+1" [offset :y [1]] [:int -5 0]]
+            [:view "y+1" [offset :y [1]] [:int -4 1]]
             [arithm [:x = "y+1"]]],
           :solutions #{{:x 1, :y 0} {:x 0, :y -1}}}))
 
@@ -48,7 +48,7 @@
          {:model
           '[[:var :x :public [:int 0 5]]
             [:var :y :public [:int -5 0]]
-            [:view "y+6" [offset :y [6]] [:int -5 0]]
+            [:view "y+6" [offset :y [6]] [:int 1 6]]
             [arithm [:x = "y+6"]]],
           :solutions
           #{{:x 1, :y -5} {:x 5, :y -1} {:x 3, :y -3} {:x 2, :y -4}
@@ -56,7 +56,7 @@
 
     )
 
-  (testing "addition should handle 0 arity calls gracefully"
+  (testing "should handle 0 arity calls gracefully"
     (is (loco?
          [($in :x 0 1)
           ($in :y -1 0)

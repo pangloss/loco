@@ -31,13 +31,16 @@
 
 (defn- name-fn [statement]
   (match statement
-         [view-name (dep :guard int?) [modifier]] (str dep "+" modifier)
-         [view-name dep [modifier]]               (str (name dep) "+" modifier)))
+         [view-name (dep :guard int?) [(modifier :guard neg?)]] (str (name dep) modifier)
+         [view-name (dep :guard int?) [modifier]]               (str dep "+" modifier)
+         [view-name dep [(modifier :guard neg?)]]               (str (name dep) modifier)
+         [view-name dep [modifier]]                             (str (name dep) "+" modifier)))
 
 (defn- domain-fn [& partial]
   (let [[statement possible-domain] partial
+        [_ _ [_ _ [mod]]] statement
         {:keys [lb ub]} (domainize possible-domain)
-        [lb ub] (sort [(+ lb) (+ ub)])]
+        [lb ub] (sort [(+ lb mod) (+ ub mod)])]
     (-> statement
         (conj [:int lb ub])
         (vary-meta assoc :domain {:int true :lb lb :ub ub}))))
