@@ -79,6 +79,9 @@
                                                children constraint)
                                   return (match constraint
                                                 [nil] nil
+                                                (constraint :guard constraint?) (do
+                                                                                  (swap! acc into (concat [var] [constraint]))
+                                                                                  var-name)
                                                 [(num :guard int?)] num
                                                 [(view :guard view?)] (view-transform view acc)
                                                 (constraints :guard (p some (some-fn constraint?))) (do
