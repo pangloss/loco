@@ -5,6 +5,8 @@
    "constraints/vars"
    "constraints/views/minus"
    "constraints/views/offset"
+   "constraints/views/scale"
+   
    "constraints/sum"
 
    "constraints/times"
