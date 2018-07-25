@@ -4,7 +4,7 @@
   [
    "constraints/vars"
    "constraints/views/minus"
-
+   "constraints/views/offset"
    "constraints/sum"
 
    "constraints/times"
