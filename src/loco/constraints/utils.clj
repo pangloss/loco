@@ -203,6 +203,8 @@
 (s/def ::comparison-symbol? comparison-symbol?)
 (s/def ::arithmetic-symbol? arithmetic-symbol?)
 (s/def ::int-var? (p instance? IntVar))
+(s/def ::set-var? (p instance? SetVar))
+(s/def ::coll-setvar? (s/coll-of ::set-var?))
 (s/def ::coerce-intvar? (s/or :int-var ::int-var? :int int?))
 (s/def ::coll-coerce-intvar? (s/coll-of ::coerce-intvar?))
 (s/def ::int-or-intvar? (some-fn int? int-var?))

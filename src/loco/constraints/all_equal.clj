@@ -4,7 +4,8 @@
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.arithm :refer [$arithm]]
-   [loco.constraints.utils :refer :all]
+   [loco.utils :refer [p]]
+   [loco.constraints.utils :refer :all :as utils]
    )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar SetVar]))
@@ -15,14 +16,15 @@
   (s/cat :constraint #{constraint-name}
          :args (s/spec
                 (s/or
-                 :ints (s/coll-of int-var?)
-                 :sets (s/coll-of set-var?)))))
+                 :ints ::utils/coll-coerce-intvar?
+                 :sets ::utils/coll-setvar?))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-int-var (p utils/coerce-int-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [:ints vars]}
-           (.allEqual model (into-array IntVar vars))
+           (.allEqual model (->> vars (map coerce-int-var) (into-array IntVar)))
 
            {:args [:sets vars]}
            (.allEqual model (into-array SetVar vars))
@@ -42,12 +44,13 @@
   (constraint constraint-name (vec vars)
               compiler))
 
-;;TODO: partial implementation
 (defloco $=
   [& more]
   (let [morev (vec more)]
-    (match [morev]
+    (match morev
+           [x y]   ($arithm x = y)
            [[x y]] ($arithm x = y)
-           [_]     ($all-equal morev))))
+           [(v :guard vector?)] ($all-equal v)
+           _     ($all-equal morev))))
 
 (reset-meta! (var $=) (meta (var $all-equal)))
