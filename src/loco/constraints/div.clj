@@ -30,13 +30,11 @@
 
 (declare $div)
 (defn- constraint-fn [& partial]
-  (println 'constraint-fn partial)
   (let [[var-name [op [dividend, divisor]]] partial]
     ($div var-name = dividend / divisor)))
 
 ;;TODO: possible that there is a way to optimize this, but i was a bit lazy
 (defn- domain-fn [partial]
-  (println 'domain-fn partial)
   (let [[_ domains] partial
         [{lb1 :lb ub1 :ub} {lb2 :lb ub2 :ub}] (map domainize domains)
         lb1 (int lb1)
