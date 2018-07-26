@@ -1,11 +1,11 @@
 (ns loco.constraints.automata.regular
-  (:use loco.constraints.utils)
   (:require
-   [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.utils :refer [p]]
+   )
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]
    org.chocosolver.solver.constraints.nary.automata.FA.FiniteAutomaton))
@@ -15,14 +15,17 @@
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
-                      (s/tuple (s/coll-of int-var?)
+                      (s/tuple ::utils/coll-coerce-intvar?
                                (s/tuple #{'automation} #(instance? FiniteAutomaton %))))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-int-var (p utils/coerce-int-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [vars [_ automation]]}
-           (.regular model (into-array IntVar vars) automation)
+           (.regular model
+                     (->> vars (map coerce-int-var) (into-array IntVar))
+                     automation)
 
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
