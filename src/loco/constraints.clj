@@ -6,6 +6,7 @@
    "constraints/views/minus"
    "constraints/views/offset"
    "constraints/views/scale"
+   "constraints/views/abs"
    
    "constraints/sum"
 
