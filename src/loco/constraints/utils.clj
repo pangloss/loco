@@ -206,6 +206,7 @@
 (s/def ::set-var? (p instance? SetVar))
 (s/def ::coll-setvar? (s/coll-of ::set-var?))
 (s/def ::coll-intvar? (s/coll-of ::int-var?))
+(s/def ::coll-int? (s/coll-of int?))
 (s/def ::coerce-intvar? (s/or :int-var ::int-var? :int int?))
 (s/def ::coll-coerce-intvar? (s/coll-of ::coerce-intvar?))
 (s/def ::int-or-intvar? (some-fn int? int-var?))

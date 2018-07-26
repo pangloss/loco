@@ -366,21 +366,6 @@
       ($count 3 [:a :b :c] :limit)
       ($count :a [:b :c] :limit)]))
 
-  (testing "bin-packing"
-    (constraints-assert
-     '("BINPACKING ([PropItemToLoad(i1-bin, i2-bin, i3-bin, ..., bin-load-2), PropLoadToItem(bin-load-1, bin-load-2, i1-bin, ..., i3-bin), bin-load-1 = {0..2} + bin-load-2 = {0..5} = 6])")
-     [($in :i1-bin 0 2)
-      ($in :i2-bin 0 2)
-      ($in :i3-bin 0 2)
-      ($in :bin-load-1 0 2)
-      ($in :bin-load-2 0 5)
-      ($bin-packing
-       {:i1-bin 1
-        :i2-bin 2
-        :i3-bin 3}
-       [:bin-load-1 :bin-load-2]
-       )]))
-
   (testing "bits-int-channeling"
     (constraints-assert
      '("BITSINTCHANNELING ([PropBitChanneling(int-var, b1, b2, ..., b4)])")
