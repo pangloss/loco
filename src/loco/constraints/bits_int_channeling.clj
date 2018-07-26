@@ -1,10 +1,12 @@
 (ns loco.constraints.bits-int-channeling
   (:require
-   [loco.constraints.utils :refer :all]
-   [loco.constraints :refer [$bool]]
-   [clojure.spec.alpha :as s]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints :refer [$bool]]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.utils :refer [p]]
+   )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar]))
 
@@ -15,14 +17,17 @@
          :args       (s/spec
                       (s/tuple
                        (s/tuple #{'bits} (s/coll-of bool-var?))
-                       (s/tuple #{'int-var} int-var?)
+                       (s/tuple #{'int-var} ::utils/coerce-intvar?)
                        ))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-int-var (p utils/coerce-int-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [[_ bits] [_ int-var]]}
-           (.bitsIntChanneling model (into-array BoolVar bits) int-var)
+           (.bitsIntChanneling model
+                               (into-array BoolVar bits)
+                               (coerce-int-var int-var))
 
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))

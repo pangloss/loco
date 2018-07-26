@@ -366,12 +366,6 @@
       ($count 3 [:a :b :c] :limit)
       ($count :a [:b :c] :limit)]))
 
-  (testing "bits-int-channeling"
-    (constraints-assert
-     '("BITSINTCHANNELING ([PropBitChanneling(int-var, b1, b2, ..., b4)])")
-     [($in :int-var 0 16)
-      ($bits-int-channeling [:b1 :b2 :b3 :b4] :int-var)]))
-
   ;;wtf lawl
   (testing "diff-n"
     (constraints-assert
