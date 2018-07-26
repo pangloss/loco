@@ -32,7 +32,7 @@
 (defn- name-fn [statement]
   (match statement
          [view-name (dep :guard int?) []] (str "-" dep)
-         [view-name dep []] (str "-" (name dep))))
+         [view-name dep []] (str "-" (str+ dep))))
 
 (defn- domain-fn [statement possible-domain]
   (let [{:keys [lb ub]} (domainize possible-domain)

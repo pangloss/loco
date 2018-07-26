@@ -35,17 +35,6 @@
      :compiler compiler}
    [name input]))
 
-#_(defn- str+ [thing]
-  (if (or (keyword? thing) (string? thing) (symbol? thing))
-    (name thing)
-    (str thing)))
-
-#_(defn- default-partial-name-fn [[partial-name [& partial-contents]]]
-  (->> partial-contents
-       (map str+)
-       (interpose "_")
-       (apply str (str+ partial-name) "_")))
-
 (defn- hasher
   "produce a readable and short name"
   [deps-name]
@@ -59,6 +48,12 @@
 (def ^:private has-domain? (c some? :domain meta))
 (def ^:private get-var-name (c second))
 
+;;TODO: these string functions overlap, fix it up
+(defn str+ [thing]
+  (if (or (keyword? thing) (string? thing) (symbol? thing))
+    (name thing)
+    (str thing)))
+
 (defn- stringize [obj]
   (cond
     (string? obj) obj
@@ -68,7 +63,6 @@
     ))
 
 (defn- default-name-fn [partial]
-  ;;(println 'default-name-fn partial)
   (match partial
          [partial-name body]
          (->> body

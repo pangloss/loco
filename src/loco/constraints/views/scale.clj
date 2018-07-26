@@ -33,7 +33,7 @@
   (match statement
          [view-name (dep :guard int?) [-1]]       (str "-(" dep ")")
          [view-name (dep :guard int?) [modifier]] (str dep "*" modifier)
-         [view-name dep [modifier]]               (str (name dep) "*" modifier)))
+         [view-name dep [modifier]]               (str (str+ dep) "*" modifier)))
 
 (defn- domain-fn [& partial]
   (let [[statement possible-domain] partial
