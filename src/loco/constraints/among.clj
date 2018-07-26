@@ -1,31 +1,33 @@
 (ns loco.constraints.among
-  (:use loco.constraints.utils)
   (:require
-   [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.utils :refer [p]]
+   )
   (:import
    [org.chocosolver.solver.variables IntVar]))
 
 (def ^:private constraint-name 'among)
 
+;;example: [among [[:a :b :c] [nb-var 3] [values [2 3]]]]
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
                       (s/cat
-                       :ints   (s/coll-of int-var?)
-                       :nb-var (s/spec (s/tuple #{'nb-var} int-var?))
-                       :values (s/spec (s/tuple #{'values} (s/spec (s/coll-of int?))))))))
+                       :ints   ::utils/coll-intvar?
+                       :nb-var (s/tuple #{'nb-var} ::utils/coerce-intvar?)
+                       :values (s/tuple #{'values} (s/coll-of int?))))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-int-var (p utils/coerce-int-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args {:ints vars :nb-var [_ nb-var] :values [_ values]} }
            (.among model
-                   nb-var
-                   (into-array IntVar vars)
+                   (coerce-int-var nb-var)
+                   (->> vars (into-array IntVar))
                    (int-array values))
 
            ::s/invalid

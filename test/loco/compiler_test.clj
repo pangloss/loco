@@ -366,15 +366,6 @@
       ($count 3 [:a :b :c] :limit)
       ($count :a [:b :c] :limit)]))
 
-  (testing "among"
-    (constraints-assert
-     '("AMONG ([AMONG([a = {0..5},b = {0..5},c = {0..5}],{[2, 3]},3 = 3)])")
-     [($in :a 0 5)
-      ($in :b 0 5)
-      ($in :c 0 5)
-      ($in :limit 0 3)
-      ($among 3 [:a :b :c] [2 3])]))
-
   (testing "at-least-n-values"
     (constraints-assert
      '("ATLEASTNVALUES ([PropAtLeastNValues(a, b, n-values)])")
