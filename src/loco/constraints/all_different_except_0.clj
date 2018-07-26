@@ -13,13 +13,14 @@
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
-         :ints       (s/coll-of int-var?)))
+         :ints       ::utils/coll-coerce-intvar?))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-int-var (partial utils/coerce-int-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:ints vars}
-           (.allDifferentExcept0 model (->> vars (into-array IntVar)))
+           (.allDifferentExcept0 model (->> vars (map coerce-int-var) (into-array IntVar)))
 
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
