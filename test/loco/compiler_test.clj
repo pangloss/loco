@@ -375,15 +375,6 @@
       ($at-least-n-values [:a :b] :n-values)]
      ))
 
-  (testing "at-most-n-values"
-    (constraints-assert
-     '("ATMOSTNVALUES ([PropAtMostNValues(a, b, n-values)])")
-     [($in :a 0 5)
-      ($in :b 0 5)
-      ($in :n-values 0 5)
-      ($at-most-n-values [:a :b] :n-values)]
-     ))
-
   (testing "bin-packing"
     (constraints-assert
      '("BINPACKING ([PropItemToLoad(i1-bin, i2-bin, i3-bin, ..., bin-load-2), PropLoadToItem(bin-load-1, bin-load-2, i1-bin, ..., i3-bin), bin-load-1 = {0..2} + bin-load-2 = {0..5} = 6])")

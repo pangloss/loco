@@ -1,11 +1,11 @@
 (ns loco.constraints.at-most-n-values
-  (:use loco.constraints.utils)
   (:require
-   [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.utils :refer [p]]
+   )
   (:import
    [org.chocosolver.solver.variables IntVar]))
 
@@ -15,17 +15,18 @@
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
                       (s/tuple
-                       (s/coll-of int-var?)
-                       (s/tuple #{'n-values} int-var?)
+                       ::utils/coll-coerce-intvar?
+                       (s/tuple #{'n-values} ::utils/coerce-intvar?)
                        (s/tuple #{'strong} boolean?)))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-int-var (p utils/coerce-int-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [vars [_ n-values] [_ strong]] }
            (.atMostNValues model
-                           (into-array IntVar vars)
-                           n-values
+                           (->> vars (map coerce-int-var) (into-array IntVar))
+                           (coerce-int-var n-values)
                            strong)
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
