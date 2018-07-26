@@ -41,7 +41,7 @@
     )
   )
 
-(deftest ^:compiler mod-compile-test
+#_(deftest ^:compiler mod-compile-test
   (are [expected input] (= expected (utils/constraints-strings input))
     '("ABSOLUTE ([|T1_1| = [0,100] = |T1_1 = [-100,100]|])"
       "DIVISION ([PropDivXYZ(x, y, T1_1, ..., |T1_1|)])"

@@ -27,7 +27,7 @@
     )
   )
 
-(deftest ^:compiler compile-test
+#_(deftest ^:compiler compile-test
   (are [expected input] (= expected (utils/constraints-strings input))
     '("ATMOSTNVALUES ([PropAtMostNValues(x, y, 1, cste -- 1)])")
     [($in :x 0 5)
