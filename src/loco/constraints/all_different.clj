@@ -16,24 +16,25 @@
          :args       (s/spec
                       (s/or
                        :sets   (s/coll-of set-var?)
-                       :ints   (s/coll-of int-var?)
+                       :ints   ::utils/coll-coerce-intvar?
                        :with-consistency
                        (s/spec
                         (s/cat
-                         :ints (s/coll-of int-var?)
+                         :ints ::utils/coll-coerce-intvar?
                          :consistency (s/tuple #{'consistency} #{'default 'bc 'ac})))))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-int-var (partial utils/coerce-int-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [:ints vars]}
-           (.allDifferent model (into-array IntVar vars) "DEFAULT")
+           (.allDifferent model (into-array IntVar (map coerce-int-var vars)) "DEFAULT")
 
            {:args [:sets vars]}
            (.allDifferent model (into-array SetVar vars))
 
            {:args [:with-consistency {:ints vars :consistency [_ consistency]}]}
-           (.allDifferent model (into-array IntVar vars)
+           (.allDifferent model (into-array IntVar (map coerce-int-var vars))
                           ({'default "DEFAULT" 'bc "BC" 'ac "AC"} consistency))
 
            ::s/invalid

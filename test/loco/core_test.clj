@@ -188,15 +188,6 @@
     ($= :false ($- 1 :x))]
    [{:x 1}]))
 
-(deftest all-different-test
-  (test-constraint-model
-   [($in :x 0 1)
-    ($in :y [1])
-    ($in :z 1 2)
-    ($distinct [:x :y :z])
-    ($not ($distinct [:x :x]))]
-   [{:x 0 :y 1 :z 2}]))
-
 (deftest circuit-test
   (-> (solver/solution
         [($in :a 0 4)

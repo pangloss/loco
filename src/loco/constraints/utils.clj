@@ -204,6 +204,7 @@
 (s/def ::arithmetic-symbol? arithmetic-symbol?)
 (s/def ::int-var? (p instance? IntVar))
 (s/def ::coerce-intvar? (s/or :int-var ::int-var? :int int?))
+(s/def ::coll-coerce-intvar? (s/coll-of ::coerce-intvar?))
 (s/def ::int-or-intvar? (some-fn int? int-var?))
 (s/def ::int-vars (s/coll-of ::int-var?))
 (s/def ::bool-vars (s/coll-of bool-var?))
