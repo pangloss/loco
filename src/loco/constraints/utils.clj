@@ -190,13 +190,17 @@
     )
   )
 
-(defn coerce-int-var [model [coerced-int-var-type val]]
+(defn coerce-var [model [coerced-int-var-type val]]
   {:pre [(instance? org.chocosolver.solver.Model model)]}
   (case coerced-int-var-type
     :int-var val
     :int (.intVar model val) ;;create int-var constant
-    )
-  )
+    :bool-var val
+    :bool (.intVar model val) ;;create int-var constant
+    ))
+
+(defn coerce-int-var [model [coerced-int-var-type val]]
+  (coerce-var model [coerced-int-var-type val]))
 
 (s/def ::comparison-operator? comparison-operator?)
 (s/def ::arithmetic-operator? arithmetic-operator?)
@@ -204,11 +208,15 @@
 (s/def ::arithmetic-symbol? arithmetic-symbol?)
 (s/def ::int-var? (p instance? IntVar))
 (s/def ::set-var? (p instance? SetVar))
+(s/def ::bool-var? (p instance? BoolVar))
 (s/def ::coll-setvar? (s/coll-of ::set-var?))
+(s/def ::coll-boolvar? (s/coll-of ::bool-var?))
 (s/def ::coll-intvar? (s/coll-of ::int-var?))
 (s/def ::coll-int? (s/coll-of int?))
 (s/def ::coerce-intvar? (s/or :int-var ::int-var? :int int?))
+(s/def ::coerce-boolvar? (s/or :bool-var ::bool-var? :bool #{0 1}))
 (s/def ::coll-coerce-intvar? (s/coll-of ::coerce-intvar?))
+(s/def ::coll-coerce-boolvar? (s/coll-of ::coerce-boolvar?))
 (s/def ::int-or-intvar? (some-fn int? int-var?))
 (s/def ::int-vars (s/coll-of ::int-var?))
 (s/def ::bool-vars (s/coll-of bool-var?))

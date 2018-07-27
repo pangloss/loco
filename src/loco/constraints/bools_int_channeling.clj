@@ -1,11 +1,12 @@
 (ns loco.constraints.bools-int-channeling
   (:use loco.constraints.utils)
   (:require
-   [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.utils :refer [p]]
+   )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar]))
 
@@ -15,16 +16,20 @@
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
                       (s/tuple
-                       (s/tuple #{'bool-vars} (s/coll-of bool-var?))
-                       (s/tuple #{'int-var} int-var?)
+                       (s/tuple #{'bool-vars} ::utils/coll-coerce-boolvar?)
+                       (s/tuple #{'int-var}   ::utils/coerce-intvar?)
                        (s/tuple #{'offset} int?)
                        ))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-var (p utils/coerce-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [[_ bools] [_ int-var] [_ offset]]}
-           (.boolsIntChanneling model (into-array BoolVar bools) int-var offset)
+           (.boolsIntChanneling model
+                                (->> bools (map coerce-var) (into-array BoolVar))
+                                (coerce-var int-var)
+                                offset)
 
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
@@ -41,5 +46,5 @@
    (constraint constraint-name
                [['bool-vars (vec bool-vars)]
                 ['int-var int-var]
-                ['offset (preserve-consts offset)]]
+                ['offset offset]]
                compiler)))

@@ -397,20 +397,6 @@
      )
     )
 
-  (testing "bools-int-channeling"
-    (constraints-assert
-     '("BOOLCHANNELING ([PropEnumDomainChanneling(a, b, c, ..., int)])")
-     [($bools :a :b :c :d)
-      ($in :int 0 4)
-      ($bools-int-channeling [:a :b :c :d] :int)])
-
-    (constraints-assert
-     '("BOOLCHANNELING ([PropEnumDomainChanneling(a, b, c, ..., int)])")
-     [($bools :a :b :c :d)
-      ($in :int 0 4)
-      ($bools-int-channeling [:a :b :c :d] :int 2)])
-    )
-
   (testing "clauses-int-channeling"
     ;;TODO: throw as model/compile time
     (is
