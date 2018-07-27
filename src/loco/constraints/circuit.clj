@@ -1,16 +1,27 @@
 (ns loco.constraints.circuit
-  (:use loco.constraints.utils)
   (:require
-   [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.match :refer [match+]]
+   )
   (:import
    org.chocosolver.solver.constraints.nary.circuit.CircuitConf
    [org.chocosolver.solver.variables SetVar IntVar BoolVar]))
 
 (def ^:private constraint-name 'circuit)
+
+(def ^:private conf-map
+  {
+   :all   CircuitConf/ALL
+   :first CircuitConf/FIRST
+   :light CircuitConf/LIGHT
+   :rd    CircuitConf/RD
+   })
+
+(def ^:private allowed-conf-values
+  (set (keys conf-map)))
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
@@ -22,7 +33,7 @@
                        :conf (s/tuple
                               (s/coll-of int-var?)
                               (s/tuple #{'offset} nat-int?)
-                              (s/tuple #{'conf} #{'all 'first 'light 'rd}))))))
+                              (s/tuple #{'conf} allowed-conf-values))))))
 
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
@@ -34,21 +45,18 @@
            (.circuit model
                      (into-array IntVar vars)
                      offset
-                     ({
-                       'all   CircuitConf/ALL
-                       'first CircuitConf/FIRST
-                       'light CircuitConf/LIGHT
-                       'rd    CircuitConf/RD
-                       } conf))
+                     (conf-map conf))
 
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
+;;TODO: can implement a version that takes in something more looking like a graph, [[:a :b] [:a :c]]...
 (defloco $circuit
   "Given a list of int-vars L, and an optional offset number (default
   0), the elements of L define a circuit, where (L[i] = j + offset)
-  means that j is the successor of i.  Hint: make the offset 1 when
-  using a 1-based list.
+  means that j is the successor of i.
+
+  Hint: make the offset 1 when using a 1-based list.
 
   vars = IntVar[]
   offset = integer, default=0
@@ -58,27 +66,26 @@
   - subtour elimination : Caseau & Laburthe (ICLP'97)
   - allDifferent GAC algorithm: Régin (AAAI'94)
   - dominator-based filtering: Fages & Lorca (CP'11)
-  - Strongly Connected Components based filtering (Cambazard & Bourreau JFPC'06 and Fages and Lorca TechReport'12)
-
-  See Fages PhD Thesis (2014) for more information"
+  - Strongly Connected Components based filtering"
   {:choco ["circuit(IntVar[] vars)"
            "circuit(IntVar[] vars, int offset)"
-           "circuit(IntVar[] vars, int offset, CircuitConf conf)"]}
+           "circuit(IntVar[] vars, int offset, CircuitConf conf)"]
+   :gccat ["http://sofdem.github.io/gccat/gccat/Ccircuit.html"]}
   ([vars]
    ($circuit vars 0))
   ([vars offset]
    {:pre [(nat-int? offset) (sequential? vars)]}
    (constraint constraint-name
                [(vec vars)
-                ['offset (preserve-consts offset)]]
+                ['offset offset]]
                compiler))
 
   ([vars offset circuit-conf]
    {:pre [(nat-int? offset)
           (sequential? vars)
-          (#{:all :first :light :rd 'all 'first 'light 'rd} circuit-conf)]}
+          (allowed-conf-values circuit-conf)]}
    (constraint constraint-name
                [(vec vars)
-                ['offset (preserve-consts offset)]
+                ['offset offset]
                 ['conf (symbol circuit-conf)]]
                compiler)))
