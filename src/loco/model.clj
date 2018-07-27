@@ -6,6 +6,8 @@
    [clojure.walk :as walk]
    [loco.constraints.vars :refer [$proto]]
    [loco.utils :refer [split]]
+   [clojure.set :as set]
+   [clojure.pprint :refer [pprint]]
    )
   )
 
@@ -25,6 +27,8 @@
 (defn- partial-constraint? [statement]  (->> statement meta :partial-constraint))
 (defn- view? [statement]                (->> statement meta :view))
 (defn- proto? [statement]               (->> statement meta :proto))
+
+(defn- var-name [var] (second var))
 
 (defn- var-name-domain-map [problem]
   (let [get-name second]
@@ -68,7 +72,7 @@
                           (cond
                             (and (constraint? statement) (search-nil? statement)) nil
                             (view? statement) (view-transform statement acc)
-                            
+
                             (partial-constraint? statement)
                             (let [{:keys [name-fn constraint-fn]} (meta statement)
                                   var-name (name-fn statement)
@@ -159,11 +163,26 @@
        (every? (comp (some-fn var? constraint? generated-vars?)))))
 
 (defn- elevate-generated-vars [problem]
-  (->> problem
-       (mapcat
-        #(if (generated-vars? %)
-           %
-           [%]))))
+  (let [var-name-index-init (->> problem
+                                 (filter var?)
+                                 (map var-name)
+                                 (into #{}))
+        [with-gen-vars non-gen-statements] (split generated-vars? problem)]
+    (->>
+     with-gen-vars
+     (reduce
+      (fn [[problem var-name-index] statement-with-gen-vars]
+        (let [;;TODO: recur here (elevate-generated-vars statement-with-gen-vars)
+              [vars non-vars] (split var? statement-with-gen-vars)
+              new-vars (remove (comp var-name-index second) vars)
+              new-var-names (->> new-vars (map var-name) (into #{}))
+              ]
+          [(-> problem
+               (into new-vars)
+               (into non-vars))
+           (set/union var-name-index new-var-names)]))
+      [non-gen-statements var-name-index-init])
+     first)))
 
 (defn- compile-problem [problem]
   (let [[vars constraints] (->> problem

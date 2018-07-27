@@ -254,18 +254,6 @@
      )
     )
 
-  (testing "cardinality"
-    (constraints-assert
-     '("GCC ([PropFastGCC_(a, b, c, d, ...,cste -- 0)])")
-     [($in :a 2 3)
-      ($in :b 1 3)
-      ($in :c 1 3)
-      ($in :d 2 3)
-      ($in :e 1 3)
-      ($cardinality [:a :b :c :d :e] {1 :ones, 2 :twos} :closed)]
-     )
-    )
-
   (testing "knapsack"
     (constraints-assert
      '("KNAPSACK ([3.x + 1.y + 2.z - 1.W = 0, 5.x + 6.y + 7.z - 1.V = 0, PropKnapsack(x, y, z, ..., V)])")

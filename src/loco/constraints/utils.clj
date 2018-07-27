@@ -186,18 +186,15 @@
   (cond
     (int? obj) {:int true :lb obj :ub obj}
     (and (find obj :lb)
-         (find obj :ub)) obj
-    )
-  )
+         (find obj :ub)) obj))
 
 (defn coerce-var [model [coerced-int-var-type val]]
   {:pre [(instance? org.chocosolver.solver.Model model)]}
   (case coerced-int-var-type
     :int-var val
-    :int (.intVar model val) ;;create int-var constant
+    :int (.intVar model val)
     :bool-var val
-    :bool (.intVar model val) ;;create int-var constant
-    ))
+    :bool (.intVar model val)))
 
 (defn coerce-int-var [model [coerced-int-var-type val]]
   (coerce-var model [coerced-int-var-type val]))
