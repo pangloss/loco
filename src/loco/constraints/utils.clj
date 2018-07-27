@@ -13,14 +13,6 @@
 (def ^:private c comp)
 (def ^:private p partial)
 
-(defn ^:dynamic preserve-consts [val]
-  (match [val (meta val)]
-         [_ {:preserve-const true}] val
-         [_ {:preserve-consts true}] val
-         [(val :guard number?) _] (vary-meta [val] merge {:preserve-const true})
-         [(val :guard sequential?) _] (vary-meta val merge {:preserve-consts true})
-         :else val))
-
 (defn- var? [statement]                 (->> statement meta :var))
 (defn- set? [statement]                 (->> statement meta :set))
 (defn- task? [statement]                (->> statement meta :task))
