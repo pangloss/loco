@@ -45,6 +45,6 @@
           (every? sequential? [vars1 vars2])
           (every? nat-int? [offset1 offset2])]}
    (constraint constraint-name
-               [[(vec vars1) 'offset (preserve-consts offset1)]
-                [(vec vars2) 'offset (preserve-consts offset2)]]
+               [[(vec vars1) 'offset  offset1]
+                [(vec vars2) 'offset  offset2]]
                compiler)))

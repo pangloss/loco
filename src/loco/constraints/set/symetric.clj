@@ -39,7 +39,7 @@
           [set-list offset] :guard [set-list sequential?, offset nat-int?]
           (constraint constraint-name
                       [(vec set-list)
-                       ['offset (preserve-consts offset)]]
+                       ['offset  offset]]
                       compiler)
 
           [set-list :guard sequential?] ($symetric set-list 0)

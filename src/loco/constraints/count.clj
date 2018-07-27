@@ -39,6 +39,6 @@
   {:pre [(sequential? vars)]}
   (constraint constraint-name
               [(vec vars)
-               ['value (preserve-consts value)]
+               ['value  value]
                ['limit limit]]
               compiler))

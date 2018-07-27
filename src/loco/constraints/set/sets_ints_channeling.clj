@@ -43,6 +43,6 @@
   ([sets offset-set ints offset-int]
    {:pre [(nat-int? offset-int) (nat-int? offset-set) (sequential? ints) (sequential? sets)]}
    (constraint constraint-name
-               [['sets (vec sets) 'offset (preserve-consts offset-set)]
-                ['ints (vec ints) 'offset (preserve-consts offset-int)]]
+               [['sets (vec sets) 'offset  offset-set]
+                ['ints (vec ints) 'offset  offset-int]]
                compiler)))

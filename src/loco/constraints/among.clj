@@ -45,5 +45,5 @@
   (constraint constraint-name
               [(vec vars)
                ['nb-var nb-var]
-               ['values (preserve-consts (vec values))]]
+               ['values (vec values)]]
               compiler))

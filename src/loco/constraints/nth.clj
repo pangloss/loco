@@ -35,7 +35,7 @@
   [body]
   (match body [table
                ['at index]
-               ['offset (preserve-consts offset)]])
+               ['offset  offset]])
   #_(->>
    deps
    lb-ub-seq
@@ -56,11 +56,11 @@
   ([vars index offset]
    {:pre [(nat-int? offset) (sequential? vars)]}
    (let [table (if (every? int? vars)
-                 (preserve-consts (vec vars))
+                  (vec vars)
                  (vec vars))
          body [table
                ['at index]
-               ['offset (preserve-consts offset)]]
+               ['offset  offset]]
          ]
      (partial-constraint
       partial-name

@@ -53,13 +53,13 @@
    {:pre [(every? int? vs) (sequential? xs)]}
    (constraint constraint-name
                [(vec xs)
-                (preserve-consts (vec vs))]
+                 (vec vs)]
                compiler))
 
   ([xs s t]
    {:pre [(int? s) (int? t) (sequential? xs)]}
    (constraint constraint-name
                [(vec xs)
-                (preserve-consts s)
-                (preserve-consts t)]
+                 s
+                 t]
                compiler)))

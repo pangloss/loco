@@ -64,19 +64,19 @@
    (match [member-of collection]
           [member (table :guard sequential?)]
           (constraint constraint-name
-                      [member 'of (preserve-consts (vec table))]
+                      [member 'of  (vec table)]
                       compiler)
 
           ;;TODO: opprotunity to generate vars (set)
           [member (set :guard keyword?)]
           (constraint constraint-name
-                      [(preserve-consts member) 'of set]
+                      [ member 'of set]
                       compiler)))
 
   ([var lb ub]
    {:pre [(int? lb) (int? ub) (< lb ub)]}
    (constraint constraint-name
                [var
-                ['lb (preserve-consts lb)]
-                ['ub (preserve-consts ub)]]
+                ['lb  lb]
+                ['ub  ub]]
                compiler)))

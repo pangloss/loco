@@ -82,12 +82,12 @@
   ([int-vars coeffs]
    {:pre [(sequential? int-vars)
           (every? int? coeffs)]}
-   (scalar-partial [(vec int-vars) (preserve-consts coeffs)]))
+   (scalar-partial [(vec int-vars)  coeffs]))
 
   ([eq operator int-vars coeffs]
    {:pre [(sequential? int-vars)
           (comparison-operator? operator)
           (every? int? coeffs)]}
    (constraint constraint-name
-               [$scalar (to-operator operator) int-vars (preserve-consts coeffs)]
+               [$scalar (to-operator operator) int-vars  coeffs]
                compiler)))

@@ -34,5 +34,5 @@
   {:pre [(nat-int? offset)]}
   (constraint constraint-name
               [set1 set2
-               ['offset (preserve-consts offset)]]
+               ['offset  offset]]
               compiler))

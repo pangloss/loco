@@ -64,13 +64,13 @@
   ([value table index offset]
    {:pre [(nat-int? offset) (sequential? table)]}
    (let [table (if (every? int? table)
-                 (preserve-consts table)
+                  table
                  table)]
      (constraint constraint-name
                  [value
                   ['in table]
                   ['at index]
-                  ['offset (preserve-consts offset)]]
+                  ['offset  offset]]
                  compiler))))
 
 (def $elem $element)

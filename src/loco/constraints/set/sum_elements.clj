@@ -47,5 +47,5 @@
    (constraint constraint-name
                [sum-var
                 ['indices indices-set]
-                ['weights (preserve-consts (vec weights))]
-                ['offset  (preserve-consts offset)]])))
+                ['weights  (vec weights)]
+                ['offset   offset]])))

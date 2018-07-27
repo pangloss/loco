@@ -131,9 +131,9 @@
     (not-empty? :guard boolean?)]
    (constraint constraint-name
                [max
-                ['of         (preserve-consts (vec weights))]
+                ['of          (vec weights)]
                 ['indices    set-indices]
-                ['offset     (preserve-consts offset)]
+                ['offset      offset]
                 ['not-empty? not-empty?]]
                compiler)
 

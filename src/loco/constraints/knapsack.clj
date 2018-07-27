@@ -55,8 +55,8 @@
          (sequential? occurrences)
          ]}
   (constraint constraint-name
-              [['weight (preserve-consts (vec weight))]
-               ['energy (preserve-consts (vec energy))]
+              [['weight  (vec weight)]
+               ['energy  (vec energy)]
                ['occurrences (vec occurrences)]
                ['weight-sum weight-sum]
                ['energy-sum energy-sum]]

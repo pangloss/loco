@@ -34,7 +34,7 @@
   [num-empty-sets collection]
   {:pre [(sequential? collection)]}
   (constraint constraint-name
-              [(preserve-consts num-empty-sets)
+              [ num-empty-sets
                ['of (vec collection)]]
               compiler))
 

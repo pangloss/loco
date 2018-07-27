@@ -41,7 +41,7 @@
           (sequential? sets)]}
    (constraint constraint-name
                [['inverse-sets (vec inverse-sets)
-                 'offset (preserve-consts offset-invsere-set)]
+                 'offset  offset-invsere-set]
                 ['sets (vec sets)
-                 'offset (preserve-consts offset-set)]]
+                 'offset  offset-set]]
                compiler)))

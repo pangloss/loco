@@ -41,5 +41,5 @@
    (constraint constraint-name
                 [set-var
                  ['channel (vec bools)]
-                 ['offset (preserve-consts offset)]]
+                 ['offset  offset]]
                 compiler)))

@@ -79,11 +79,10 @@ Parameters:
           (some? (#{:closed true false} closed?))
           (every? int? (keys frequencies))
           (distinct? (keys frequencies))
-          ;;(distinct? (vals frequencies)) ;;we can have repeated occurrence vars
           ]
     }
    (let [closed (get {:closed true} closed? closed?)
-         values (preserve-consts (vec (keys frequencies)))
+         values (vec (keys frequencies))
          occurences (vec (vals frequencies))
          generated-vars (->> occurences
                              distinct

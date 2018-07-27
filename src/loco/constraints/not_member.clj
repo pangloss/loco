@@ -57,19 +57,19 @@
    (match [not-member-of collection]
           [not-member (table :guard sequential?)]
           (constraint constraint-name
-                      [not-member 'of (preserve-consts (vec table))]
+                      [not-member 'of  (vec table)]
                       compiler)
 
           ;;TODO: opprotunity to generate vars (set)
           [not-member (set :guard keyword?)]
           (constraint constraint-name
-                      [(preserve-consts not-member) 'of set]
+                      [ not-member 'of set]
                       compiler)))
 
   ([not-member lb ub]
    {:pre [(int? lb) (int? ub) (< lb ub)]}
    (constraint constraint-name
                [not-member
-                ['lb (preserve-consts lb)]
-                ['ub (preserve-consts ub)]]
+                ['lb  lb]
+                ['ub  ub]]
                compiler)))

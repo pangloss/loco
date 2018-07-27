@@ -44,5 +44,5 @@
    (constraint constraint-name
                [(vec succs)
                 ['nb-trees nb-trees]
-                ['offset (preserve-consts offset)]]
+                ['offset  offset]]
                compiler)))

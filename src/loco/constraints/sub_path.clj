@@ -46,6 +46,6 @@
                [(vec vars)
                 ['start start]
                 ['end end]
-                ['offset (preserve-consts offset)]
+                ['offset  offset]
                 ['size size]]
                compiler)))
