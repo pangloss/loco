@@ -1,11 +1,11 @@
 (ns loco.constraints.clauses-int-channeling
-  (:use loco.constraints.utils)
   (:require
-   [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.utils :refer [p]]
+   )
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar]))
 
@@ -15,19 +15,20 @@
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
                       (s/tuple
-                       (s/tuple #{'int-var} int-var?)
-                       (s/tuple #{'e-vars} (s/coll-of bool-var?))
-                       (s/tuple #{'l-vars} (s/coll-of bool-var?))
+                       ::utils/int-var?
+                       (s/tuple #{'e-vars} ::utils/coll-boolvar?)
+                       (s/tuple #{'l-vars} ::utils/coll-boolvar?)
                        ))))
 
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [[_ int-var] [_ e-vars] [_ l-vars]]}
+           {:args [int-var [_ e-vars] [_ l-vars]]}
            (.clausesIntChanneling model
                                   int-var
                                   (into-array BoolVar e-vars)
                                   (into-array BoolVar l-vars))
+
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
@@ -43,10 +44,10 @@
   Contract: eVars.lenght == lVars.length == var.getUB() - var.getLB() + 1
   Contract: var is not a boolean variable"
   {:choco "clausesIntChanneling(IntVar var, BoolVar[] eVars, BoolVar[] lVars)"}
-  [int-var e-vars l-vars]
+  [var e-vars l-vars]
   {:pre [(every? sequential? [e-vars l-vars]) (= (count e-vars) (count l-vars))]}
   (constraint constraint-name
-              [['int-var int-var]
+              [var
                ['e-vars (vec e-vars)]
                ['l-vars (vec l-vars)]]
               compiler))
