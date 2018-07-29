@@ -272,12 +272,16 @@
 (defloco $task
   "Container representing a task: It ensures that: start + duration = end"
   {:choco "Task(IntVar s, IntVar d, IntVar e)"}
-  [var-name start duration end]
-  {:pre [(valid-variable-name? var-name)]}
-  (->
-   ^:var ^:task
-   [:var var-name :public [:task start duration end]]
-   hidden-conversion))
+  ([task-name _start start _duration duration _end end]
+   {:pre [not-any? nil? [start duration end]]}
+   (let [{:keys [start duration end]} {_start start _duration duration _end end}]
+     ($task task-name start duration end)))
+  ([var-name start duration end]
+   {:pre [(valid-variable-name? var-name)]}
+   (->
+    ^:var ^:task
+    [:var var-name :public [:task start duration end]]
+    hidden-conversion)))
 
 (defloco $task- [& more] (-> (apply $task more) make-hidden))
 (reset-meta! (var $task-) (meta (var $task)))

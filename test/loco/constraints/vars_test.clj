@@ -3,7 +3,7 @@
    [clojure.test :refer :all]
    [loco.constraints :refer :all]
    [loco.constraints.test-utils :refer :all]
-   )  
+   )
   (:import org.chocosolver.solver.Model))
 
 (deftest const-vars-test
@@ -208,12 +208,50 @@
    (loco?
     [($in :a 1 2)
      ($in :b 2 4)
+     ($in [:c 0] 3 5)
+     ($task :my-task2 :a :b [:c 0])]
+    {:compiled
+     [["a = {1..2}"
+       "b = {2..4}"
+       "[:c 0] = {3..5}"
+       "Task[start=a = {1..2}, duration=b = {2..4}, end=[:c 0] = {3..5}]"]
+      []],
+     :solutions
+     #{{:a 1,:b 4,[:c 0] 5,:my-task2 {:start 1, :duration 4, :end 5}}
+       {:a 1,:b 2,[:c 0] 3,:my-task2 {:start 1, :duration 2, :end 3}}
+       {:a 2,:b 3,[:c 0] 5,:my-task2 {:start 2, :duration 3, :end 5}}
+       {:a 1,:b 3,[:c 0] 4,:my-task2 {:start 1, :duration 3, :end 4}}
+       {:a 2,:b 2,[:c 0] 4,:my-task2 {:start 2, :duration 2, :end 4}}}}))
+
+  (is
+   (loco?
+    [($in :a 1 2)
+     ($in :b 2 4)
+     ($in [:c 0] 3 5)
+     ($task :my-task2 :start :a :duration :b :end [:c 0])]
+    {:compiled
+     [["a = {1..2}"
+       "b = {2..4}"
+       "[:c 0] = {3..5}"
+       "Task[start=a = {1..2}, duration=b = {2..4}, end=[:c 0] = {3..5}]"]
+      []],
+     :solutions
+     #{{:a 1,:b 4,[:c 0] 5,:my-task2 {:start 1, :duration 4, :end 5}}
+       {:a 1,:b 2,[:c 0] 3,:my-task2 {:start 1, :duration 2, :end 3}}
+       {:a 2,:b 3,[:c 0] 5,:my-task2 {:start 2, :duration 3, :end 5}}
+       {:a 1,:b 3,[:c 0] 4,:my-task2 {:start 1, :duration 3, :end 4}}
+       {:a 2,:b 2,[:c 0] 4,:my-task2 {:start 2, :duration 2, :end 4}}}}))
+
+  (is
+   (loco?
+    [($in :a 1 2)
+     ($in :b 2 4)
      ($in :c 3 5)
-     ($task :my-task [1 2] [2 3] [3 4]) 
-     ($task :my-task :a :b :c) 
+     ($task :my-task [1 2] [2 3] [3 4])
+     ($task :my-task :a :b :c)
      ($task [:my-task 1] :a :b :c)
      ($task :_my-task [1 2] [2 3] [3 4])
-     ($task [:_my-task 1] :a :b :c) ]
+     ($task [:_my-task 1] :a :b :c)]
     {:identity [[:var :a :public [:int 1 2]]
                 [:var :b :public [:int 2 4]]
                 [:var :c :public [:int 3 5]]
@@ -237,8 +275,8 @@
                   {:a 2,:b 2,:c 4,:my-task {:start 2, :duration 2, :end 4},[:my-task 1] {:start 2, :duration 2, :end 4}}
                   {:a 1,:b 2,:c 3,:my-task {:start 1, :duration 2, :end 3},[:my-task 1] {:start 1, :duration 2, :end 3}}}
      }))
-  
-  
+
+
   )
 
 (deftest tuples-test

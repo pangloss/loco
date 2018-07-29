@@ -186,18 +186,18 @@
               (into-array Integer/TYPE ub))
 
      [[:var var-name _ [:task start duration end]] _]
-     (let [task
-           (.taskVar
-            model
-            (if (keyword? start)
-              (lookup-var start)
-              (apply anon-int-var model start))
-            (if (keyword? duration)
-              (lookup-var duration)
-              (apply anon-int-var model duration))
-            (if (keyword? end)
-              (lookup-var end)
-              (apply anon-int-var model end)))]
+     (let [name? #(or (string? %) (keyword? %))
+           task (.taskVar
+                 model
+                 (if (name? start)
+                   (lookup-var start)
+                   (apply anon-int-var model start))
+                 (if (name? duration)
+                   (lookup-var duration)
+                   (apply anon-int-var model duration))
+                 (if (name? end)
+                   (lookup-var end)
+                   (apply anon-int-var model end)))]
        (.ensureBoundConsistency task)
        task)
 
