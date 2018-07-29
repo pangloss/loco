@@ -342,18 +342,6 @@
       ($in :c 0 5)
       ($sort [:a :b :c] [:x :y :z])]))
 
-
-  (testing "count"
-    (constraints-assert
-     '("COUNT ([PropFastCount_(a, b, c, limit=limit, value=3)])"
-       "COUNT ([PropCountVar_(b, c, limit, a, value=a, cardinality=limit])")
-     [($in :a 0 5)
-      ($in :b 0 5)
-      ($in :c 0 5)
-      ($in :limit 0 3)
-      ($count 3 [:a :b :c] :limit)
-      ($count :a [:b :c] :limit)]))
-
   ;;wtf lawl
   (testing "diff-n"
     (constraints-assert
