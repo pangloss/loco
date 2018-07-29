@@ -191,13 +191,19 @@
                  model
                  (if (name? start)
                    (lookup-var start)
-                   (apply anon-int-var model start))
+                   (apply anon-int-var model (if (int? start)
+                                               [start]
+                                               start)))
                  (if (name? duration)
                    (lookup-var duration)
-                   (apply anon-int-var model duration))
+                   (apply anon-int-var model (if (int? duration)
+                                               [duration]
+                                               duration)))
                  (if (name? end)
                    (lookup-var end)
-                   (apply anon-int-var model end)))]
+                   (apply anon-int-var model (if (int? end)
+                                               [end]
+                                               end))))]
        (.ensureBoundConsistency task)
        task)
 
