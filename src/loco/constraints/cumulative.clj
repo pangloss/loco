@@ -1,12 +1,10 @@
 (ns loco.constraints.cumulative
-  (:use loco.constraints.utils)
   (:require
-   [loco.utils :refer [p c]]
-   [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   )
   (:import
    org.chocosolver.solver.constraints.nary.cumulative.Cumulative$Filter
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -33,21 +31,23 @@
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
                       (s/tuple
-                       (s/coll-of               task-var?)
-                       (s/tuple #{'heights}     (s/coll-of int-var?))
-                       (s/tuple #{'capacity}    int-var?)
+                       ::utils/coll-taskvar?
+                       (s/tuple #{'heights}     ::utils/coll-coerce-intvar?)
+                       (s/tuple #{'capacity}    ::utils/coerce-intvar?)
                        (s/tuple #{'incremental} boolean?)
                        (s/tuple #{'filters}     (s/coll-of filters?))
                        ))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (println 'statement statement)
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-var (utils/coerce-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [tasks [_ heights] [_ capacity] [_ incremental?] [_ filters]]}
            (.cumulative model
                         (into-array Task tasks)
-                        (into-array IntVar heights)
-                        capacity
+                        (->> heights (map coerce-var) (into-array IntVar))
+                        (coerce-var capacity)
                         incremental?
                         (->> filters
                              (keep filter-to-enum)
@@ -55,6 +55,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
+;;TODO: create args-list for $cumulative
 (defloco $cumulative
   "Creates a cumulative constraint:
   Enforces that at each point in time,
@@ -76,22 +77,26 @@
   {:choco
    ["cumulative(Task[] tasks, IntVar[] heights, IntVar capacity)"
     "cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental)"
-    "cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)"]}
-  ([tasks heights capacity]
-   ($cumulative tasks heights capacity false))
-  ([tasks heights capacity incremental?]
-   ($cumulative tasks heights capacity incremental? [:default]))
-  ([tasks heights capacity incremental? filters]
+    "cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters)"]
+   :gccat "http://sofdem.github.io/gccat/gccat/Ccumulative.html"}
+  ([tasks & {:keys [heights capacity incremental? filters]}]
    {:pre
-    [(sequential? filters)
+    [(or (sequential? filters) (nil? filters))
      (every? filters? filters)
-     (sequential? tasks)
-     (sequential? heights)
-     (boolean? incremental?)]}
-   (constraint constraint-name
-               [(vec tasks)
-                ['heights (vec heights)]
-                ['capacity capacity]
-                ['incremental incremental?]
-                ['filters (mapv (c symbol name) filters)]]
-               compiler)))
+     (or (sequential? tasks) (map? tasks))
+     (or (sequential? heights) (nil? heights))
+     (or (boolean? incremental?) (nil? incremental?))]}
+   (match
+    [tasks heights capacity incremental? filters]
+
+    [(tasks :guard map?) nil capacity incremental? filters]
+    ($cumulative (keys tasks) :heights (vals tasks) :capacity capacity :incremental? incremental? :filters filters)
+
+    [(tasks :guard sequential?) heights capacity incremental? filters]
+    (constraint constraint-name
+                [(vec tasks)
+                 ['heights (vec heights)]
+                 ['capacity capacity]
+                 ['incremental incremental?]
+                 ['filters (mapv (comp symbol name) filters)]]
+                compiler))))
