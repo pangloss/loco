@@ -273,7 +273,7 @@
   "Container representing a task: It ensures that: start + duration = end"
   {:choco "Task(IntVar s, IntVar d, IntVar e)"}
   ([task-name _start start _duration duration _end end]
-   {:pre [not-any? nil? [start duration end]]}
+   {:pre [(not-any? nil? [start duration end])]}
    (let [{:keys [start duration end]} {_start start _duration duration _end end}]
      ($task task-name start duration end)))
   ([var-name start duration end]

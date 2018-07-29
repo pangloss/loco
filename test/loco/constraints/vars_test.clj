@@ -10,9 +10,9 @@
   (is
    (loco?
     [($const :7 7)
-     ($const :a 1)               
-     ($const [:b 10] 2)          
-     ($const [:constraint 10] 2) 
+     ($const :a 1)
+     ($const [:b 10] 2)
+     ($const [:constraint 10] 2)
      ($const- [:constraint 20] 4)
      ($const [:_constraint 30] 4)]
     {:identity [[:var :7 :public [:const 7]]
@@ -39,11 +39,11 @@
   (is
    (loco?
     [
-     ($bool :8)               
+     ($bool :8)
      ($bool [:constraint 11])
-     ($bool- [:constraint 111]) 
+     ($bool- [:constraint 111])
      ($bool [:_constraint 112])
-     ($bools :a :_b)           
+     ($bools :a :_b)
      ($bools [:a 1] [:_b 2])]
     {:identity [[:var :8 :public [:bool 0 1]]
                 [:var [:constraint 11] :public [:bool 0 1]]
@@ -86,13 +86,13 @@
    (loco?
     [
      ($in :a 1)
-     ($in :b 2 2) 
-     ($in :c 3 4) 
-     ($in [:constraint 12] 5) 
-     ($in :d [6 9])       
-     ($in :f 10 15 :bounded)  
-     ($in :_g 10 20 :bounded) 
-     ($in :_d [6 7 8 9])      
+     ($in :b 2 2)
+     ($in :c 3 4)
+     ($in [:constraint 12] 5)
+     ($in :d [6 9])
+     ($in :f 10 15 :bounded)
+     ($in :_g 10 20 :bounded)
+     ($in :_d [6 7 8 9])
      ($in [:_constraint 12] 5)
      ]
     {:identity [[:var :a :public [:int 1 1]]
@@ -145,13 +145,13 @@
   (is
    (loco?
     [
-     ($set :a [] [])       
-     ($set :b [] [1 2 3])  
-     ($set :d [1] [1 2 3]) 
-     ($set :e [1 2 3])     
-     ($set [:constraint 2] [1 2 3]) 
-     ($set [:_constraint 2] [1 2 3]) 
-     ($set :_e [1 2 3])     
+     ($set :a [] [])
+     ($set :b [] [1 2 3])
+     ($set :d [1] [1 2 3])
+     ($set :e [1 2 3])
+     ($set [:constraint 2] [1 2 3])
+     ($set [:_constraint 2] [1 2 3])
+     ($set :_e [1 2 3])
      ]
     {:identity [[:var :a :public [:set #{} #{}]]
                 [:var :b :public [:set #{} #{1 2 3}]]

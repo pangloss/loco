@@ -186,7 +186,7 @@
               (into-array Integer/TYPE ub))
 
      [[:var var-name _ [:task start duration end]] _]
-     (let [name? #(or (string? %) (keyword? %))
+     (let [name? (some-fn string? keyword?)
            task (.taskVar
                  model
                  (if (name? start)
