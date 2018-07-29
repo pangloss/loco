@@ -1,12 +1,9 @@
 (ns loco.constraints.div-test
   (:require
-   [loco.model :as model]
-   [loco.compiler :as compiler]
-   [loco.solver :as solver]
-   [loco.constraints.test-utils :as utils])
-  (:use
-   loco.constraints
-   clojure.test))
+   [clojure.test :refer :all]
+   [loco.constraints :refer :all]
+   [loco.constraints.test-utils :as utils]
+   ))
 
 (deftest div-test
   (is
@@ -30,4 +27,3 @@
 
   (is (thrown? AssertionError ($div 0 0 0)))
   )
-
