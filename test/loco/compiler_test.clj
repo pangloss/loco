@@ -343,35 +343,7 @@
       ($sort [:a :b :c] [:x :y :z])]))
 
   ;;wtf lawl
-  (testing "diff-n"
-    (constraints-assert
-     '("DIFFNWITHCUMULATIVE ([DIFFN([x1 = {0..5},y1 = {0..5},w1 = {0..5},h1 = {0..5}],[x3 = {0..5},y2 = {0..5},w2 = {0..5},h2 = {0..5}],[x3 = {0..5},y3 = {0..5},w3 = {0..5},h3 = {0..5}]), DIFFN([x1 = {0..5},y1 = {0..5},w1 = {0..5},h1 = {0..5}],[x3 = {0..5},y2 = {0..5},w2 = {0..5},h2 = {0..5}],[x3 = {0..5},y3 = {0..5},w3 = {0..5},h3 = {0..5}]), diffN_8 = [0,10] = min(x1 = {0..5}, x3 = {0..5}, x3 = {0..5}), diffN_7 = [0,10] = max(diffN_1 = [0,10], diffN_3 = [0,10], diffN_5 = [0,10]), PropXplusYeqZ(diffN_9, diffN_8, diffN_7), PropGraphCumulative([x1 = {0..5},w1 = {0..5},diffN_1 = [0,10],h1 = {0..5}],[x3 = {0..5},w2 = {0..5},diffN_3 = [0,10],h2 = {0..5}],[x3 = {0..5},w3 = {0..5},diffN_5 = [0,10],h3 = {0..5}],diffN_12 = [0,10]), PropGraphCumulative([x1 = {0..5},w1 = {0..5},diffN_1 = [0,10],h1 = {0..5}],[x3 = {0..5},w2 = {0..5},diffN_3 = [0,10],h2 = {0..5}],[x3 = {0..5},w3 = {0..5},diffN_5 = [0,10],h3 = {0..5}],diffN_12 = [0,10]), diffN_11 = [0,10] = min(y1 = {0..5}, y2 = {0..5}, y3 = {0..5}), diffN_10 = [0,10] = max(diffN_2 = [0,10], diffN_4 = [0,10], diffN_6 = [0,10]), PropXplusYeqZ(diffN_12, diffN_11, diffN_10), PropGraphCumulative([y1 = {0..5},h1 = {0..5},diffN_2 = [0,10],w1 = {0..5}],[y2 = {0..5},h2 = {0..5},diffN_4 = [0,10],w2 = {0..5}],[y3 = {0..5},h3 = {0..5},diffN_6 = [0,10],w3 = {0..5}],diffN_9 = [0,10]), PropGraphCumulative([y1 = {0..5},h1 = {0..5},diffN_2 = [0,10],w1 = {0..5}],[y2 = {0..5},h2 = {0..5},diffN_4 = [0,10],w2 = {0..5}],[y3 = {0..5},h3 = {0..5},diffN_6 = [0,10],w3 = {0..5}],diffN_9 = [0,10])])")
 
-     [
-      ($in :x1 0 5)
-      ($in :x2 0 5)
-      ($in :x3 0 5)
-
-      ($in :y1 0 5)
-      ($in :y2 0 5)
-      ($in :y3 0 5)
-
-      ($in :w1 0 5)
-      ($in :w2 0 5)
-      ($in :w3 0 5)
-
-      ($in :h1 0 5)
-      ($in :h2 0 5)
-      ($in :h3 0 5)
-
-      ($diff-n [:x1 :x3 :x3]
-               [:y1 :y2 :y3]
-               [:w1 :w2 :w3]
-               [:h1 :h2 :h3]
-               true)
-      ]
-     )
-    )
 
   (testing "clauses-int-channeling"
     ;;TODO: throw as model/compile time
