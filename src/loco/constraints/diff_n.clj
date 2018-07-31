@@ -5,7 +5,9 @@
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
    [loco.utils :refer [p c]]
-   ))
+   )
+  (:import
+   [org.chocosolver.solver.variables SetVar IntVar BoolVar]))
 
 (def ^:private constraint-name 'diff-n)
 
