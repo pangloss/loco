@@ -131,53 +131,6 @@
      )
     )
 
-  (testing "element"
-    (constraints-assert
-     '("ELEMENT ([element(array-val = {1..5} =  <1, 2, 3, 4, 5> [index = {0..2}])])")
-     [($in :index 0 2)
-      ($in :array-val 1 5)
-      ($element :array-val [1 2 3 4 5] :index)]
-     )
-
-    (constraints-assert
-     '("ELEMENT ([PropElementV_fast(array-val, index, a, ..., c)])")
-     [($in :a 10 99)
-      ($in :b 0 9)
-      ($in :c 100 1000)
-      ($in :index 0 2)
-      ($in :array-val 100 1000)
-      ($element :array-val [:a :b :c] :index 2)]
-     )
-
-    (constraints-assert
-     '("SETELEMENT ([PropElement(a, b, c, ..., index), PropElement(a, b, c, ..., index)])")
-     [($set :a [1 9] [1 9 2 3])
-      ($set :b [0 9] [0 9 2 3])
-      ($set :c [0 8] [0 8 7 6])
-      ($in :index 0 2)
-      ($set :value [0] [0 9 8])
-      ($element :value [:a :b :c] :index 2)]
-     )
-
-    ;;TODO: test that :a is created and overridden in the model/compiler tests
-    (constraints-assert
-     '("ELEMENT ([PropElementV_fast($nth_:a_:2_:3_:4_:5_:at_:index_:offset_0, index, a, ..., 5)])"
-       "ARITHM ([$nth_:a_:2_:3_:4_:5_:at_:index_:offset_0 = 4])")
-     [;($in :a 100 200)
-      ($in :index 0 5)
-      ($= 4 ($nth [:a 2 3] :index))]
-     )
-    )
-
-
-
-
-  (->> [                                  ;($in :a 100 200)
-        ($in :index 0 5)
-        ($= 4 ($nth [:a 2 3] :index))
-        ($nth [:a 2 3] :index)]
-       (map (juxt identity meta (comp meta meta))))
-
   (testing "all different"
     (constraints-assert
      '("ALLDIFFERENT ([PropAllDiffInst(a, b, c, 0), PropAllDiffBC(a, b, c, 0), PropAllDiffAdaptative(a, b, c, 0)])")

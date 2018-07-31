@@ -3,35 +3,6 @@
         loco.model.test
         loco.constraints))
 
-(deftest $element-test
-  (compiled-assert
-   [[:var :index :public [:int 0 2]]
-    [:var :array-val :public [:int 1 5]]
-    [:constraint
-     [:element
-      [:array-val [:in [1 2 3 4 5]] [:at :index] [:offset 0]]]]]
-
-   [($in :index 0 2)
-    ($in :array-val 1 5)
-    ($element :array-val [1 2 3 4 5] :index)])
-
-  (compiled-assert
-   [[:var :a :public [:int 10 99]]
-    [:var :b :public [:int 0 9]]
-    [:var :c :public [:int 100 1000]]
-    [:var :index :public [:int 0 2]]
-    [:var :array-val :public [:int 100 1000]]
-    [:constraint [:element [:array-val [:in [:a :b :c]] [:at :index] [:offset 2]]]]]
-
-   [($in :a 10 99)
-    ($in :b 0 9)
-    ($in :c 100 1000)
-    ($in :index 0 2)
-    ($in :array-val 100 1000)
-    ($element :array-val [:a :b :c] :index 2)])
-
-  )
-
 (deftest $nth-test
   (compiled-assert
    [[:var :a :public [:int 100 200]]

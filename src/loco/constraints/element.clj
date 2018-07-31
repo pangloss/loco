@@ -1,11 +1,10 @@
 (ns loco.constraints.element
-  (:use loco.constraints.utils)
   (:require
-   [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   )
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
 
@@ -16,21 +15,29 @@
          :args       (s/spec
                       (s/or
                        :ints (s/tuple
-                              int-var?
-                              (s/tuple #{'in}     (s/coll-of int-var?))
-                              (s/tuple #{'at}     int-var?)
+                              ::utils/int-var?
+                              (s/tuple #{'in}     (s/or :ints (s/coll-of int?)
+                                                        :int-vars ::utils/coll-intvar?))
+                              (s/tuple #{'at}     ::utils/coerce-intvar?)
                               (s/tuple #{'offset} nat-int?))
                        :sets (s/tuple
-                              set-var?
-                              (s/tuple #{'in}     (s/coll-of set-var?))
-                              (s/tuple #{'at}     int-var?)
+                              ::utils/set-var?
+                              (s/tuple #{'in}     ::utils/coll-setvar?)
+                              (s/tuple #{'at}     ::utils/coerce-intvar?)
                               (s/tuple #{'offset} nat-int?))))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        coerce-var (coerce-var model)]
     (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [(:or :ints :sets) [value [_ vars] [_ index] [_ offset]]]}
-           (.element model value (into-array vars) index offset)
+           {:args [:ints [value [_ [:ints vars]] [_ index] [_ offset]]]}
+           (.element model value (int-array vars) (coerce-var index) offset)
+
+           {:args [:ints [value [_ [:int-vars vars]] [_ index] [_ offset]]]}
+           (.element model value (into-array IntVar vars) (coerce-var index) offset)
+
+           {:args [:sets [value [_ vars] [_ index] [_ offset]]]}
+           (.element model  (coerce-var index) (into-array SetVar vars) offset value)
 
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
