@@ -33,6 +33,8 @@
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;;TODO: possible partial ($= :value ($count [1 2 3] :limit))
+;; it's also possible to do ($= :limit ($count :value [1 2 3]))
+;; so it's hard to know which one is the common case.
 (defloco $count
   "Creates a count constraint. Let N be the number of variables of the
   vars collection assigned to value value;
