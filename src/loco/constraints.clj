@@ -8,7 +8,7 @@
    "constraints/views/scale"
    "constraints/views/abs"
    "constraints/views/affine"
-   
+
    "constraints/sum"
 
    "constraints/times"
@@ -36,7 +36,7 @@
    "constraints/cumulative"
    "constraints/diff_n"
 
-   ;;TODO: ;;constraints/distance
+   "constraints/distance"
    "constraints/element"
    "constraints/int_value_precede_chain"
    "constraints/inverse_channeling"
