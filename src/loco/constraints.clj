@@ -38,6 +38,7 @@
 
    "constraints/distance"
    "constraints/element"
+   "constraints/int_value_precede"
    "constraints/int_value_precede_chain"
    "constraints/inverse_channeling"
    "constraints/knapsack"
