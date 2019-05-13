@@ -1,74 +1,64 @@
 (ns loco.constraints.abs-test
   (:require
-   [clojure.test :refer :all]
-   [loco.constraints :refer :all]
-   [loco.constraints.test-utils :refer :all]
-   ))
+   [loco.model :as model]
+   [loco.compiler :as compiler]
+   [loco.solver :as solver]
+   [loco.constraints.test-utils :as utils])
+  (:use
+   loco.constraints
+   clojure.test))
 
-(deftest abs-test
-  (is
-   (loco?
+(deftest ^:model abs-model-test
+  (are [expected input] (= expected (->> input model/compile))
+    [[:var :y :public [:int 0 10]]
+     [:var :z :public [:int -5 0]]
+     [:constraint ['abs [:y '= :z]]]]
     [($in :y 0 10)
      ($in :z -5 0)
-     ;;($abs :y = :z)
-     ($abs :y :z)
-     ]
-    {:identity '[[:var :y :public [:int 0 10]]
-                 [:var :z :public [:int -5 0]]
-                 [abs [:y = :z]]],
-     :model '[[:var :y :public [:int 0 10]]
-              [:var :z :public [:int -5 0]]
-              [abs [:y = :z]]],
-     :compiled [["y = {0..10}" "z = {-5..0}"]
-                ["ABSOLUTE ([y = {0..10} = |z = {-5..0}|])"]],
-     :solutions #{{:y 4, :z -4}
-                  {:y 3, :z -3}
-                  {:y 1, :z -1}
-                  {:y 2, :z -2}
-                  {:y 0, :z 0}
-                  {:y 5, :z -5}}}))
+     ($abs :y :z)]
 
-  (is
-   (loco?
+    [[:var :y :public [:int 0 10]]
+     [:var :z :public [:int -5 0]]
+     [:var :|z| :proto [:int 0 5]]
+     [:constraint ['abs [:|z| '= :z]]]
+     [:constraint ['arithm [:y '= :|z|]]]]
     [($in :y 0 10)
      ($in :z -5 0)
-     ($= :y ($abs :z))
-     ]
-    {:model
-     '[[:var :y :public [:int 0 10]]
-       [:var :z :public [:int -5 0]]
-       [:view "|z|" [abs :z []] [:int 0 5]]
-       [arithm [:y = "|z|"]]],
-     :compiled
-     [["y = {0..10}" "z = {-5..0}" "-(z = {-5..0}) = [0,5]"]
-      ["ARITHM ([prop(y.EQ.-(z))])"]],
-     :solutions
-     #{{:y 4, :z -4} {:y 3, :z -3} {:y 1, :z -1} {:y 2, :z -2}
-       {:y 0, :z 0} {:y 5, :z -5}}})
-   "partial should be supported")
+     ($= :y ($abs :z))]
 
-  (is
-   (loco?
+    [[:var :x :public [:int -5 5]]
+     [:var :|x| :proto [:int 0 5]]
+     [:constraint ['abs [:|x| '= :x]]]
+     [:constraint ['arithm [:|x| '= 2]]]]
+    [($in :x -5 5)
+     ($= ($abs :x) 2)]
+
+    )
+  )
+
+(deftest ^:compiler abs-compile-test
+  (are [expected input] (= expected (utils/constraints-strings input))
+    '("ABSOLUTE ([y = {0..10} = |z = {-5..0}|])")
     [($in :y 0 10)
-     ($in [:z] -5 0)
-     ($= :y ($abs ($+ [:z] 4)))
-     ]
-    {:model
-     '[[:var :y :public [:int 0 10]]
-       [:var "[:z]" :public [:int -5 0]]
-       [:view "[:z]+4" [offset "[:z]" [4]] [:int -1 4]]
-       [:view "|[:z]+4|" [abs "[:z]+4" []] [:int 1 4]]
-       [arithm [:y = "|[:z]+4|"]]],
-     :compiled
-     [["y = {0..10}"
-       "[:z] = {-5..0}"
-       "([:z] = {-5..0} + 4) = [-1,4]"
-       "|([:z]+4)| = {0..4}"]
-      ["ABSOLUTE ([|([:z]+4)| = {0..4} = |([:z] = {-5..0} + 4) = [-1,4]|])"
-       "ARITHM ([prop(y.EQ.|([:z]+4)|)])"]],
-     :solutions
-     #{{:y 1, [:z] -3} {:y 3, [:z] -1} {:y 1, [:z] -5}
-       {:y 4, [:z] 0} {:y 0, [:z] -4} {:y 2, [:z] -2}}})
-   "partial should be supported")
+     ($in :z -5 0)
+     ($abs :y :z)]
 
+    '("ABSOLUTE ([|x| = {0..5} = |x = {-5..5}|])"
+      "ARITHM ([|x| = 2])")
+    [($in :x -5 5)
+     ($= ($abs :x) 2)]
+    )
+  )
+
+(deftest ^:solutions abs-solution-test
+  (are [expected input] (= expected (solver/solutions input))
+    '({:x 5, :y -5}
+      {:x 4, :y -4}
+      {:x 1, :y -1}
+      {:x 3, :y -3}
+      {:x 2, :y -2})
+    [($in :x 1 5)
+     ($in :y -5 -1)
+     ($abs :x :y)]
+    )
   )

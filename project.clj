@@ -1,6 +1,6 @@
-(defproject loco "0.3.1"
+(defproject loco "0.4.1"
   :description "Constraint Programming for Clojure"
-  :url "http://github.com/aengelberg/loco"
+  :url "http://github.com/boxxxie/loco"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-ancient "0.6.14"]]
@@ -11,11 +11,17 @@
                    :loco :loco
                    }
   :dependencies [
-                 [org.clojure/clojure "1.9.0"]
-                 [org.clojure/core.match "0.3.0-alpha5"]
-                 [defun "0.3.0-RC1"]
+                 [org.clojure/clojure "1.10.0"]
+                 [org.clojure/core.match "0.3.0"]
+
+                 [defun "0.3.0-RC1"] ;; bad idea
                  [camel-snake-kebab "0.4.0"]
-                 [org.choco-solver/choco-solver "4.0.8"]
-                 [org.clojure/math.combinatorics "0.1.4"]
-                 [expound "0.7.1"] ;; better error messages for clojure spec
+                 [org.choco-solver/choco-solver "4.10.0"]
+                 [org.clojure/math.combinatorics "0.1.5"]
+                 [expound "0.7.2"] ;; better error messages for clojure spec
+
+                 ;;pprint
+                 [fipp "0.6.14"]
+
+                 [com.rpl/specter "1.1.2"]
                  ])
