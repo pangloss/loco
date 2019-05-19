@@ -1,3 +1,5 @@
+;; FIXME: WIP
+
 (ns loco.constraints.scalar
   (:use loco.constraints.utils)
   (:require
@@ -89,5 +91,5 @@
           (comparison-operator? operator)
           (every? int? coeffs)]}
    (constraint constraint-name
-               [$scalar (to-operator operator) int-vars  coeffs]
+               [$scalar (to-operator operator) int-vars (preserve-consts coeffs)]
                compiler)))
