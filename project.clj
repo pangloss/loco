@@ -3,7 +3,6 @@
   :url "http://github.com/boxxxie/loco"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :plugins [[lein-ancient "0.6.14"]]
   :test-selectors {
                    :model :model
                    :compiler :compiler
@@ -14,6 +13,7 @@
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/core.match "0.3.0"]
 
+                 ;; FIXME: remove defun, was an experiment
                  [defun "0.3.0-RC1"] ;; bad idea
                  [camel-snake-kebab "0.4.0"]
                  [org.choco-solver/choco-solver "4.10.0"]
