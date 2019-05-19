@@ -21,7 +21,7 @@
                  [expound "0.7.2"] ;; better error messages for clojure spec
 
                  ;;pprint
-                 [fipp "0.6.14"]
+                 [fipp "0.6.18"]
 
                  [com.rpl/specter "1.1.2"]
                  ])
