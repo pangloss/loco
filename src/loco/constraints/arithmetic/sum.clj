@@ -1,4 +1,4 @@
-(ns loco.constraints.sum
+(ns loco.constraints.arithmetic.sum
   (:require
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
