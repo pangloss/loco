@@ -1,6 +1,6 @@
 ;; FIXME: WIP
 
-(ns loco.constraints.div
+(ns loco.constraints.arithmetic.div
   (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
@@ -21,21 +21,21 @@
 ;;    [loco.match :refer [match+]]
 ;;    [clojure.walk :as walk]))
 
-;; (def ^:private constraint-name 'div)
+(def ^:private constraint-name 'div)
 
-;; (s/def ::compile-spec
-;;   (s/cat :constraint #{constraint-name}
-;;          :args (s/spec
-;;                 (s/tuple int-var? #{'=} int-var? #{'/} int-var?))))
+(s/def ::compile-spec
+  (s/cat :constraint #{constraint-name}
+         :args (s/spec
+                (s/tuple int-var? #{'=} int-var? #{'/} int-var?))))
 
-;; (defn- compiler [model vars-index statement]
-;;   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-;;     (match (->> var-subed-statement (s/conform ::compile-spec))
-;;            {:args [eq _= dividend _ divisor]}
-;;            (.div model dividend divisor eq)
+(defn- compiler [model vars-index statement]
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
+    (match (->> var-subed-statement (s/conform ::compile-spec))
+           {:args [eq _= dividend _ divisor]}
+           (.div model dividend divisor eq)
 
-;;            ::s/invalid
-;;            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           ::s/invalid
+           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
 ;; ;; -------------------- partial --------------------
 

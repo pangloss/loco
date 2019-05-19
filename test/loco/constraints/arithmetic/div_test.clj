@@ -1,4 +1,4 @@
-(ns loco.constraints.div-test
+(ns loco.constraints.arithmetic.div-test
   (:require
    [clojure.test :refer :all]
    [loco.constraints :refer :all]
