@@ -1,12 +1,14 @@
-;; (ns loco.constraints.abs-test
-;;   (:require
-;;    [loco.model :as model]
-;;    [loco.compiler :as compiler]
-;;    [loco.solver :as solver]
-;;    [loco.constraints.test-utils :as utils])
-;;   (:use
-;;    loco.constraints
-;;    clojure.test))
+(ns loco.constraints.abs-test
+  (:require
+   [loco.model :as model]
+   [loco.compiler :as compiler]
+   [loco.solver :as solver]
+   [loco.constraints.test-utils :as utils])
+  (:use
+   loco.constraints
+   clojure.test))
+
+;;FIXME: remake these as (is (loco?)) form
 
 ;; (deftest ^:model abs-model-test
 ;;   (are [expected input] (= expected (->> input model/compile))
