@@ -1,9 +1,9 @@
 (ns loco.constraints.knapsack
-  (:use loco.constraints.utils)
+  (:use loco.constraints
+        loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
    [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])
   (:import
@@ -35,6 +35,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
+;;TODO: can we infer domains for the occurances variables?
 ;;TODO: find knapsack on GCCAT
 (defloco $knapsack
   "Creates a knapsack constraint. Ensures that :
