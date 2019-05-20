@@ -67,24 +67,25 @@
                [ints-list {:consistency #{:default :bc :ac}}]
                [ints-list #{:default :bc :ac}])}
   [& vars]
-  (match+ (vec vars)
-          [int-vars, {:consistency consistency}]
-          ($distinct int-vars consistency)
+  (let [vars (vec vars)]
+    (match+ vars
+            [int-vars, {:consistency consistency}]
+            ($distinct (vec (distinct int-vars)) consistency)
 
-          [int-vars, consistency]
-          :guard [int-vars sequential?, consistency #{:default :bc :ac}]
-          (constraint constraint-name
-                      [(vec int-vars)
-                       ['consistency ({:default 'default :bc 'bc :ac 'ac} consistency)]]
-                      compiler)
+            [int-vars, consistency]
+            :guard [int-vars sequential?, consistency #{:default :bc :ac}]
+            (constraint constraint-name
+                        [(vec (distinct int-vars))
+                         ['consistency ({:default 'default :bc 'bc :ac 'ac} consistency)]]
+                        compiler)
 
-          [var-list :guard sequential?]
-          (constraint constraint-name
-                      (vec var-list)
-                      compiler)
+            [var-list :guard sequential?]
+            (constraint constraint-name
+                        (vec (distinct var-list))
+                        compiler)
 
-          [& var-list]
-          (constraint constraint-name (vec var-list) compiler)))
+            [& var-list]
+            (constraint constraint-name (vec (distinct var-list)) compiler))))
 
 (def $all-different $distinct)
 (reset-meta! (var $all-different) (meta (var $distinct)))

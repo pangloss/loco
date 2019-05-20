@@ -196,7 +196,7 @@
     (vec (distinct (concat model constraints)))))
 
 (defn compile [problem]
-  {:pre [(vector? problem)
+  {:pre [(sequential? problem)
          (all-partials-transformed? problem)
          (all-statements-valid? problem)]}
   (let [compiled (->> problem elevate-generated-vars compile-problem)

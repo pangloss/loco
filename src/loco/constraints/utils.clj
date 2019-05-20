@@ -5,7 +5,10 @@
    [clojure.core.match :refer [match]]
    [loco.match :refer [match+]]
    [clojure.spec.alpha :as s]
-   [clojure.walk :as walk])
+   [clojure.walk :as walk]
+   [clojure.pprint :refer [pprint]]
+   ;;[fipp.edn :refer [pprint]]
+   )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar SetVar Task]
    org.chocosolver.solver.constraints.extension.Tuples))
@@ -268,14 +271,13 @@
        ;; TODO: remove defonce code
        ;; from defonce
        ;; this doesn't seem to be solving the issue at hand
-       (let [v0# (def ~name)]
-         (when-not (.hasRoot v0#)
-           #_(def ~name ~expr)
-           (let [defn# (defn ~name ~@more)
-                 v# (intern 'loco.constraints '~name defn#)]
-             (println "defn:" '~name)
-             (reset-meta! v# (meta #'~name))
-             )))
+       (let [defn# (defn ~name ~@more)
+             v# (intern 'loco.constraints '~name defn#)]
+         ;;(println "defn:" '~name)
+         (reset-meta! v# (meta #'~name))
+         )
        )
     )
   )
+
+(def pp pprint)

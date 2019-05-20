@@ -210,7 +210,7 @@
    (loco?
     [($in :a 0 5)
      ($in :b 0 5)
-     ($= ($minus :a) ($* :b))]
+     ($= ($minus-view :a) ($* :b))]
     {:model
      '[[:var :a :public [:int 0 5]]
        [:var :b :public [:int 0 5]]

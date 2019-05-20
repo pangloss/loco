@@ -9,7 +9,7 @@
   (is
    (loco?
     [($in :a -5 5)
-     ($= :a ($minus 3))
+     ($= :a ($minus-view 3))
      ]
     {:identity '[[:var :a :public [:int -5 5]]
                  [arithm [:a = [minus 3 []]]]],

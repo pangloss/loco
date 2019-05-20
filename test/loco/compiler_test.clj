@@ -15,7 +15,7 @@
 ;;      [($in :x -5 5)
 ;;       ($in :y 0 2)
 ;;       ;;($= 0 ($neg ($* :x :y)))
-;;       ($= 0 ($minus ($* :x :y)))])
+;;       ($= 0 ($minus-view ($* :x :y)))])
 ;;     )
 
 ;;   (testing "subtration"
