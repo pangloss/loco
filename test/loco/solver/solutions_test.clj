@@ -1,4 +1,4 @@
-(ns loco.solver.solutions
+(ns loco.solver.solutions-test
   (:use clojure.test
         loco.constraints)
   (:require
