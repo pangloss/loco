@@ -1,4 +1,6 @@
 * constraints
+** easy
+*** TODO nth
 ** hard
 *** MDD
 I've so far only seen PHD papers on this subject

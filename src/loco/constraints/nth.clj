@@ -1,7 +1,7 @@
+;; FIXME: implement nth
 (ns loco.constraints.nth
   (:require
    [loco.constraints.utils :refer :all]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]))
 
 (def ^:private partial-name 'nth)
