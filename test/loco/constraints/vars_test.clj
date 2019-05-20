@@ -5,6 +5,40 @@
    [loco.constraints.test-utils :refer :all]
    ))
 
+(def fib [1 2 3 5 8 13])
+
+(deftest object-var-name-test
+  (testing "var names that are not keywords should get converted into strings"
+    (is
+     (loco?
+      [($in [:public] [1])]
+      {:model [[:var "[public]" :public [:int [1]]]]
+       :solutions #{{[:public] 1}}
+       }
+      ))
+
+    #_(is
+     (loco?
+      [($in [:public] [1])
+       ($= [:public] ($+ [:public] [:public]))]
+      {:model '[[:var "[public]" :public [:const 1]]
+                [:var "[public]+[public]" :proto [:int 2 2]]
+                [sum ["[public]+[public]" = ["[public]" "[public]"]]]
+                [arithm ["[public]" = "[public]+[public]"]]]}
+      ))
+
+    #_(is
+     (loco?
+      [($in [:p 0 1] [0])
+       ($= [:p 0 1] ($* [:p 0 1] [:p 0 1]))]
+      {:model '[[:var "[:p 0 1]" :public [:const 0]]
+                [:var "[:p 0 1]*[:p 0 1]" :proto [:int 0 0]]
+                [times ["[:p 0 1]*[:p 0 1]" = "[:p 0 1]" * "[:p 0 1]"]]
+                [arithm ["[:p 0 1]" = "[:p 0 1]*[:p 0 1]"]]]}
+      ))
+    )
+  )
+
 (deftest const-vars-test
   (is
    (loco?

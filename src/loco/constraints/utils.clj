@@ -13,6 +13,9 @@
    [org.chocosolver.solver.variables IntVar BoolVar SetVar Task]
    org.chocosolver.solver.constraints.extension.Tuples))
 
+(def pp pprint)
+
+;;TODO: maybe we don't want these to be private
 (def ^:private c comp)
 (def ^:private p partial)
 
@@ -52,18 +55,22 @@
 (defn- stringize [obj]
   (cond
     (string? obj) obj
-    (ident? obj) (name obj)
+    (ident? obj) (symbol (name obj))
     (vector? obj) (str (mapv stringize obj))
     :else (str obj) ;; mainly for numebrs
     ))
 
 (defn- default-name-fn [partial]
-  (match partial
-         [partial-name body]
-         (->> body
-              (map stringize)
-              (interpose (name partial-name))
-              (apply str))))
+  (pp ["default name" partial])
+  (let [return (match partial
+                      [partial-name body]
+                      (->> body
+                           (map stringize)
+                           (interpose (name partial-name))
+                           (apply str)))]
+    (pp ["return" return])
+    (println return)
+    return))
 
 (defn partial-constraint
   "A partial constraint is one that lacks 1 variable (the equivalence
@@ -279,5 +286,3 @@
        )
     )
   )
-
-(def pp pprint)
