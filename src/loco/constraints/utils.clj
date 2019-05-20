@@ -60,15 +60,12 @@
     ))
 
 (defn- default-name-fn [partial]
-  (pp ["default name" partial])
   (let [return (match partial
                       [partial-name body]
                       (->> body
                            (map stringize)
                            (interpose (name partial-name))
                            (apply str)))]
-    (pp ["return" return])
-    (println return)
     return))
 
 (defn partial-constraint

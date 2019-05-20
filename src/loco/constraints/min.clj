@@ -39,18 +39,22 @@
                                      (s/tuple #{'not-empty?} boolean?))))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [(:or :ints :bools) [min [_ vars]]]}
-           (.min model min (into-array vars))
+  (pp [vars-index statement])
+  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
+        speced (->> var-subed-statement (s/conform ::compile-spec))]
+    (pp speced)
+    (match speced
+           {:args [:ints [min [_ vars]]]}
+           (.min model min (into-array IntVar vars))
 
-           ;;{:args [:bools [min [_ vars]]]}
+           {:args [:bools [min [_ vars]]]}
+           (.min model min (into-array BoolVar vars))
 
            {:args [:set [min [_ set] [_ not-empty?]]]}
-           (.min model set min not-every?) ;;fugly API! bad choco!
+           (.min model set min not-empty?) ;;fugly API! bad choco!
 
            {:args [:set-indices [min [_ weights] [_ indices] [_ offset] [_ not-empty?]]]}
-           (.min model indices (int-array weights) offset min not-every?)
+           (.min model indices (int-array weights) offset min not-empty?)
 
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
@@ -62,7 +66,9 @@
               (apply str (name partial-name) "_"))))
 
 (declare $min)
+
 (defn- constraint-fn [var-name [op args]]
+  (pp [var-name [op args]])
   ($min var-name args))
 
 (defn- domain-fn [partial]
@@ -85,7 +91,10 @@
   "handles syntax like ($= :v ($min :a :b :c))"
   [vars]
   {:pre [(sequential? vars)]}
-  (partial-constraint constraint-name (vec vars) name-fn constraint-fn domain-fn))
+  (partial-constraint constraint-name (vec vars)
+                      :name-fn name-fn
+                      :constraint-fn constraint-fn
+                      :domain-fn domain-fn))
 
 ;;TODO: rearrange the arguments in $min away from choco, and into
 ;;something more consistent, also may be good to use spec instead of
@@ -93,8 +102,13 @@
 (defloco $min
   "The minimum of several arguments. The arguments can be a mixture of int-vars and numbers
   Creates a constraint over the minimum element in a set: min{i | i in set} = minElementValue
-  Creates a constraint over the minimum element induces by a set: min{weights[i-offset] | i in indices} = minElementValue"
-  {:choco
+  Creates a constraint over the minimum element induces by a set: min{weights[i-offset] | i in indices} = minElementValue
+
+  Partial form only works for the first 2 variations of min (ints and bools)
+    example: ($= :min-val ($min :a :b :c))
+"
+  {:partial true
+   :choco
    ["min(IntVar min, IntVar[] vars)"
     "min(BoolVar max, BoolVar[] vars)"
     "min(SetVar set, IntVar minElementValue, boolean notEmpty)"

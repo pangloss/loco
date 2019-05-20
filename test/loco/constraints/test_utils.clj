@@ -57,7 +57,6 @@
                 model
                 compiled
                 solutions] :as expected} (first (drop 2 form))
-        expected-keys #{:identity :model :compiled :solutions}
         expected (if (every? nil? [identity model compiled solutions])
                    {:identity [] :model [] :compiled [] :solutions []}
                    expected)
@@ -66,7 +65,7 @@
                 compiled
                 solutions]} expected
         ]
-    (assert (every? expected-keys (keys expected)))
+    (assert (every? #{:identity :model :compiled :solutions} (keys expected)))
     `(let [model-fn# (memoize ~model/compile)
            compile-fn# (memoize ~compiler/compile)
            solutions-fn# ~solver/solutions
