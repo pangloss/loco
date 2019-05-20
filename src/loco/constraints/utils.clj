@@ -56,7 +56,6 @@
   (cond
     (string? obj) obj
     (ident? obj) (symbol (name obj))
-    (vector? obj) (str (mapv stringize obj))
     :else (str obj) ;; mainly for numebrs
     ))
 
