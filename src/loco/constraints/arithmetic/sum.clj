@@ -3,9 +3,9 @@
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
-   [loco.constraints :refer [$=]]
+   [loco.constraints :as c]
    [loco.constraints.utils :refer :all :as utils]
-   [loco.constraints.views.offset :refer [$offset-view]]
+   ;;[loco.constraints.views.offset :refer [$offset-view]]
    [loco.utils :refer [p c split]]
    )
   (:import
@@ -69,9 +69,9 @@
      (match
       [vars numbers]
       [[] []] nil
-      [[] nums] ($= summation-var (apply + nums))
-      [[only-var] []] ($= summation-var only-var)
-      [[only-var] nums] ($= summation-var ($offset-view only-var (apply + nums)))
+      [[] nums] (c/$= summation-var (apply + nums))
+      [[only-var] []] (c/$= summation-var only-var)
+      [[only-var] nums] (c/$= summation-var (c/$offset-view only-var (apply + nums)))
       [vars []] (constraint constraint-name
                               [summation-var (to-operator operator) vars]
                               compiler)
@@ -94,7 +94,7 @@
                   [[] []] nil
                   [[] nums] (apply + nums)
                   [[only-var] []] only-var
-                  [[only-var] nums] ($offset-view only-var (apply + nums))
+                  [[only-var] nums] (c/$offset-view only-var (apply + nums))
                   [_ _] ($sum var-name '= body)
                   )]
       [return]

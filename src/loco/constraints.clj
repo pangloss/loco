@@ -8,23 +8,23 @@
    "constraints/views/scale"
    "constraints/views/abs"
    "constraints/views/affine"
-
+   "constraints/arithm"
    "constraints/all_equal"
    "constraints/arithmetic/sum"
 
-    "constraints/times"
-    "constraints/arithm"
-    "constraints/arithmetic/subtraction"
+   "constraints/times"
 
-   ;; "constraints/mod"
-   ;; "constraints/abs"
-    "constraints/arithmetic/div"
+   "constraints/arithmetic/subtraction"
+
+   "constraints/mod"
+   "constraints/abs"
+   "constraints/arithmetic/div"
 
    ;; "constraints/not_all_equal"
 
-    "constraints/all_different"
-    "constraints/all_different_except_0"
-    "constraints/among"
+   ;; "constraints/all_different"
+   ;; "constraints/all_different_except_0"
+   ;; "constraints/among"
    ;; "constraints/at_least_n_values"
    ;; "constraints/at_most_n_values"
    ;; "constraints/bin_packing"
@@ -62,7 +62,7 @@
    ;; "constraints/table"
    ;; "constraints/tree"
 
-   ;; "constraints/set/intersection"
+    "constraints/set/intersection"
    ;; "constraints/set/union"
    ;; "constraints/set/nb_empty"
    ;; "constraints/set/not_empty"
@@ -81,4 +81,5 @@
    ;; "constraints/automata/regular"
    ])
 
-(apply load imports)
+(defonce o
+  (apply load imports))

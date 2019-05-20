@@ -8,7 +8,7 @@
    )
   )
 
-(def ^:private view-name 'minus)
+(def ^:private view-name 'minus-view)
 
 ;; example: [[:view -y [minus [] :y] [:int 0 -4]]
 (s/def ::compile-spec
@@ -42,7 +42,7 @@
         (vary-meta assoc :domain {:int true :lb lb :ub ub}))))
 
 ;;TODO: fix up docs
-(defloco $minus
+(defloco $minus-view
   "takes a partial constraint and creates a negative constraint from
   it (neg (- :x :b)) also can be used to create a neg var
   via (neg :-i :i)
@@ -61,5 +61,5 @@
          domain-fn
          compiler-fn)))
 
-(defloco $neg [& more] (apply $minus more))
-(reset-meta! (var $neg) (meta (var $minus)))
+(defloco $neg [& more] (apply $minus-view more))
+(reset-meta! (var $neg) (meta (var $minus-view)))

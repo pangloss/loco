@@ -6,7 +6,7 @@
    ))
 
 ;;TODO: move this test into some other namespace
-#_(deftest subtration-meta-test
+(deftest subtration-meta-test
   (is (=
        {
         :doc "partial of $sum\n\n  e.g.:\n  ($= :eq ($- :n1 :n2 :n3 4)) => ($sum :eq := :n1 -:n2 -:n3 -4)\n  ",
@@ -36,7 +36,7 @@
          {:model
           '[[:var :x :public [:int 0 5]]
             [:var :y :public [:int -5 0]]
-            [:view "y-1" [offset :y [-1]] [:int -6 -1]]
+            [:view "y-1" [offset-view :y [-1]] [:int -6 -1]]
             [arithm [:x = "y-1"]]]}))
     
     (is (loco?
@@ -46,7 +46,7 @@
          {:model
           '[[:var :x :public [:int 0 5]]
             [:var :y :public [:int -5 0]]
-            [:view "y-6" [offset :y [-6]] [:int -11 -6]]
+            [:view "y-6" [offset-view :y [-6]] [:int -11 -6]]
             [arithm [:x = "y-6"]]]}
          ))
 
@@ -75,7 +75,7 @@
                       [arithm [:x = [- [:y]]]]],
           :model '[[:var :x :public [:int 0 5]]
                    [:var :y :public [:int -5 0]]
-                   [:view "-y" [minus :y []] [:int 0 5]]
+                   [:view "-y" [minus-view :y []] [:int 0 5]]
                    [arithm [:x = "-y"]]],
           :compiled [["x = {0..5}"
                       "y = {-5..0}"
@@ -104,8 +104,8 @@
        [:var :h :public [:int 0 5]]
        [:var :j :public [:int 1 2]]
        [:var "g-h-j-1" :proto [:int -8 3]]
-       [:view "-h" [minus :h []] [:int -5 0]]
-       [:view "-j" [minus :j []] [:int -2 -1]]
+       [:view "-h" [minus-view :h []] [:int -5 0]]
+       [:view "-j" [minus-view :j []] [:int -2 -1]]
        [sum ["g-h-j-1" = [:g "-h" "-j" -1]]]
        [arithm [0 = "g-h-j-1"]]],
      :compiled
@@ -138,9 +138,9 @@
        [:var :y :public [:int 0 5]]
        [:var :z :public [:int 1 2]]
        [:var "x-z" :proto [:int -2 4]]
-       [:view "-z" [minus :z []] [:int -2 -1]]
+       [:view "-z" [minus-view :z []] [:int -2 -1]]
        [:var "y-x-z" :proto [:int -4 7]]
-       [:view "-x-z" [minus "x-z" []] [:int -4 2]]
+       [:view "-x-z" [minus-view "x-z" []] [:int -4 2]]
        [sum ["x-z" = [:x "-z"]]]
        [sum ["y-x-z" = [:y "-x-z"]]]
        [arithm [:x = "y-x-z"]]],
@@ -164,16 +164,16 @@
    (loco?
     [($in :a 0 5)
      ($in :b 0 5)
-     ($= ($minus :a) ($- :b))]
+     ($= ($neg :a) ($- :b))]
     {:identity
      '[[:var :a :public [:int 0 5]]
        [:var :b :public [:int 0 5]]
-       [arithm [[minus :a []] = [- [:b]]]]],
+       [arithm [[minus-view :a []] = [- [:b]]]]],
      :model
      '[[:var :a :public [:int 0 5]]
        [:var :b :public [:int 0 5]]
-       [:view "-a" [minus :a []] [:int -5 0]]
-       [:view "-b" [minus :b []] [:int -5 0]]
+       [:view "-a" [minus-view :a []] [:int -5 0]]
+       [:view "-b" [minus-view :b []] [:int -5 0]]
        [arithm ["-a" = "-b"]]],
      :compiled
      [["a = {0..5}"

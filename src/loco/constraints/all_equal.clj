@@ -1,10 +1,9 @@
 (ns loco.constraints.all-equal
+  (:use loco.constraints)
   (:require
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
-   ;;[loco.constraints.arithm :refer [$arithm]]
-   ;;[loco.constraints :refer [$arithm]]
    [loco.constraints.utils :refer :all :as utils]
    [loco.utils :refer [p]]
    )
@@ -48,6 +47,7 @@
          [(single-arg-as-vec :guard vector?)]
          (constraint constraint-name (vec single-arg-as-vec)
                      compiler)
+         [a b] ($arithm a '= b)
          :else (constraint constraint-name (vec more)
                            compiler)
          ))
