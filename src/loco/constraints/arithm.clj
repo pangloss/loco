@@ -4,7 +4,6 @@
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
-   [loco.match :refer [match+]]
    [loco.utils :refer [p c]]
    )
   (:import
@@ -73,7 +72,7 @@
 
 ;;FIXME: not sure how to get this working :(
 ;;maybe the defloco should be done sorta like a safer reset-meta! like in vars.clj
-(s/fdef loco.constraints/$arithm
+#_(s/fdef loco.constraints/$arithm
   :args (s/or
          :arity-3 (s/cat :a any? :compare ::utils/comparison-operator? :b any?)
          :arity-5 (s/cat :a any?

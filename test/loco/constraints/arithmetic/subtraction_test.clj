@@ -5,7 +5,8 @@
    [loco.constraints.test-utils :refer :all]
    ))
 
-(deftest subtration-meta-test
+;;TODO: move this test into some other namespace
+#_(deftest subtration-meta-test
   (is (=
        {
         :doc "partial of $sum\n\n  e.g.:\n  ($= :eq ($- :n1 :n2 :n3 4)) => ($sum :eq := :n1 -:n2 -:n3 -4)\n  ",

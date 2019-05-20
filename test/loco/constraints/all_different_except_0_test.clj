@@ -22,7 +22,9 @@
      [["x = [0,1]" "y = {1,4}" "z = {1..2}"]
       ["ALLDIFFERENT ([PropCondAllDiffInst(cste -- 0, x, y, z), PropCondAllDiff_AC(cste -- 0, x, y, z)])"]],
      :solutions
-     #{{:x 1, :y 4, :z 2} {:x 0, :y 4, :z 2} {:x 0, :y 1, :z 2}
+     #{{:x 1, :y 4, :z 2}
+       {:x 0, :y 4, :z 2}
+       {:x 0, :y 1, :z 2}
        {:x 0, :y 4, :z 1}}}
     ))
 

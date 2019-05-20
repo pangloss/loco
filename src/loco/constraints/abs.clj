@@ -1,13 +1,13 @@
 (ns loco.constraints.abs
   (:use loco.constraints.utils)
   (:require
-   [loco.constraints :refer :all]
+   [loco.constraints :refer [$abs-view]]
    [clojure.spec.alpha :as s]
    [loco.utils :refer [p c]]
    [loco.constraints.utils :as utils]
    [clojure.core.match :refer [match]]
-   [loco.match :refer [match+]]
-   [clojure.walk :as walk]))
+   [clojure.walk :as walk]
+   ))
 
 (def ^:private constraint-name 'abs)
 
@@ -33,8 +33,6 @@
   (match partial
          [partial-name [operand]]
          (str "|" (name operand) "|")))
-
-(declare $abs)
 
 (defn- constraint-fn [var-name [op [operand]]]
   [($abs-view operand)])
@@ -66,3 +64,36 @@
                compiler))
   ([eq _op operand]
    ($abs eq operand)))
+
+;; macroexpanded
+#_(do
+  (in-ns 'loco.constraints)
+  (when (resolve '$abs) (ns-unmap 'loco.constraints '$abs))
+  (in-ns 'loco.constraints.abs)
+  (when (resolve '$abs) (ns-unmap 'loco.constraints.abs '$abs))
+  (let [defn__13978__auto__ (defn $abs
+                              "Creates an absolute value constraint:\n  ($abs eq operand) or ($abs eq = operand)\n  eq = |operand|\n\n  eq      = IntVar\n  operand = IntVar"
+                              {:choco
+                               "absolute(IntVar var1, IntVar var2)",
+                               :partial true}
+                              ([operand]
+                                (partial-constraint
+                                  partial-name
+                                  [operand]
+                                  :name-fn
+                                  name-fn
+                                  :constraint-fn
+                                  constraint-fn
+                                  :domain-fn
+                                  domain-fn))
+                              ([eq operand]
+                                (constraint
+                                  constraint-name
+                                  [eq '= operand]
+                                  compiler))
+                              ([eq _op operand] ($abs eq operand)))
+        v__13979__auto__ (intern
+                           'loco.constraints
+                           '$abs
+                           defn__13978__auto__)]
+    (reset-meta! v__13979__auto__ (meta #'$abs))))

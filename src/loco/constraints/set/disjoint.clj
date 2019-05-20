@@ -9,7 +9,7 @@
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
 
-(def ^:private constraint-name 'disjoint)
+(def ^:private constraint-name 'set/disjoint)
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}

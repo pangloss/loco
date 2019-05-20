@@ -9,7 +9,7 @@
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
 
-(def ^:private constraint-name 'subset-eq)
+(def ^:private constraint-name 'set/subset-eq)
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}

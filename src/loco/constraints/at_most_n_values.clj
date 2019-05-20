@@ -1,4 +1,5 @@
 ;; FIXME: WIP
+
 (ns loco.constraints.at-most-n-values
   (:require
    [clojure.core.match :refer [match]]
@@ -9,6 +10,7 @@
    )
   (:import
    [org.chocosolver.solver.variables IntVar]))
+
 ;; (in-ns 'loco.constraints)
 ;; (ns loco.constraints.at-most-n-values
 ;;   (:use loco.constraints.utils)
@@ -21,7 +23,7 @@
 ;;   (:import
 ;;    [org.chocosolver.solver.variables IntVar]))
 
-;; (def ^:private constraint-name 'at-most-n-values)
+(def ^:private constraint-name 'at-most-n-values)
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
@@ -56,6 +58,7 @@
                 ['n-values n-values]
                 ['strong strong?]]
                compiler)))
+
 ;; (s/def ::compile-spec
 ;;   (s/cat :constraint #{constraint-name}
 ;;          :args       (s/spec

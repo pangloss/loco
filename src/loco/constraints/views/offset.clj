@@ -8,7 +8,7 @@
    )
   )
 
-(def ^:private view-name 'offset)
+(def ^:private view-name 'offset-view)
 
 ;; example: [[:view -y [offset [4] :y] [:int 0 4]]
 (s/def ::compile-spec
@@ -45,7 +45,7 @@
         (conj [:int lb ub])
         (vary-meta assoc :domain {:int true :lb lb :ub ub}))))
 
-(defloco $offset
+(defloco $offset-view
   "creates a offset view.
 
 Creates a view based on var, equal to var+cste."

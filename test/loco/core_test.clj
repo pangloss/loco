@@ -128,13 +128,7 @@
     ($= :x :y)]
    [{:x 5 :z 3 :y 5}]))
 
-(deftest scalar-test
-  (test-constraint-model
-   [($in :x 1 5)
-    ($in :y 1 5)
-    ($in :z 1 5)
-    ($= ($scalar [:x :y :z] '(100 10 1)) 123)]
-   [{:x 1 :y 2 :z 3}]))
+
 
 (deftest mod-scalar-test
   (test-constraint-model

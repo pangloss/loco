@@ -2,21 +2,15 @@
 (ns loco.constraints.arithmetic.subtraction
   (:require
    [clojure.core.match :refer [match]]
-   [loco.constraints :refer [$arithm $sum]]
+   [loco.constraints :refer [$sum]]
+   ;;[loco.constraints :refer [$arithm]]
    [loco.constraints.utils :refer :all]
    [loco.constraints.views.minus :refer [$minus]]
-   [loco.constraints.views.offset :refer [$offset]]
+   [loco.constraints.views.offset :refer [$offset-view]]
    [loco.utils :refer [p c split]]
    ))
-;; (in-ns 'loco.constraints)
-;; (ns loco.constraints.arithmetic
-;;   (:use loco.utils
-;;         loco.constraints.utils)
-;;   (:require [clojure.core.match :refer [match]]
-;;             [loco.constraints.sum :refer [$sum]]
-;;             [loco.views.minus :refer [minus]]))
 
-;; (def ^:private partial-name '-)
+(def ^:private partial-name '-)
 
 ;; (defn- name-fn [partial]
 ;;   (match partial
@@ -34,7 +28,7 @@
                   [(only-arg :guard int?) [] []] (- only-arg)
                   [only-arg [] []] ($minus only-arg)
                   [(only-arg :guard int?) [] nums] (- only-arg (apply + nums))
-                  [op1 [] nums] ($offset op1 (- (apply + nums)))
+                  [op1 [] nums] ($offset-view op1 (- (apply + nums)))
                   [_ _ _] ($sum var-name '= (apply vector operand1 negative-vars))
                   )]
       [return]
@@ -70,6 +64,7 @@
    ;;name-fn
    :constraint-fn constraint-fn
    :domain-fn domain-fn))
+
 ;; ;;FIXME: subtract constraint-fn seems incomplete
 ;; (defn- constraint-fn [var-name [op [operand1 & more]]]
 ;;   (let [

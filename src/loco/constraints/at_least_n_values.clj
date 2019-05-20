@@ -1,4 +1,5 @@
 ;; FIXME: WIP
+
 (ns loco.constraints.at-least-n-values
     (:require
      [clojure.core.match :refer [match]]
@@ -9,6 +10,7 @@
      )
     (:import
      [org.chocosolver.solver.variables IntVar]))
+
 ;; (in-ns 'loco.constraints)
 ;; (ns loco.constraints.at-least-n-values
 ;;   (:use loco.constraints.utils)
@@ -21,7 +23,7 @@
 ;;     (:import
 ;;      [org.chocosolver.solver.variables IntVar]))
 
-;; (def ^:private constraint-name 'at-least-n-values)
+(def ^:private constraint-name 'at-least-n-values)
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
@@ -40,6 +42,10 @@
                             (->> vars (map coerce-int-var) (into-array IntVar))
                             (coerce-int-var n-values)
                             ac)
+
+           ::s/invalid
+           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           
 ;; (s/def ::compile-spec
 ;;   (s/cat :constraint #{constraint-name}
 ;;          :args       (s/spec

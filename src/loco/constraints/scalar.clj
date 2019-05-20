@@ -3,16 +3,22 @@
 (ns loco.constraints.scalar
   (:use loco.constraints.utils)
   (:require
-   [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
-   [clojure.walk :as walk])
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.match :refer [match+]]
+   )
   (:import
-   [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
+   [org.chocosolver.solver.variables
+    SetVar
+    IntVar
+    BoolVar
+    Task]))
 
 (def ^:private constraint-name 'scalar)
 
+;;FIXME: this is very broken, the format is [var '= [[1 a] [10 b] [100 c]]]
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
          :args       (s/spec
@@ -22,6 +28,7 @@
                        (s/coll-of int-var?)
                        (s/coll-of int?)))))
 
+;;FIXME: this is very broken, the format is [var '= [[1 a] [10 b] [100 c]]]
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
@@ -37,11 +44,13 @@
 
 ;;TODO: write tests for this related to nested preserve-consts
 (declare $scalar)
+
 (defn- constraint-fn
   "handle syntax like ($= :v ($scalar :a :b :c [100 10 1]))"
   [var-name [op [vars coeffs]]]
-  ($scalar var-name = vars coeffs))
+  ($scalar var-name '= vars coeffs))
 
+;;FIXME: this is very broken, the format is [var '= [[1 a] [10 b] [100 c]]]
 (defn- name-fn [partial]
   (match partial
          [partial-name [vars coeffs]]
@@ -51,7 +60,8 @@
               flatten
               (apply str (name partial-name) "_" ))))
 
-;;shit, don't even know what the body of this is going to look like. it has preserved consts, and vars in parallel arrays, maybe they could be joined
+;;FIXME: this is very broken, the format is [var '= [[1 a] [10 b] [100 c]]]
+;;...shit. don't even know what the body of this is going to look like. it has preserved consts, and vars in parallel arrays, maybe they could be joined
 (defn- domain-fn [partial]
   (match partial
          [partial-name [vars coeffs]]
@@ -84,12 +94,23 @@
   ([int-vars coeffs]
    {:pre [(sequential? int-vars)
           (every? int? coeffs)]}
-   (scalar-partial [(vec int-vars)  coeffs]))
+   (scalar-partial (mapv vector coeffs (repeat '*) int-vars)))
+
+  ([eq operator int-var-coeff-pairs]
+   {:pre [(sequential? int-var-coeff-pairs)
+          ;; test that every coeff is an int
+          ;; test that we are dealing with pairs
+          (every? #(and
+                    (int? (first %))
+                    (= 2 (count %))) int-var-coeff-pairs)]}
+   (constraint constraint-name
+               [eq '=  (vec int-var-coeff-pairs)]
+               compiler))
 
   ([eq operator int-vars coeffs]
    {:pre [(sequential? int-vars)
-          (comparison-operator? operator)
-          (every? int? coeffs)]}
+          (every? int? coeffs)
+          (= (count int-vars) (count coeffs))]}
    (constraint constraint-name
-               [$scalar (to-operator operator) int-vars (preserve-consts coeffs)]
+               [eq '=  (mapv vector coeffs int-vars)]
                compiler)))

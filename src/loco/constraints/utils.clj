@@ -258,20 +258,24 @@
                                  ;;sometimes the ns loco.constraints
                                  ;;isn't made, and we refer to it in
                                  ;;the intern! :(
-       (in-ns '~cur-ns)
-       #_(when (= (name '$arithm) (name '~name))
-         (println '$arithm)
-         (println)
-         (println (meta #'loco.constraints.arithm/$arithm)))
-       (let [defn# (defn ~name ~@more)
-             v# (intern 'loco.constraints '~name defn#)]
-         (reset-meta! v# (meta #'~name))
-         )
+       (when (resolve '~name)
+         (ns-unmap 'loco.constraints '~name))
 
-       #_(intern 'loco.constraints '~name ~name)
-       #_(when (= (name '$arithm) (name '~name))
-         (println)
-         (println (meta #'loco.constraints/$arithm)))
+       (in-ns '~cur-ns)
+       (when (resolve '~name)
+         (ns-unmap '~cur-ns '~name))
+
+       ;; TODO: remove defonce code
+       ;; from defonce
+       ;; this doesn't seem to be solving the issue at hand
+       (let [v0# (def ~name)]
+         (when-not (.hasRoot v0#)
+           #_(def ~name ~expr)
+           (let [defn# (defn ~name ~@more)
+                 v# (intern 'loco.constraints '~name defn#)]
+             (println "defn:" '~name)
+             (reset-meta! v# (meta #'~name))
+             )))
        )
     )
   )

@@ -43,7 +43,7 @@
    (loco?
     [($set :x [0 5] [0 2 5 6 7 8 9])
      ($set :y [0 2] [0 2 5 3 4])
-     ($all-equal [:x :y])]
+     ($= [:x :y])]
     {
      :model
      '[[:var :x :public [:set #{0 5} #{0 2 5 6 7 8 9}]]

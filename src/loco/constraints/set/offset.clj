@@ -1,4 +1,4 @@
-(ns loco.constraints.set.off-set
+(ns loco.constraints.set.offset
   (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
@@ -9,7 +9,7 @@
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
 
-(def ^:private constraint-name 'off-set)
+(def ^:private constraint-name 'set/offset)
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
@@ -26,7 +26,7 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defloco $off-set
+(defloco $offset
   "Creates a constraint linking set1 and set2
   with an index offset : x in set1 <=> x+offset in set2"
   {:choco "offSet(SetVar set1, SetVar set2, int offset)"}

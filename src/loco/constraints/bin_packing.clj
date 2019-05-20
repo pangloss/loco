@@ -1,4 +1,5 @@
 ;; FIXME: WIP
+
 (ns loco.constraints.bin-packing
     (:require
      [clojure.core.match :refer [match]]
@@ -9,6 +10,7 @@
      )
     (:import
      [org.chocosolver.solver.variables IntVar]))
+
 ;; (in-ns 'loco.constraints)
 ;; (ns loco.constraints.bin-packing
 ;;     (:use loco.constraints.utils)
@@ -21,7 +23,7 @@
 ;;     (:import
 ;;      [org.chocosolver.solver.variables IntVar]))
 
-;; (def ^:private constraint-name 'bin-packing)
+(def ^:private constraint-name 'bin-packing)
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
@@ -43,7 +45,10 @@
                         (int-array item-size)
                         (->> bin-load (map coerce-int-var) (into-array IntVar))
                         offset)
-;; (s/def ::compile-spec
+                      ::s/invalid
+                      (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+           
+           ;; (s/def ::compile-spec
 ;;   (s/cat :constraint #{constraint-name}
 ;;          :args       (s/spec
 ;;                       (s/tuple

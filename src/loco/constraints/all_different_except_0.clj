@@ -3,7 +3,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
+   ;;[loco.match :refer [match+]]
    [clojure.core.match :refer [match]]
    [clojure.walk :as walk])
   (:import
@@ -34,15 +34,13 @@
   [& vars]
   {:pre [(sequential? vars)]}
   (match (vec vars)
-         [var-list :guard sequential?]
-         (constraint constraint-name
-                     (vec var-list)
-                     compiler)
+         [var-list :guard sequential?] (constraint constraint-name
+                                                   (vec var-list)
+                                                   compiler)
 
-         [& var-list]
-         (constraint constraint-name
-                     (vec var-list)
-                     compiler)))
+         [& var-list] (constraint constraint-name
+                                  (vec var-list)
+                                  compiler)))
 
 (def $all-different-except-0 $distinct-except-0)
 (reset-meta! (var $all-different-except-0) (meta (var $distinct-except-0)))

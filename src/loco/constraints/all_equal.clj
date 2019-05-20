@@ -3,14 +3,18 @@
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
-   [loco.constraints.arithm :refer [$arithm]]
-   [loco.utils :refer [p]]
+   ;;[loco.constraints.arithm :refer [$arithm]]
+   ;;[loco.constraints :refer [$arithm]]
    [loco.constraints.utils :refer :all :as utils]
+   [loco.utils :refer [p]]
    )
   (:import
-   [org.chocosolver.solver.variables IntVar BoolVar SetVar]))
+   [org.chocosolver.solver.variables
+    IntVar
+    BoolVar
+    SetVar]))
 
-(def ^:private constraint-name 'all-equal)
+(def ^:private constraint-name '=)
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
@@ -32,25 +36,18 @@
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
 
-(defloco $all-equal
+(defloco $=
   "Constrains that all vars are equal to each other
 
   Creates a constraint stating that ints should be all equal.
   Creates a constraint stating that sets should be all equal."
   {:choco ["allEqual(IntVar... vars)"
            "allEqual(SetVar... sets)"]}
-  [vars]
-  {:pre [(vector? vars)]}
-  (constraint constraint-name (vec vars)
-              compiler))
-
-(defloco $=
   [& more]
-  (let [morev (vec more)]
-    (match morev
-           [x y]   ($arithm x = y)
-           [[x y]] ($arithm x = y)
-           [(v :guard vector?)] ($all-equal v)
-           _     ($all-equal morev))))
-
-(reset-meta! (var $=) (meta (var $all-equal)))
+  (match (vec more)
+         [(single-arg-as-vec :guard vector?)]
+         (constraint constraint-name (vec single-arg-as-vec)
+                     compiler)
+         :else (constraint constraint-name (vec more)
+                           compiler)
+         ))

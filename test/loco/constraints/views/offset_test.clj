@@ -9,7 +9,7 @@
   (is
    (loco?
     [($in :a -5 10)
-     ($= :a ($offset 2 3))]
+     ($= :a ($offset-view 2 3))]
     {:identity
      '[[:var :a :public [:int -5 10]]
        [arithm [:a = [offset 2 [3]]]]],
@@ -25,7 +25,7 @@
   (is
    (loco?
     [($in :a -5 10)
-     ($= 6 ($offset :a 3))]
+     ($= 6 ($offset-view :a 3))]
     {:identity
      '[[:var :a :public [:int -5 10]]
        [arithm [6 = [offset :a [3]]]]],
@@ -40,6 +40,6 @@
    )
 
   (testing "edge cases as described in docs"
-    (is (thrown? AssertionError ($offset :b :a))))
+    (is (thrown? AssertionError ($offset-view :b :a))))
 
   )

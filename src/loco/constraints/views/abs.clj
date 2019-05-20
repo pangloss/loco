@@ -8,7 +8,7 @@
    )
   )
 
-(def ^:private view-name 'abs)
+(def ^:private view-name 'abs-view)
 
 ;; example: [[:view -y [abs [] :y] [:int 0 -4]]
 (s/def ::compile-spec
