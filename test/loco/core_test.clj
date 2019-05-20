@@ -222,25 +222,7 @@
                 z (a (dec i))]
             (is (= (count (distinct [v w x y z])) 5))))))
 
-(deftest nth-test
-  (test-constraint-model
-   [($in :a [5])
-    ($in :b [5])
-    ($in :c [2])
-    ($in :d [5])
-    ($in :e [5])
-    ($in :x 0 4)
-    ($= ($nth [:a :b :c :d :e] :x) :x)]
-   [{:a 5 :b 5 :c 2 :d 5 :e 5 :x 2}])
-  (test-constraint-model
-   [($in :a [5])
-    ($in :b [5])
-    ($in :c [3])
-    ($in :d [5])
-    ($in :e [5])
-    ($in :x 0 4)
-    ($= ($nth [:a :b :c :d :e] :x 1) :x)]
-   [{:a 5 :b 5 :c 3 :d 5 :e 5 :x 3}]))
+
 
 (deftest cardinality-test
   (-> (solver/solutions
