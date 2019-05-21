@@ -42,16 +42,17 @@
 (defn- compiler [model vars-index statement]
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [(:or :ints :bools) [max [_ vars]]]}
-           (.max model max (into-array vars))
+           {:args [:ints [max [_ vars]]]}
+           (.max model max (into-array IntVar vars))
 
-           ;;{:args [:bools [max [_ vars]]]}
+           {:args [:bools [max [_ vars]]]}
+           (.max model max (into-array BoolVar vars))
 
            {:args [:set [max [_ set] [_ not-empty?]]]}
-           (.max model set max not-every?) ;;fugly API! bad choco!
+           (.max model set max not-empty?) ;;fugly API! bad choco!
 
            {:args [:set-indices [max [_ weights] [_ indices] [_ offset] [_ not-empty?]]]}
-           (.max model indices (int-array weights) offset max not-every?)
+           (.max model indices (int-array weights) offset max not-empty?)
 
            ::s/invalid
            (report-spec-error constraint-name ::compile-spec var-subed-statement))))
@@ -63,6 +64,7 @@
               (apply str (name partial-name) "_"))))
 
 (declare $max)
+
 (defn- constraint-fn [var-name [op args]]
   ($max var-name args))
 
@@ -86,7 +88,10 @@
   "handles syntax like ($= :v ($max :a :b :c))"
   [vars]
   {:pre [(sequential? vars)]}
-  (partial-constraint constraint-name (vec vars) name-fn constraint-fn domain-fn))
+  (partial-constraint constraint-name (vec vars)
+                      :name-fn name-fn
+                      :constraint-fn constraint-fn
+                      :domain-fn domain-fn))
 
 ;;TODO: redo max and min docs, this is complicated...
 ;;TODO: replace defun with match+ or conform add bool documentation
@@ -111,8 +116,7 @@
   [& more]
   (match
    (vec more)
-
-   [(max-list :guard sequential?)] (apply max-partial max-list)
+   [(max-list :guard sequential?)] (max-partial max-list)
 
    [max (vars :guard sequential?)]
    (constraint constraint-name
@@ -139,4 +143,4 @@
                 ['not-empty? not-empty?]]
                compiler)
 
-   [& int-vars] (apply max-partial int-vars)))
+   [& int-vars] (max-partial int-vars)))
