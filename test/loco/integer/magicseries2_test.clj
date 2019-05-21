@@ -4,9 +4,8 @@
             A series S = (S0,...Sn) is magic if Si represents the number of occurrences of i in S.
             Example: A Magic Series of length 5 is |2|1|2|0|0|"
       :solutions true}
-  loco.integer.magicseries2
+  loco.integer.magicseries2-test
   (:require [clojure.test :refer :all]
-            ;[loco.core :refer :all]
             [loco.constraints :refer :all]
             [loco.solver :as solver]))
 
