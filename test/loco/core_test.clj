@@ -269,32 +269,3 @@
     ($reify :reify ($< 0 :a))
     ($= :b :reify)]
    [{:a 5 :b 1}]))
-
-(deftest knapsack-test
-  (test-constraint-model
-   "Super basic knapsack constraint"
-   [($knapsack [1 1] [1 1] [1 1] 2 2)]
-   [{}])
-
-  (test-constraint-model
-   "Basic knapsack constraint"
-   [($knapsack [2 3]
-               [6 5]
-               [:x :y]
-               :total-weight
-               :total-value)
-    ($in :x 0 10)
-    ($in :y 0 10)
-    ($in :total-weight 0 10)
-    ($in :total-value 0 10)]
-   [{:x 0 :y 0 :total-weight 0 :total-value 0}
-    {:x 1 :y 0 :total-weight 2 :total-value 6}
-    {:x 0 :y 1 :total-weight 3 :total-value 5}
-    {:x 0 :y 2 :total-weight 6 :total-value 10}])
-
-  (test-constraint-model
-   "Knapsack constraint with negatives"
-   [($in :x -100 100)
-    ($in :y -100 100)
-    ($knapsack [1 1] [10 20] [:x :y] 10 10)]
-   [{:x 19 :y -9}]))
