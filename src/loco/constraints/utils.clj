@@ -9,7 +9,8 @@
    [clojure.pprint :refer [pprint]]
    ;;[fipp.edn :refer [pprint]]
    )
-  (:import
+  (:impor
+   org.chocosolver.solver.constraints.Constraint
    [org.chocosolver.solver.variables IntVar BoolVar SetVar Task]
    org.chocosolver.solver.constraints.extension.Tuples))
 
@@ -175,6 +176,7 @@
 (def set-var?       (p instance? SetVar))
 (def task-var?      (p instance? Task))
 (def tuples-var?    (p instance? Tuples))
+(def constraint?    (p instance? Constraint))
 ;;(def int-or-bool? #(or (bool-var? %) (int-var? %)))
 
 (defn domainize

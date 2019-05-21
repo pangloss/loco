@@ -21,12 +21,6 @@
   {:pre [(sequential? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:or (vec constraints-or-bools)]])
 
-(defloco $not
-  "Given a constraint C, returns \"not C\" a.k.a. \"~C\", which is true iff C is false."
-  {:choco "not(Constraint cstr)"}
-  [constraint]
-  [:constraint [:not constraint]])
-
 (defloco $when
   [if-this then-this]
   [:constraint [:when [if-this then-this]]])
@@ -117,5 +111,3 @@ In other words, if P is true, Q must be true (otherwise the whole
      second)))
 
 (defloco $true []  (constraint 'true nil identity))
-
-(defloco $false [] (constraint 'false nil identity))

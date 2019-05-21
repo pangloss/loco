@@ -78,6 +78,7 @@
    "constraints/set/inverse"
 
    "constraints/logic/logic"
+   "constraints/logic/not"
    "constraints/automata/regular"
    ])
 
