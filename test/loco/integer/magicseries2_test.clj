@@ -61,11 +61,12 @@
   (is (empty? (solver/solutions (ms2-model 2))) "Length 2 does not have solution")
   (is (empty? (solver/solutions (ms2-model 3))) "Length 3 does not have solution")
 
-  ;; No solution for length = 6 (try it out!)
+  ;; ;; No solution for length = 6 (try it out!)
   (is (empty? (solver/solutions (ms2-model 6))) "Length 6 does not have solution")
 
-  ;; Testing between 4 (inclusive) and 50 (inclusive)
+  ;; ;; Testing between 4 (inclusive) and 50 (inclusive)
   (doseq [l (range 4 21)]
     (doseq [sol (solver/solutions (ms2-model l))]
       (doseq [[[k i] occ] (seq sol)]
-        (is (= occ (count (filter #(= i %1) (map second sol)))))))))
+        (is (= occ (count (filter #(= i %1) (map second sol))))))))
+  )

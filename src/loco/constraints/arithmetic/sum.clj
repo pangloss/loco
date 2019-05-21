@@ -97,28 +97,21 @@
                   [[only-var] nums] (c/$offset-view only-var (apply + nums))
                   [_ _] ($sum var-name '= body)
                   )]
-      [return]
-      )
-    ))
+      [return])))
 
-(defn- domain-fn
-  ([partial]
-   (->
-    (match partial
-           [partial-name []] {:lb 0 :ub 0}
-           [partial-name body]
-           (->>
-            body
-            (map domainize) ;;FIXME: leaky abstration
-            (reduce
-             (fn [{:keys [lb ub] :as acc} domain]
-               (match
-                domain
-                ;;TODO: handle enumerated domains
-                {:int true :lb d-lb :ub d-ub} {:lb (unchecked-add (int lb) (int d-lb))
-                                               :ub (unchecked-add (int ub) (int d-ub))}))
-             )))
-    (assoc :int true))))
+(defn- domain-fn [[partial-name body]]
+  (let [new-domain (->>
+                    body
+                    (map domainize) ;;FIXME: leaky abstration
+                    (reduce
+                     (fn [{:keys [lb ub] :as acc} domain]
+                       ;;TODO: handle enumerated domains
+                       (match domain
+                              {:lb d-lb :ub d-ub} {:lb (unchecked-add (int lb) (int d-lb))
+                                                   :ub (unchecked-add (int ub) (int d-ub))}))
+                     {:lb 0 :ub 0}
+                     ))]
+    (-> new-domain (assoc :int true))))
 
 (defloco $+
   "partial of $sum
