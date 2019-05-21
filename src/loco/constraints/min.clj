@@ -39,10 +39,8 @@
                                      (s/tuple #{'not-empty?} boolean?))))))
 
 (defn- compiler [model vars-index statement]
-  (pp [vars-index statement])
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
         speced (->> var-subed-statement (s/conform ::compile-spec))]
-    (pp speced)
     (match speced
            {:args [:ints [min [_ vars]]]}
            (.min model min (into-array IntVar vars))
@@ -68,7 +66,6 @@
 (declare $min)
 
 (defn- constraint-fn [var-name [op args]]
-  (pp [var-name [op args]])
   ($min var-name args))
 
 (defn- domain-fn [partial]
