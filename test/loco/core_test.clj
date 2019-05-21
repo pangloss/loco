@@ -109,27 +109,6 @@
     ($= ($abs :x) 2)]
    [{:x -2} {:x 2}]))
 
-(deftest minmax-test
-  (test-constraint-model
-   [($in :x -5 5)
-    ($in :y -5 5)
-    ($in :z -5 5)
-    ($= ($min :x :y :z) :x)
-    ($= ($max :x :y :z) :z)
-    ($= :x -5)
-    ($= :z -5)]
-   [{:x -5 :y -5 :z -5}])
-  (test-constraint-model
-   [($in :x 1 5)
-    ($in :y 2 6)
-    ($in :z 3 7)
-    ($= ($min :x 5) 5)
-    ($= ($max :z 3) 3)
-    ($= :x :y)]
-   [{:x 5 :z 3 :y 5}]))
-
-
-
 (deftest mod-scalar-test
   (test-constraint-model
    [($in :x 1 5)
@@ -181,47 +160,6 @@
     ($= :true :x)
     ($= :false ($- 1 :x))]
    [{:x 1}]))
-
-(deftest circuit-test
-  (-> (solver/solution
-        [($in :a 0 4)
-         ($in :b [0])
-         ($in :c 0 4)
-         ($in :d 0 4)
-         ($in :e 0 4)
-         ($circuit [:a :b :c :d :e])])
-    (as-> sol
-          (let [a [:a :b :c :d :e]
-                [v i] (first sol)
-                w (a i)
-                i (sol w)
-                x (a i)
-                i (sol x)
-                y (a i)
-                i (sol y)
-                z (a i)]
-            (is (= (count (distinct [v w x y z])) 5)))))
-
-  ;;testing offset
-  (-> (solver/solution
-        [($in :a 1 5)
-         ($in :b [1])
-         ($in :c 1 5)
-         ($in :d 1 5)
-         ($in :e 1 5)
-         ($circuit [:a :b :c :d :e] 1)])
-    (as-> sol
-          (let [a [:a :b :c :d :e]
-                [v i] (first sol)
-                w (a (dec i))
-                i (sol w)
-                x (a (dec i))
-                i (sol x)
-                y (a (dec i))
-                i (sol y)
-                z (a (dec i))]
-            (is (= (count (distinct [v w x y z])) 5))))))
-
 
 
 (deftest cardinality-test
