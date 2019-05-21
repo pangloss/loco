@@ -3,10 +3,7 @@
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
-   [loco.constraints :as c]
    [loco.constraints.utils :refer :all :as utils]
-   ;;[loco.constraints.views.offset :refer [$offset-view]]
-   [loco.utils :refer [p c split]]
    )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar]))

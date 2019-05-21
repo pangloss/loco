@@ -6,7 +6,6 @@
    ))
 
 (deftest cardinality-test
-
   (is
    (loco?
     [($in :a 0 3)
@@ -16,8 +15,7 @@
     {:solutions
      #{{:a 1, :b 1, :c 2}
        {:a 2, :b 1, :c 1}
-       {:a 1, :b 2, :c 1}}}
-    ))
+       {:a 1, :b 2, :c 1}}}))
 
   (is
    (loco?
@@ -56,5 +54,24 @@
      ($in :b 1 3)
      ($cardinality [:a :b] {1 :same, 2 :same})]
     {:solutions #{{:a 3, :b 3, :same 0}
-                  {:a 2, :b 1, :same 1}}}))
-  )
+                  {:a 2, :b 1, :same 1}}})))
+
+;; legacy test
+#_(deftest cardinality-test
+    (-> (solver/solutions
+         [($in :a 1 5)
+          ($in :b 1 5)
+          ($in :c 1 5)
+          ($in :d 1 5)
+          ($in :e 1 5)
+          ($in :ones 1 5)
+          ($in :twos 1 5)
+          ($cardinality [:a :b :c :d :e] {1 :ones 2 :twos})])
+        (as-> ms
+            (doseq [m ms]
+              (-> m
+                  (map [:a :b :c :d :e])
+                  frequencies
+                  (map [1 2])
+                  (= (map m [:ones :twos]))
+                  is)))))
