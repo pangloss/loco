@@ -13,6 +13,7 @@
    org.chocosolver.solver.variables.IntVar
    org.chocosolver.solver.variables.SetVar
    org.chocosolver.solver.variables.Task
+   org.chocosolver.solver.variables.RealVar
    ))
 
 (defn- problem->Model
@@ -126,33 +127,44 @@
    :model-objective <Map>
   }"
   [problem & args]
-  (let [args-map (apply hash-map args)
-        {:keys [constraints
-                model
-                public-vars-index
-                vars-index
-                var-name-mapping]
-         } (get-compiled-model problem)
-        solver (.getSolver model)
-        var-key-name-fn (if (empty? var-name-mapping)
-                          identity
-                          (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
-        solution-extractor (p extract-solution public-vars-index var-key-name-fn)
-        search-monitors (set-search-monitor-settings! solver args-map)
-        model-objective (set-model-objective! model vars-index args-map)
-        ]
+  (if (instance? Model problem)
+      ;; we were given a choco model instead of something nicely wrapped
+      ;; we will still attempt to solve the model but we don't do anything fancy
+      (->
+       problem
+       (.getSolver)
+       (.streamSolutions nil) ;;lawl, doesn't work without args
+       (.iterator)
+       iterator-seq)
+
+      ;;we have are given a nice loco object, do nice things and return a seq of clojure stuff
+      (let [args-map (apply hash-map args)
+            {:keys [constraints
+                    model
+                    public-vars-index
+                    vars-index
+                    var-name-mapping]
+             } (get-compiled-model problem)
+            solver (.getSolver model)
+            var-key-name-fn (if (empty? var-name-mapping)
+                              identity
+                              (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
+            solution-extractor (p extract-solution public-vars-index var-key-name-fn)
+            search-monitors (set-search-monitor-settings! solver args-map)
+            model-objective (set-model-objective! model vars-index args-map)
+            ]
 
 
-    (->
-     solver
-     (.streamSolutions nil) ;;lawl, doesn't work without args
-     (.iterator)
-     iterator-seq
-     (->> (map solution-extractor))
-     (with-meta {:solver solver
-                 :search-monitors search-monitors
-                 :model model
-                 :model-objective model-objective}))))
+        (->
+         solver
+         (.streamSolutions nil) ;;lawl, doesn't work without args
+         (.iterator)
+         iterator-seq
+         (->> (map solution-extractor))
+         (with-meta {:solver solver
+                     :search-monitors search-monitors
+                     :model model
+                     :model-objective model-objective})))))
 
 (def solution (c first (p solutions)))
 (alter-meta! (var solution) merge (select-keys (meta (var solutions)) [:doc :arglists]))

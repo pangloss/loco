@@ -24,4 +24,8 @@
                  [fipp "0.6.18"]
 
                  [com.rpl/specter "1.1.2"]
-                 ])
+                 ]
+  :jvm-opts [
+             "-Djava.library.path=/home/pauli/ibex/ibex/lib/lib"
+             ]
+  )
