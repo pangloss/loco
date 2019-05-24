@@ -1,6 +1,9 @@
 (ns loco.utils
-  (:refer-clojure :exclude [var?])
-  (:require [clojure.core.match :refer [match]]))
+  (:require
+   [clojure.core.match :refer [match]]
+   ;;[fipp.edn :refer [pprint]]
+   [clojure.pprint :refer [pprint]]
+   ))
 
 (def p partial)
 (def c comp)
@@ -67,40 +70,13 @@
    ]
   )
 
-;; (defn var?
-;;   [form]
-;;   (match form
-;;          [:var & _] true
-;;          :else false))
+(def pp pprint)
 
-(defn public-var? [form]
-  (match form
-         [:var _ :public & _] true
-         :else false))
-
-(defn hidden-var? [form]
-  (match form
-         [:var _ :hidden & _] true
-         :else false))
-
-;; (defn proto-var? [form]
-;;   (match form
-;;          [:var _ :proto & _] true
-;;          :else false))
-
-(def var? (c some? :var meta))
-
-(def proto? (c some? :proto meta))
-
-(def constraint? (c some? :constraint meta))
-
-(def partial-constraint? (c some? :partial-constraint meta))
-
-(def view? (c some? :view meta))
-
-(def reify? (c some? :reify meta))
-
-(defn reify? [form]
-  (match form
-         [:reify _ _] true
-         :else false))
+(def print-java-members [java-obj]
+  (clojure.pprint/print-table
+   (->>
+    java-obj
+    clojure.reflect/reflect
+    :members
+    (filter :exception-types)
+    (sort-by :name))))

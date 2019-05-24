@@ -1,32 +1,68 @@
 (ns loco.constraints.utils
+  (:use loco.utils)
   (:refer-clojure :exclude [compile var? set?])
   (:require
-   [loco.utils :refer [split]]
    [clojure.core.match :refer [match]]
    [loco.match :refer [match+]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
-   [clojure.pprint :refer [pprint]]
-   ;;[fipp.edn :refer [pprint]]
    )
-  (:impor
+  (:import
    org.chocosolver.solver.constraints.Constraint
    [org.chocosolver.solver.variables IntVar BoolVar SetVar Task]
    org.chocosolver.solver.constraints.extension.Tuples))
 
-(def pp pprint)
 
-;;TODO: maybe we don't want these to be private
-(def ^:private c comp)
-(def ^:private p partial)
 
-(defn- var? [statement]                 (->> statement meta :var))
-(defn- set? [statement]                 (->> statement meta :set))
-(defn- task? [statement]                (->> statement meta :task))
-(defn- tuples? [statement]              (->> statement meta :tuples))
-(defn- constraint? [statement]          (->> statement meta :constraint))
-(defn- partial-constraint? [statement]  (->> statement meta :partial-constraint))
-(defn- view? [statement]                (->> statement meta :view))
+;; -------------------- from loco.utils
+;; (defn var?
+;;   [form]
+;;   (match form
+;;          [:var & _] true
+;;          :else false))
+
+(defn public-var? [form]
+  (match form
+         [:var _ :public & _] true
+         :else false))
+
+;; (defn hidden-var? [form]
+;;   (match form
+;;          [:var _ :hidden & _] true
+;;          :else false))
+
+;; ;; (defn proto-var? [form]
+;; ;;   (match form
+;; ;;          [:var _ :proto & _] true
+;; ;;          :else false))
+
+;; (def var? (c some? :var meta))
+
+;; (def proto? (c some? :proto meta))
+
+;; (def constraint? (c some? :constraint meta))
+
+;; (def partial-constraint? (c some? :partial-constraint meta))
+
+;; (def view? (c some? :view meta))
+
+;; (def reify? (c some? :reify meta))
+
+(defn reify? [form]
+  (match form
+         [:reify _ _] true
+         :else false))
+;; -------------------- loco.utils
+
+;;FIXME: the names are conflicting with clojure.core
+
+(defn var? [statement]                 (->> statement meta :var))
+(defn set? [statement]                 (->> statement meta :set))
+(defn task? [statement]                (->> statement meta :task))
+(defn tuples? [statement]              (->> statement meta :tuples))
+(defn constraint? [statement]          (->> statement meta :constraint))
+(defn partial-constraint? [statement]  (->> statement meta :partial-constraint))
+(defn view? [statement]                (->> statement meta :view))
 
 (defn constraint
   ([name input compiler]
@@ -198,8 +234,11 @@
      :bool-var val
      :bool (.intVar model val))))
 
-(defn coerce-int-var [model [coerced-int-var-type val]]
-  (coerce-var model [coerced-int-var-type val]))
+(defn coerce-int-var
+  ([model]
+   (p coerce-var model))
+  ([model [coerced-int-var-type val]]
+   (coerce-var model [coerced-int-var-type val])))
 
 (s/def ::arithmetic-operator? arithmetic-operator?)
 (s/def ::arithmetic-symbol? arithmetic-symbol?)

@@ -55,7 +55,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   [prefix] (gensym prefix))
 
 ;;this is really complicated... very skeptical of it's use, or even correctly working
-(defloco $cond
+#_(defloco $cond
   "A convenience function for constructing a \"cond\"-like statement out of $if/$reify statements.
   The final \"else\" can be specified using the :else keyword.
 

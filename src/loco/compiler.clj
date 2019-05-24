@@ -1,10 +1,10 @@
 (ns loco.compiler
+  (:use loco.utils
+        loco.constraints.utils)
   (:refer-clojure :exclude [compile ints var?])
   (:require
    [loco.model :as model]
    [loco.match :refer [match+]]
-   [loco.constraints :refer []]
-   [loco.utils :refer [p c view? var? constraint? reify? public-var?]]
    [clojure.core.match :refer [match]]
    [clojure.pprint :refer [pprint]])
   (:import org.chocosolver.solver.Model

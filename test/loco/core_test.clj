@@ -6,7 +6,7 @@
    [loco.solver :as solver]
    ))
 
-(deftest logic-test
+#_(deftest logic-test
   (is (loco?
        [($in :x [1])
         ($true)
@@ -103,8 +103,7 @@
        {:solutions #{{:x 1 :y 2 :z 2}}})))
 
 
-
-(deftest reify-test
+#_(deftest reify-test
   (is (loco?
        [($in :x 0 1)
         ($reify :true ($true))

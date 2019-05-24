@@ -1,7 +1,6 @@
-;; FIXME: WIP
-
 (ns loco.constraints.scalar
-  (:use loco.constraints)
+  (:use loco.constraints
+        loco.utils)
   (:require
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
@@ -26,9 +25,7 @@
                        (s/coll-of (s/tuple int? int-var?))))))
 
 (defn- compiler [model vars-index statement]
-  (pp ["compiler" [model vars-index statement]])
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (pp ["subed" var-subed-statement])
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [result op vars-coeffs]}
            (let [coeffs (map first vars-coeffs)

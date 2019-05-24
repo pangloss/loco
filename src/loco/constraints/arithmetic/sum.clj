@@ -1,9 +1,12 @@
 (ns loco.constraints.arithmetic.sum
+  (:use loco.utils
+        loco.constraints.utils
+        loco.constraints)
   (:require
    [clojure.core.match :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
-   [loco.constraints.utils :refer :all :as utils]
+   [loco.constraints.utils :as utils]
    )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar]))
@@ -28,7 +31,7 @@
   (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
     (match (->> var-subed-statement (s/conform ::compile-spec))
            {:args [:ints {:eq-var eq-var :op op, :vars vars}]}
-           (.sum model (into-array IntVar (map (p coerce-int-var model) vars)) (name op) eq-var)
+           (.sum model (into-array IntVar (map (utils/coerce-int-var model) vars)) (name op) eq-var)
 
            {:args [:bools {:eq-var eq-var :op op, :vars vars}]}
            (.sum model (into-array BoolVar vars) (name op) eq-var)
@@ -66,9 +69,9 @@
      (match
       [vars numbers]
       [[] []] nil
-      [[] nums] (c/$= summation-var (apply + nums))
-      [[only-var] []] (c/$= summation-var only-var)
-      [[only-var] nums] (c/$= summation-var (c/$offset-view only-var (apply + nums)))
+      [[] nums] ($= summation-var (apply + nums))
+      [[only-var] []] ($= summation-var only-var)
+      [[only-var] nums] ($= summation-var ($offset-view only-var (apply + nums)))
       [vars []] (constraint constraint-name
                               [summation-var (to-operator operator) vars]
                               compiler)
@@ -91,7 +94,7 @@
                   [[] []] nil
                   [[] nums] (apply + nums)
                   [[only-var] []] only-var
-                  [[only-var] nums] (c/$offset-view only-var (apply + nums))
+                  [[only-var] nums] ($offset-view only-var (apply + nums))
                   [_ _] ($sum var-name '= body)
                   )]
       [return])))
