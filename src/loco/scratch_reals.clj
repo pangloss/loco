@@ -1,4 +1,5 @@
 (ns loco.scratch-reals
+  (:use loco.utils)
   (:require
      [loco.solver :as solver])
   (:import
@@ -32,45 +33,49 @@
 ;; positive infinity
 ;;##Inf
 
-(->
- (let [model (new Model)
-       precision 1.0e-6
-       precision 1.0e-2
-       x (.realVar model "x", ##-Inf ##Inf precision)
-       y (.realVar model "y", -1.0e8, 1.0e8, precision)
-       z (.realVar model "z", -1.0e8, 1.0e8, precision)
+(defn make-model [precision]
+  (let [model (new Model)
+        x (.realVar model "x", ##-Inf ##Inf precision)
+        y (.realVar model "y", -1.0e8, 1.0e8, precision)
+        z (.realVar model "z", -1.0e8, 1.0e8, precision)
 
-       constraint-str (str
-                       "{1}^2 * (1 + {2}^2) + {2} * ({2} - 24 * {1}) = -13;"
-                       "{0}^2 * (1 + {1}^2) + {1} * ({1} - 24 * {0}) = -13;"
-                       "{2}^2 * (1 + {0}^2) + {0} * ({0} - 24 * {2}) = -13")
-       ;;vars = new RealVar[]{x, y, z};
-       vars (into-array RealVar [x y z])
-       ]
-   ;; model.realIbexGenericConstraint(
-   ;;                                 "{1}^2 * (1 + {2}^2) + {2} * ({2} - 24 * {1}) = -13;" +
-   ;;                                 "{0}^2 * (1 + {1}^2) + {1} * ({1} - 24 * {0}) = -13;" +
-   ;;                                 "{2}^2 * (1 + {0}^2) + {0} * ({0} - 24 * {2}) = -13",
-   ;;                                 vars).post();
+        constraint-str (str
+                        "{1}^2 * (1 + {2}^2) + {2} * ({2} - 24 * {1}) = -13;"
+                        "{0}^2 * (1 + {1}^2) + {1} * ({1} - 24 * {0}) = -13;"
+                        "{2}^2 * (1 + {0}^2) + {0} * ({0} - 24 * {2}) = -13")
+        vars (into-array RealVar [x y z])
+        ]
+    (->
+     model
+     (.realIbexGenericConstraint constraint-str vars)
+     (.post))
+    (-> model (.setPrecision precision))
+    {
+     :x x
+     :y y
+     :z z
+     :model model
+     }
+    )
+  )
 
-   ;; mutation happens here! yay!
-   (->
-    model
-    (.realIbexGenericConstraint constraint-str vars)
-    (.post))
 
-   [
-    ;;model
-    (instance? org.chocosolver.solver.search.IResolutionHelper (.getSolver model))
-    (instance? org.chocosolver.solver.ISolver (.getSolver model))
-    ;;(.streamSolutions (.getSolver model))
-    ;; (.solve (.getSolver model))
-    ;; (.solve (.getSolver model))
-    (.streamSolutions (.getSolver model) nil)
-    (time (solver/solution model))
-    (time (solver/solutions model))
-    ]
+(let [
+      precision 1.0e-4
+      ;;precision 1.0
+      {normal :model} (make-model precision)
+      {max :model x :x y :y z :z} (make-model precision)
+      ]
+  (-> max (.setObjective Model/MAXIMIZE z))
+  [
+   normal
+   max
+   ["--------------------max"]
+   (time (doall (solver/solutions max)))
+   ;;((juxt count identity) (time (solver/solutions max)))
 
-   )
- println
- )
+   ["--------------------reg"]
+   (time (doall (solver/solutions normal)))
+   ;;((juxt count identity) (time (solver/solutions normal)))
+   ]
+  )
