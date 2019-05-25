@@ -2,7 +2,7 @@
   (:require
    [clojure.core.match :refer [match]]
    ;;[fipp.edn :refer [pprint]]
-   [clojure.pprint :refer [pprint]]
+   [clojure.pprint :refer [pprint, print-table]]
    ))
 
 (def p partial)
@@ -71,8 +71,9 @@
   )
 
 (def pp pprint)
+(def ppt print-table)
 
-(def print-java-members [java-obj]
+(defn print-java-members [java-obj]
   (clojure.pprint/print-table
    (->>
     java-obj
