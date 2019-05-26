@@ -1,7 +1,8 @@
 (ns loco.scratch-reals
   (:use loco.utils)
   (:require
-     [loco.solver :as solver])
+   [loco.solver :as solver]
+   )
   (:import
    (org.chocosolver.solver.constraints.real Ibex)
    ;; (org.chocosolver.solver.variables IntVar)
@@ -33,7 +34,7 @@
 ;; positive infinity
 ;;##Inf
 
-(defn make-model [precision]
+(defn cyclo-hexan-problem-model [precision]
   (let [model (new Model)
         x (.realVar model "x", ##-Inf ##Inf precision)
         y (.realVar model "y", -1.0e8, 1.0e8, precision)
@@ -59,12 +60,11 @@
     )
   )
 
-
 (let [
       precision 1.0e-4
       ;;precision 1.0
-      {normal :model} (make-model precision)
-      {max :model x :x y :y z :z} (make-model precision)
+      {normal :model} (cyclo-hexan-problem-model precision)
+      {max :model x :x y :y z :z} (cyclo-hexan-problem-model precision)
       ]
   (-> max (.setObjective Model/MAXIMIZE z))
   [
@@ -73,7 +73,6 @@
    ["--------------------max"]
    (time (doall (solver/solutions max)))
    ;;((juxt count identity) (time (solver/solutions max)))
-
    ["--------------------reg"]
    (time (doall (solver/solutions normal)))
    ;;((juxt count identity) (time (solver/solutions normal)))
