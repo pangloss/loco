@@ -54,6 +54,14 @@
     {:gensym (gensym str-name)
      :var (.realVar model str-name, val)}))
 
+(defn const-reals [model prefixes name vals]
+  (mapv
+   (fn [val prefix]
+     (let [str-name (str prefix " " name)]
+       {:gensym (gensym str-name)
+        :var (.realVar model str-name, val)}))
+   vals prefixes))
+
 (defn choco-real [model name lb ub precision]
   (let [str-name (str name)]
     {:gensym (gensym str-name)
@@ -79,7 +87,7 @@
     {:vars vars
      :constraints constraints}))
 
-(defn ontario-tax-bracket-model [model choco-income-var precision]
+(defn ontario-tax-bracket-model [model prefix choco-income-var precision]
   ;;bracket-amount=MAX(0,MIN(net-income,current-tax-bracket)-previous-tax-bracket)
   ;; 0 1 2 3 [bracket-amount net-income current-tax-bracket previous-tax-bracket]
   ;;(str "max(0, min({0}, {1}) - {2}) = {3};")
@@ -90,9 +98,9 @@
              (map
               (fn [[min max percent]]
                 (let [
-                      choco-income-tax-bracket-var (choco-real model ["taxed-income" max] 0, max, 1.0)
+                      choco-income-tax-bracket-var (choco-real model [prefix "taxed-income" max] 0, max, 1.0)
                       {income-tax-bracket-gensym :gensym} choco-income-tax-bracket-var
-                      choco-income-tax-payment-var (choco-real model ["taxed-amount %" (int (* 100 percent))] 0, (* max percent), 0.01)
+                      choco-income-tax-payment-var (choco-real model [prefix "taxed-amount %" (int (* 100 percent))] 0, (* max percent), 1.0)
                       {income-tax-payment-gensym :gensym} choco-income-tax-payment-var
                       ]
                   {
@@ -118,18 +126,33 @@
     model
     ))
 
+(def years
+  [2045
+   2046 2047 2048 2049 2050 2051 2052 2053 2054 2055 2056 2057 2058 2059 2060 2061 2062 2063 2064 2065 2066 2067 2068
+   2069 2070 2071 2072 2073 2074 2075 2076 2077 2078 2079 2080 2081 2082 2083 2084 2085 2086 2087 2088 2089 2090 2091
+   2092 2093 2094 2095 2096 2097 2098 2099 2100 2101 2102 2103 2104 2105 2106 2107 2108 2109 2110 2111 2112 2113
+   ])
+
+(def incomes
+  [107745.45 62869.16 75585.43 76780.60 66258.49 67499.16 68763.24 84076.29 86050.84 88087.16 90283.00 91481.67 92699.00
+   93928.89 95164.98 96400.72 97732.21 98988.52 100316.52 101647.03 102965.19 104346.23 105715.42 107091.02 108521.24
+   109917.03 111346.24 112807.78 114276.33])
+
 (->>
  (let [
        precision 1.0
        model (new Model)
-       income-var (const-real model "income" 107745.45)
-       model (ontario-tax-bracket-model model income-var precision)
+       income-vars (const-reals model years "net-income" (take 2 incomes))
+       _model (doall
+               (map (fn [income-var year]
+                      (ontario-tax-bracket-model model year income-var precision))
+                    income-vars years))
        ]
    ;;(-> model (.setObjective Model/MAXIMIZE z))
    [
     model
     ["--------------------reg"]
-    (time (doall (solver/solutions model)))
+    (time (first (solver/solutions model)))
     ]
    )
  println
