@@ -29,14 +29,15 @@
 (def tax-bracket-amounts
   (mapv int [1000000.00, 220000.00, 210371.00, 150000.00, 147667.00, 95259.00, 91101.00, 87813.00, 77313.00, 47630.00, 43906.00]))
 
+(def tax-bracket-percents
+  (map (p * 0.01) [53.53, 51.97, 47.97, 46.41, 43.41, 37.91, 33.89, 31.48, 29.65, 24.15, 20.05]))
+
 (def tax-bracket-ranges
   (reverse
    (map vector
         (rest (conj tax-bracket-amounts 0))
-        tax-bracket-amounts)))
-
-#_(def tax-bracket-percents
-    (reverse [53.53, 51.97, 47.97, 46.41, 43.41, 37.91, 33.89, 31.48, 29.65, 24.15, 20.05]))
+        tax-bracket-amounts
+        tax-bracket-percents)))
 
 #_(def tax-bracket-pairs
     (map vector
@@ -87,16 +88,22 @@
         taxed-incomes
         (->> tax-bracket-ranges
              (map
-              (fn [[min max]]
+              (fn [[min max percent]]
                 (let [
-                      choco-income-tax-bracket-var (choco-real model ["taxed-income" max] 0, max, precision)
+                      choco-income-tax-bracket-var (choco-real model ["taxed-income" max] 0, max, 1.0)
                       {income-tax-bracket-gensym :gensym} choco-income-tax-bracket-var
+                      choco-income-tax-payment-var (choco-real model ["taxed-amount %" (int (* 100 percent))] 0, (* max percent), 0.01)
+                      {income-tax-payment-gensym :gensym} choco-income-tax-payment-var
                       ]
                   {
-                   :vars [choco-income-tax-bracket-var]
-                   :constraints [(choco-constraint ["max(0, min( " income-gensym " , " max " ) - " min " ) = " income-tax-bracket-gensym])]
+                   :vars [choco-income-tax-bracket-var
+                          choco-income-tax-payment-var]
+                   :constraints
+                   [
+                    (choco-constraint ["max(0, min( " income-gensym " , " max " ) - " min " ) = " income-tax-bracket-gensym])
+                    (choco-constraint [income-tax-bracket-gensym " * " percent " = " income-tax-payment-gensym])
+                    ]
                    }))))
-
         {tax-vars :vars
          tax-constraint-strs :constraints} (magic [choco-income-var, (map :vars taxed-incomes)]
                                               (map :constraints taxed-incomes))
