@@ -87,7 +87,7 @@
     {:vars vars
      :constraints constraints}))
 
-(defn ontario-tax-bracket-model [model prefix choco-income-var precision]
+(defn ontario-tax-bracket-model [model prefix choco-income-var]
   ;;bracket-amount=MAX(0,MIN(net-income,current-tax-bracket)-previous-tax-bracket)
   ;; 0 1 2 3 [bracket-amount net-income current-tax-bracket previous-tax-bracket]
   ;;(str "max(0, min({0}, {1}) - {2}) = {3};")
@@ -98,9 +98,9 @@
              (map
               (fn [[min max percent]]
                 (let [
-                      choco-income-tax-bracket-var (choco-real model [prefix "taxed-income" max] 0, max, 1.0)
+                      choco-income-tax-bracket-var (choco-real model [prefix "taxed-income" max] 0, max, 100.0)
                       {income-tax-bracket-gensym :gensym} choco-income-tax-bracket-var
-                      choco-income-tax-payment-var (choco-real model [prefix "taxed-amount %" (int (* 100 percent))] 0, (* max percent), 1.0)
+                      choco-income-tax-payment-var (choco-real model [prefix "taxed-amount %" (int (* 100 percent))] 0, (* max percent), 100.0)
                       {income-tax-payment-gensym :gensym} choco-income-tax-payment-var
                       ]
                   {
@@ -122,7 +122,6 @@
      model
      (.realIbexGenericConstraint tax-bracket-constraint-str vars)
      (.post))
-    (-> model (.setPrecision precision))
     model
     ))
 
@@ -140,19 +139,21 @@
 
 (->>
  (let [
-       precision 1.0
+       precision 100.0
        model (new Model)
-       income-vars (const-reals model years "net-income" (take 2 incomes))
+       income-vars (const-reals model years "net-income" (take 1 incomes))
        _model (doall
                (map (fn [income-var year]
-                      (ontario-tax-bracket-model model year income-var precision))
+                      (ontario-tax-bracket-model model year income-var))
                     income-vars years))
        ]
+   (-> model (.setPrecision precision))
    ;;(-> model (.setObjective Model/MAXIMIZE z))
    [
+    "-------------------- model"
     model
-    ["--------------------reg"]
-    (time (first (solver/solutions model)))
+    "-------------------- solutions"
+    ((juxt count identity) (time (solver/solutions model)))
     ]
    )
  println
