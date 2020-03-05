@@ -1,7 +1,7 @@
 (ns loco.constraints.views.abs
   (:require
    [clojure.walk :as walk]
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.set :as set]
    [loco.constraints.utils :refer :all :as utils]
@@ -14,24 +14,20 @@
 (s/def ::compile-spec
   (s/tuple #{:view} string? (s/tuple #{view-name} ::utils/coerce-intvar? #{[]}) ::utils/int-domain))
 
-(defn- compiler-fn [model vars-index statement]
-  (let [constraint-name view-name
-        var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           [:view var-name [_ dependency-var _mods] _domain]
-           (.intAbsView model (coerce-int-var model dependency-var))
-
-           ::s/invalid
-           (report-spec-error view-name ::compile-spec var-subed-statement))))
+(let [constraint-name view-name]
+  (compile-function
+   (match *conformed
+     [:view _var-name [_ ?dependency-var _mods] _domain]
+     (.intAbsView *model (coerce-int-var *model ?dependency-var)))))
 
 (defn- view-fn [name statement]
   (match statement
-         [view-name dep []] (with-meta [:view name statement]
-                              (meta statement))))
+    [view-name dep []] (with-meta [:view name statement]
+                         (meta statement))))
 
 (defn- name-fn [statement]
   (match statement
-         [view-name dep []] (str "|" (str+ dep) "|")))
+    [_view-name ?dep []] (str "|" (str+ ?dep) "|")))
 
 (defn- domain-fn [statement possible-domain]
   (let [{:keys [lb ub]} (domainize possible-domain)
@@ -41,7 +37,7 @@
         (vary-meta assoc :domain {:int true :lb lb :ub ub}))))
 
 ;;TODO: $abs constraint and $abs view overlap, as $abs is a partial.
-(defloco $abs-view
+(defn $abs-view
   "Creates a view over var such that: |var|.
 
 - if var is already instantiated, returns a fixed variable;
@@ -58,4 +54,4 @@
           name-fn
           view-fn
           domain-fn
-          compiler-fn)))
+          compiler)))

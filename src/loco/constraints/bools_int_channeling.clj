@@ -1,7 +1,7 @@
 (ns loco.constraints.bools-int-channeling
-  (:use loco.constraints.utils)
+
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -21,20 +21,16 @@
                        (s/tuple #{'offset} int?)
                        ))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-var (p utils/coerce-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [[_ bools] [_ int-var] [_ offset]]}
-           (.boolsIntChanneling model
-                                (->> bools (map coerce-var) (into-array BoolVar))
-                                (coerce-var int-var)
-                                offset)
+(compile-function
+ (let [coerce-var (p utils/coerce-var *model)]
+   (match *conformed
+     {:args [[_ ?bools] [_ ?int-var] [_ ?offset]]}
+     (.boolsIntChanneling *model
+                          (->> ?bools (map coerce-var) (into-array BoolVar))
+                          (coerce-var ?int-var)
+                          ?offset))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $bools-int-channeling
+(defn $bools-int-channeling
   "Creates an channeling constraint between an integer variable and a
   set of boolean variables.
   Maps the boolean assignments variables bVars with the standard assignment variable var.

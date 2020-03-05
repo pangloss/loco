@@ -1,6 +1,6 @@
 (ns loco.constraints.element
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -26,23 +26,19 @@
                               (s/tuple #{'at}     ::utils/coerce-intvar?)
                               (s/tuple #{'offset} nat-int?))))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-var (coerce-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:ints [value [_ [:ints vars]] [_ index] [_ offset]]]}
-           (.element model value (int-array vars) (coerce-var index) offset)
+(compile-function
+ (let [coerce-var (coerce-var *model)]
+   (match *conformed
+     {:args [:ints [?value [_ [:ints ?vars]] [_ ?index] [_ ?offset]]]}
+     (.element *model ?value (int-array ?vars) (coerce-var ?index) ?offset)
 
-           {:args [:ints [value [_ [:int-vars vars]] [_ index] [_ offset]]]}
-           (.element model value (into-array IntVar vars) (coerce-var index) offset)
+     {:args [:ints [?value [_ [:int-vars ?vars]] [_ ?index] [_ ?offset]]]}
+     (.element *model ?value (into-array IntVar ?vars) (coerce-var ?index) ?offset)
 
-           {:args [:sets [value [_ vars] [_ index] [_ offset]]]}
-           (.element model  (coerce-var index) (into-array SetVar vars) offset value)
+     {:args [:sets [?value [_ ?vars] [_ ?index] [_ ?offset]]]}
+     (.element *model (coerce-var ?index) (into-array SetVar ?vars) ?offset ?value))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $element
+(defn $element
   "-------------------- IntVar --------------------
   Given a list of int-vars L, an int-var i, and an optional offset
   number (default 0), returns a new int-var constrained to equal L[i],
@@ -81,4 +77,4 @@
                  compiler))))
 
 (def $elem $element)
-(reset-meta! (var $elem) (meta (var $element)))
+(alter-meta! (var $elem) merge (dissoc (meta (var $element)) :name))

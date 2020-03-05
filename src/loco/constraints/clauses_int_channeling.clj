@@ -1,6 +1,6 @@
 (ns loco.constraints.clauses-int-channeling
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -20,21 +20,17 @@
                        (s/tuple #{'l-vars} ::utils/coll-boolvar?)
                        ))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [int-var [_ e-vars] [_ l-vars]]}
-           (.clausesIntChanneling model
-                                  int-var
-                                  (into-array BoolVar e-vars)
-                                  (into-array BoolVar l-vars))
-
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+(compile-function
+ (match *conformed
+   {:args [?int-var [_ ?e-vars] [_ ?l-vars]]}
+   (.clausesIntChanneling *model
+                          ?int-var
+                          (into-array BoolVar ?e-vars)
+                          (into-array BoolVar ?l-vars))))
 
 ;;TODO: do the int domain validation in the model/compile step
 ;;the distance of the LB and UB of int-var needs to be equal to (count e-vars)
-(defloco $clauses-int-channeling
+(defn $clauses-int-channeling
   "Creates an channeling constraint between an integer variable and a
   set of clauses. Link each value from the domain of var to two
   boolean variable: one reifies the equality to the i^th value of the

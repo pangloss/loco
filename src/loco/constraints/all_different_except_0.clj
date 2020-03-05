@@ -1,10 +1,10 @@
 (ns loco.constraints.all-different-except-0
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   ;;[loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables IntVar]))
@@ -15,17 +15,13 @@
   (s/cat :constraint #{constraint-name}
          :ints       ::utils/coll-coerce-intvar?))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-int-var (partial utils/coerce-int-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:ints vars}
-           (.allDifferentExcept0 model (->> vars (map coerce-int-var) (into-array IntVar)))
+(compile-function
+ (let [coerce-int-var (partial utils/coerce-int-var *model)]
+   (match *conformed
+     {:ints ?vars}
+     (.allDifferentExcept0 *model (->> ?vars (map coerce-int-var) (into-array IntVar))))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $distinct-except-0
+(defn $distinct-except-0
   "Creates an allDifferent constraint for variables that are not equal to 0.
   There can be multiple variables equal to 0."
   {:choco "allDifferentExcept0(IntVar[] vars)"
@@ -34,13 +30,13 @@
   [& vars]
   {:pre [(sequential? vars)]}
   (match (vec vars)
-         [var-list :guard sequential?] (constraint constraint-name
-                                                   (vec var-list)
-                                                   compiler)
+    [(m/pred sequential? ?var-list)] (constraint constraint-name
+                                                 (vec ?var-list)
+                                                 compiler)
 
-         [& var-list] (constraint constraint-name
-                                  (vec var-list)
-                                  compiler)))
+    [& ?var-list] (constraint constraint-name
+                              (vec ?var-list)
+                              compiler)))
 
 (def $all-different-except-0 $distinct-except-0)
-(reset-meta! (var $all-different-except-0) (meta (var $distinct-except-0)))
+(alter-meta! (var $all-different-except-0) merge (dissoc (meta (var $distinct-except-0)) :name))

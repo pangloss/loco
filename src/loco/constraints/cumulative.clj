@@ -1,6 +1,6 @@
 (ns loco.constraints.cumulative
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -38,25 +38,21 @@
                        (s/tuple #{'filters}     (s/coll-of filters?))
                        ))))
 
-(defn- compiler [model vars-index statement]
-  (println 'statement statement)
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-var (utils/coerce-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [tasks [_ heights] [_ capacity] [_ incremental?] [_ filters]]}
-           (.cumulative model
-                        (into-array Task tasks)
-                        (->> heights (map coerce-var) (into-array IntVar))
-                        (coerce-var capacity)
-                        incremental?
-                        (->> filters
-                             (keep filter-to-enum)
-                             (into-array Cumulative$Filter)))
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+(compile-function
+ (let [coerce-var (utils/coerce-var *model)]
+   (match *conformed
+     {:args [?tasks [_ ?heights] [_ ?capacity] [_ ?incremental?] [_ ?filters]]}
+     (.cumulative *model
+                  (into-array Task ?tasks)
+                  (->> ?heights (map coerce-var) (into-array IntVar))
+                  (coerce-var ?capacity)
+                  ?incremental?
+                  (->> ?filters
+                       (keep filter-to-enum)
+                       (into-array Cumulative$Filter))))))
 
 ;;TODO: create args-list for $cumulative
-(defloco $cumulative
+(defn $cumulative
   "Creates a cumulative constraint:
   Enforces that at each point in time,
   the cumulated height of the set of tasks that overlap that point does not exceed a given limit.
@@ -89,14 +85,14 @@
    (match
     [tasks heights capacity incremental? filters]
 
-    [(tasks :guard map?) nil capacity incremental? filters]
-    ($cumulative (keys tasks) :heights (vals tasks) :capacity capacity :incremental? incremental? :filters filters)
+    [(m/pred map? ?tasks) nil ?capacity ?incremental? ?filters]
+    ($cumulative (keys ?tasks) :heights (vals ?tasks) :capacity ?capacity :incremental? ?incremental? :filters ?filters)
 
-    [(tasks :guard sequential?) heights capacity incremental? filters]
+    [(m/pred sequential? ?tasks) ?heights ?capacity ?incremental? ?filters]
     (constraint constraint-name
-                [(vec tasks)
-                 ['heights (vec heights)]
-                 ['capacity capacity]
-                 ['incremental incremental?]
-                 ['filters (mapv (comp symbol name) filters)]]
+                [(vec ?tasks)
+                 ['heights (vec ?heights)]
+                 ['capacity ?capacity]
+                 ['incremental ?incremental?]
+                 ['filters (mapv (comp symbol name) ?filters)]]
                 compiler))))

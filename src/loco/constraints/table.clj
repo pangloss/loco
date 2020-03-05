@@ -2,8 +2,8 @@
   (:require
    [clojure.spec.alpha :as s]
    [loco.constraints.utils :refer :all :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -35,25 +35,21 @@
                                           (s/tuple #{'algo} #{'AC2001 'AC3 'AC3rm
                                                               'AC3bit+rm 'FC}))))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:vars-tuples [vars [_ tuples]]]}
-           (.table model (into-array IntVar vars) tuples)
+(compile-function
+ (match *conformed
+   {:args [:vars-tuples [?vars [_ ?tuples]]]}
+   (.table *model (into-array IntVar ?vars) ?tuples)
 
-           {:args [:vars-tuples-algo [vars [_ tuples] [_ algo]]]}
-           (.table model (into-array IntVar vars) tuples (name algo))
+   {:args [:vars-tuples-algo [?vars [_ ?tuples] [_ ?algo]]]}
+   (.table *model (into-array IntVar ?vars) ?tuples (name ?algo))
 
-           {:args [:pair-tuples [[_ var1 var2] [_ tuples]]]}
-           (.table model var1 var2 tuples)
+   {:args [:pair-tuples [[_ ?var1 ?var2] [_ ?tuples]]]}
+   (.table *model ?var1 ?var2 ?tuples)
 
-           {:args [:pair-tuples-algo [[_ var1 var2] [_ tuples] [_ algo]]]}
-           (.table model var1 var2 tuples (name algo))
+   {:args [:pair-tuples-algo [[_ ?var1 ?var2] [_ ?tuples] [_ ?algo]]]}
+   (.table *model ?var1 ?var2 ?tuples (name ?algo))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $table
+(defn $table
   "-------------------- IntVar [] --------------------
   ;; table(IntVar[] vars, Tuples tuples)
   ;; table(IntVar[] vars, Tuples tuples, String algo)
@@ -103,35 +99,33 @@
                [int-var1 int-var2 tuples algo])
    }
   [& more]
-  (match+
-   (vec more)
-   [int-vars tuples] :guard [int-vars sequential?]
+  (match (vec more)
+    [(m/pred sequential? ?int-vars) ?tuples]
    (constraint constraint-name
-               [(vec int-vars)
-                ['tuples tuples]]
+               [(vec ?int-vars)
+                ['tuples ?tuples]]
                compiler)
 
-   [int-vars tuples algo]
-   :guard [int-vars sequential?
-           ;;TODO: symbolize and stringize the algos for $table
-           algo #{:CT+ :GAC2001 :GAC2001+ :GAC3rm :GAC3rm+ :GACSTR+ :STR2+ :FC :MDD+}]
+    [(m/pred sequential? ?int-vars)
+     ?tuples
+     (m/pred #{:CT+ :GAC2001 :GAC2001+ :GAC3rm :GAC3rm+ :GACSTR+ :STR2+ :FC :MDD+} ?algo)]
    (constraint constraint-name
-               [(vec int-vars)
-                ['tuples tuples]
-                ['algo (symbol (name algo))]]
+               [(vec ?int-vars)
+                ['tuples ?tuples]
+                ['algo (symbol (name ?algo))]]
                compiler)
 
-   [int-var1 int-var2 tuples] :guard [[int-var1 int-var2] keyword?]
+    [(m/pred keyword? ?int-var1) (m/pred keyword? ?int-var2) ?tuples]
    (constraint constraint-name
-               [['pair int-var1 int-var2]
-                ['tuples tuples]]
+               [['pair ?int-var1 ?int-var2]
+                ['tuples ?tuples]]
                compiler)
 
-   [int-var1 int-var2 tuples algo]
-   :guard [[int-var1 int-var2] keyword?
-           algo #{:AC2001 :AC3 :AC3rm :AC3bit+rm :FC}]
+    [(m/pred keyword? ?int-var1) (m/pred keyword? ?int-var2)
+     ?tuples
+     (m/pred #{:AC2001 :AC3 :AC3rm :AC3bit+rm :FC} ?algo)]
    (constraint constraint-name
-               [['pair int-var1 int-var2]
-                ['tuples tuples]
-                ['algo (symbol (name algo))]]
+               [['pair ?int-var1 ?int-var2]
+                ['tuples ?tuples]
+                ['algo (symbol (name ?algo))]]
                compiler)))

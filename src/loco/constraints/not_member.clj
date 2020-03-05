@@ -1,11 +1,11 @@
 (ns loco.constraints.not-member
   (:refer-clojure :exclude [set])
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -26,22 +26,18 @@
                        :int-set   (s/tuple
                                    int-or-intvar? #{'of} set-var?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:int-lb-ub [not-member [_ lb] [_ ub]]]}
-           (.notMember model not-member lb ub)
+(compile-function
+ (match *conformed
+   {:args [:int-lb-ub [?not-member [_ ?lb] [_ ?ub]]]}
+   (.notMember *model ?not-member ?lb ?ub)
 
-           {:args [:int-set [not-member _ set-var]]}
-           (.notMember model not-member set-var)
+   {:args [:int-set [?not-member _ ?set-var]]}
+   (.notMember *model ?not-member ?set-var)
 
-           {:args [:int-table [not-member _ table]]}
-           (.notMember model not-member (int-array table))
+   {:args [:int-table [?not-member _ ?table]]}
+   (.notMember *model ?not-member (int-array ?table))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $not-member
+(defn $not-member
   "-------------------- IntVar --------------------
   Creates a member constraint. Ensures var does not take its values in [LB, UB]
   Creates a member constraint. Ensures var does not take its values in table
@@ -55,15 +51,15 @@
            "notMember(IntVar var, SetVar set)"]}
   ([not-member-of collection]
    (match [not-member-of collection]
-          [not-member (table :guard sequential?)]
+          [?not-member (m/pred sequential? ?table)]
           (constraint constraint-name
-                      [not-member 'of  (vec table)]
+                      [?not-member 'of  (vec ?table)]
                       compiler)
 
           ;;TODO: opprotunity to generate vars (set)
-          [not-member (set :guard keyword?)]
+          [?not-member (m/pred keyword? ?set)]
           (constraint constraint-name
-                      [ not-member 'of set]
+                      [?not-member 'of ?set]
                       compiler)))
 
   ([not-member lb ub]

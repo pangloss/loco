@@ -1,10 +1,8 @@
 (ns loco.constraints.knapsack
-  (:use loco.constraints
-        loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -21,23 +19,19 @@
                        (s/tuple #{'weight-sum} int-var?)
                        (s/tuple #{'energy-sum} int-var?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [[_ weights] [_ energies] [_ occurrences] [_ weight-sum] [_ energy-sum]]}
-           (.knapsack model
-                      (into-array IntVar occurrences)
-                      weight-sum
-                      energy-sum
-                      (int-array weights)
-                      (int-array energies))
-
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+(compile-function
+ (match *conformed
+   {:args [[_ ?weights] [_ ?energies] [_ ?occurrences] [_ ?weight-sum] [_ ?energy-sum]]}
+   (.knapsack *model
+              (into-array IntVar ?occurrences)
+              ?weight-sum
+              ?energy-sum
+              (int-array ?weights)
+              (int-array ?energies))))
 
 ;;TODO: can we infer domains for the occurances variables?
 ;;TODO: find knapsack on GCCAT
-(defloco $knapsack
+(defn $knapsack
   "Creates a knapsack constraint. Ensures that :
   - occurrences[i] * weight[i] = weightSum
   - occurrences[i] * energy[i] = energySum

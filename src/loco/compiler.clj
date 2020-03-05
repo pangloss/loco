@@ -4,8 +4,7 @@
   (:refer-clojure :exclude [compile ints var?])
   (:require
    [loco.model :as model]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.pprint :refer [pprint]])
   (:import org.chocosolver.solver.Model
            org.chocosolver.solver.variables.SetVar
@@ -30,187 +29,181 @@
       name)))
 
 ;;TODO: use prewalk-replace?
-(defn compile-constraint-statement [vars-index model statement]
+(defn compile-constraint-statement [vars-index *model statement]
   (let [
         lookup-var (partial lookup-var vars-index)
         lookup-var-unchecked (partial lookup-var-unchecked vars-index)
         realize-nested-constraints (fn [constraints]
                                      (->> constraints
-                                          (map (p compile-constraint-statement vars-index model))
-                                          (into-array Constraint)
-                                          ))
-        realize-nested-constraint (p compile-constraint-statement vars-index model)
-        int-var? (p instance? IntVar)
-        set-var? (p instance? SetVar)
-        bool-var? (p instance? BoolVar)
-        task-var? (p instance? Task)
-        tuples-var? (p instance? Tuples)
-        lookup-set-var? (c set-var? lookup-var-unchecked)
-        lookup-int-var? (c int-var? lookup-var-unchecked)
-        lookup-bool-var? (c bool-var? lookup-var-unchecked)
-        lookup-task-var? (c task-var? lookup-var-unchecked)
-        lookup-tuples-var? (c tuples-var? lookup-var-unchecked)
-        all-lookup-int-vars? (p every? lookup-int-var?)
-        all-lookup-set-vars? (p every? lookup-set-var?)
-        all-lookup-bool-vars? (p every? lookup-bool-var?)
-        all-lookup-task-vars? (p every? lookup-task-var?)
-        all-int-vars? (p every? int-var?)
-        all-set-vars? (p every? set-var?)
-        all-bool-vars? (p every? bool-var?)
+                                          (map (p compile-constraint-statement vars-index *model))
+                                          (into-array Constraint)))
+        realize-nested-constraint (p compile-constraint-statement vars-index *model)
+        int-var?                  (p instance? IntVar)
+        set-var?                  (p instance? SetVar)
+        bool-var?                 (p instance? BoolVar)
+        task-var?                 (p instance? Task)
+        tuples-var?               (p instance? Tuples)
+        lookup-set-var?           (c set-var? lookup-var-unchecked)
+        lookup-int-var?           (c int-var? lookup-var-unchecked)
+        lookup-bool-var?          (c bool-var? lookup-var-unchecked)
+        lookup-task-var?          (c task-var? lookup-var-unchecked)
+        lookup-tuples-var?        (c tuples-var? lookup-var-unchecked)
+        all-lookup-int-vars?      (p every? lookup-int-var?)
+        all-lookup-set-vars?      (p every? lookup-set-var?)
+        all-lookup-bool-vars?     (p every? lookup-bool-var?)
+        all-lookup-task-vars?     (p every? lookup-task-var?)
+        all-int-vars?             (p every? int-var?)
+        all-set-vars?             (p every? set-var?)
+        all-bool-vars?            (p every? bool-var?)
         ]
 
-    (match
-     [statement (meta statement)]
-     [constraint {:compiler compiler}] (compiler model vars-index constraint)
-     [[?constraint] _]
-     (match+
-      ?constraint
+    (match [statement (meta statement)]
+      [?constraint {:compiler ?compiler}] (?compiler *model vars-index ?constraint)
+      [[?constraint] _]
+      (match ?constraint
+        ;; -------------------- LOGIC --------------------
+        ;; handle boolean lists
+        [:and (m/pred (p every? (c (p instance? BoolVar) lookup-var-unchecked)) ?bools)]
+        (.and *model (->> ?bools (map lookup-var) (into-array BoolVar)))
 
+        [:and (m/pred constraint? ?constraints)]
+        (.and *model (realize-nested-constraints ?constraints))
 
-      ;; -------------------- LOGIC --------------------
-      ;; handle boolean lists
-      [:and (bools :guard (p every? (c (p instance? BoolVar) lookup-var-unchecked)))]
-      (.and model (->> bools (map lookup-var) (into-array BoolVar)))
+        ;; handle boolean lists
+        [:or (m/pred (p every? (c (p instance? BoolVar) lookup-var-unchecked)) ?bools)]
+        (.or *model (->> ?bools (map lookup-var) (into-array BoolVar)))
 
-      [:and (constraints :guard (p every? constraint?))]
-      (.and model (realize-nested-constraints constraints))
+        [:or (m/pred (p every? constraint?) ?constraints)]
+        (.or *model (realize-nested-constraints ?constraints))
 
-      ;; handle boolean lists
-      [:or (bools :guard (p every? (c (p instance? BoolVar) lookup-var-unchecked)))]
-      (.or model (->> bools (map lookup-var) (into-array BoolVar)))
+        [:when [(m/pred (c (p instance? BoolVar) lookup-var-unchecked) ?bool) ?then-constraint]]
+        (.ifThen *model
+                 (lookup-var ?bool)
+                 (realize-nested-constraint ?then-constraint))
 
-      [:or (constraints :guard (p every? constraint?))]
-      (.or model (realize-nested-constraints constraints))
+        [:when [?if-constraint ?then-constraint]]
+        (.ifThen *model
+                 (realize-nested-constraint ?if-constraint)
+                 (realize-nested-constraint ?then-constraint))
 
-      [:when [(bool :guard (c (p instance? BoolVar) lookup-var-unchecked)) then-constraint]]
-      (.ifThen model
-               (lookup-var bool)
-               (realize-nested-constraint then-constraint))
+        [:if-else [(m/pred (c (p instance? BoolVar) lookup-var-unchecked) ?bool)
+                   ?then-constraint ?else-constraint]]
+        (.ifThenElse *model
+                     (lookup-var ?bool)
+                     (realize-nested-constraint ?then-constraint)
+                     (realize-nested-constraint ?else-constraint))
 
-      [:when [if-constraint then-constraint]]
-      (.ifThen model
-               (realize-nested-constraint if-constraint)
-               (realize-nested-constraint then-constraint))
+        [:if-else [?if-constraint ?then-constraint ?else-constraint]]
+        (.ifThenElse *model
+                     (realize-nested-constraint ?if-constraint)
+                     (realize-nested-constraint ?then-constraint)
+                     (realize-nested-constraint ?else-constraint))
 
-      [:if-else [(bool :guard (c (p instance? BoolVar) lookup-var-unchecked))
-                 then-constraint else-constraint]]
-      (.ifThenElse model
-                   (lookup-var bool)
-                   (realize-nested-constraint then-constraint)
-                   (realize-nested-constraint else-constraint))
+        [:iff [?if-constraint ?then-constraint]]
+        (.ifOnlyIf *model
+                   (realize-nested-constraint ?if-constraint)
+                   (realize-nested-constraint ?then-constraint))
 
-      [:if-else [if-constraint then-constraint else-constraint]]
-      (.ifThenElse model
-                   (realize-nested-constraint if-constraint)
-                   (realize-nested-constraint then-constraint)
-                   (realize-nested-constraint else-constraint))
+        [:not ?constraint]
+        (.not *model (realize-nested-constraint ?constraint))
 
-      [:iff [if-constraint then-constraint]]
-      (.ifOnlyIf model
-                 (realize-nested-constraint if-constraint)
-                 (realize-nested-constraint then-constraint))
+        :true
+        (.trueConstraint *model)
 
-      [:not constraint]
-      (.not model (realize-nested-constraint constraint))
+        :false
+        (.falseConstraint *model)
 
-      :true
-      (.trueConstraint model)
+        ))))
 
-      :false
-      (.falseConstraint model)
-
-      ))))
-
-(defn compile-reify-statement [vars-index model statement]
+(defn compile-reify-statement [vars-index *model statement]
   (match statement
-         [:reify (var-name :guard (c (p instance? BoolVar)
-                                     (p lookup-var-unchecked vars-index))) constraint]
-         (.reification model
-                       (lookup-var vars-index var-name)
-                       (compile-constraint-statement vars-index model constraint))))
+    [:reify (m/pred (c (p instance? BoolVar)
+                       (p lookup-var-unchecked vars-index))
+                    ?var-name) ?constraint]
+    (.reification *model
+                  (lookup-var vars-index ?var-name)
+                  (compile-constraint-statement vars-index *model ?constraint))))
 
-(defn compile-reifies [model vars-index ast]
+(defn compile-reifies [*model vars-index ast]
   (->>
    ast
-   (map (partial compile-reify-statement vars-index model))
+   (map (partial compile-reify-statement vars-index *model))
    doall))
 
 ;;this is a bit annoying, maybe ok to move it into the
 ;;compile-var-statement, but currently only used by Task
 (defn- anon-int-var
-  ([model domain]
+  ([*model domain]
    {:pre [(or (and (sequential? domain) (every? integer? domain))
               (integer? domain))]}
    (if (integer? domain)
-     (.intVar model domain)
-     (.intVar model (int-array domain))))
-  ([model lb ub]
+     (.intVar *model domain)
+     (.intVar *model (int-array domain))))
+  ([*model lb ub]
    {:pre [(integer? lb) (integer? ub)]}
-   (.intVar model (min lb ub) (max lb ub)))
-  ([model lb ub bounded?]
+   (.intVar *model (min lb ub) (max lb ub)))
+  ([*model lb ub bounded?]
    {:pre [(integer? lb) (integer? ub) (boolean? bounded?)]}
-   (.intVar model (min lb ub) (max lb ub) bounded?)))
+   (.intVar *model (min lb ub) (max lb ub) bounded?)))
 
-(defn- compile-var-statement-helper
+(defn- compile-var-statement-helper ;; TODO: the guards should be replaced with spec/schema
   "these should be replaced by compile functions that are assigned where the vars are created"
   {:deprecated true}
-  [vars-index vars model statement]
+  [vars-index vars *model statement]
   (let [lookup-var (partial lookup-var vars-index)]
-    (match+
-     [statement (meta statement)]
+    (match [statement (meta statement)]
 
-     [[:var var-name _ _] {:neg dep-name}]
-     (.intMinusView model (lookup-var dep-name))
+      [[:var ?var-name _ _] {:neg ?dep-name}]
+      (.intMinusView *model (lookup-var ?dep-name))
 
-     [[:var var-name _ [:bool _ _]] _]
-     (.boolVar model (name var-name))
+      [[:var ?var-name _ [:bool _ _]] _]
+      (.boolVar *model (name ?var-name))
 
-     [[:var var-name _ [:int lb ub]] _] :guard [[lb ub] integer?]
-     (.intVar model (name var-name) lb ub)
+      [[:var ?var-name _ [:int (m/pred integer? ?lb) (m/pred integer? ?ub)]] _]
+      (.intVar *model (name ?var-name) ?lb ?ub)
 
-     [[:var var-name _ [:int lb ub :bounded]] _] :guard [[lb ub] integer?]
-     (.intVar model (name var-name) lb ub true)
+      [[:var ?var-name _ [:int (m/pred integer? ?lb) (m/pred integer? ?ub) :bounded]] _]
+      (.intVar *model (name ?var-name) ?lb ?ub true)
 
-     [[:var var-name _ [:int enumeration]] _] :guard [enumeration vector?]
-     (.intVar model (name var-name) (int-array enumeration))
+      [[:var ?var-name _ [:int (m/pred vector? (p every? integer?) ?enumeration)]] _]
+      (.intVar *model (name ?var-name) (int-array ?enumeration))
 
-     [[:var var-name _ [:const value]] _] :guard [value integer?]
-     (.intVar model (name var-name) value)
+      [[:var ?var-name _ [:const (m/pred integer? ?value)]] _]
+      (.intVar *model (name ?var-name) ?value)
 
-     [[:var var-name _ [:set constants]] _] :guard [constants set?]
-     (.setVar model (name var-name) (into-array Integer/TYPE constants))
+      [[:var ?var-name _ [:set (m/pred set? ?constants)]] _]
+      (.setVar *model (name ?var-name) (into-array Integer/TYPE ?constants))
 
-     [[:var var-name _ [:set lb ub]] _] :guard [[lb ub] [set? (p every? integer?)]]
-     (.setVar model (name var-name)
-              (into-array Integer/TYPE lb)
-              (into-array Integer/TYPE ub))
+      [[:var ?var-name _ [:set (m/pred set? (p every? integer?) ?lb) (m/pred set? (p every? integer?) ?ub)]] _]
+      (.setVar *model (name ?var-name)
+               (into-array Integer/TYPE ?lb)
+               (into-array Integer/TYPE ?ub))
 
-     [[:var var-name _ [:task start duration end]] _]
-     (let [name? (some-fn string? keyword?)
-           task (.taskVar
-                 model
-                 (if (name? start)
-                   (lookup-var start)
-                   (apply anon-int-var model (if (int? start)
-                                               [start]
-                                               start)))
-                 (if (name? duration)
-                   (lookup-var duration)
-                   (apply anon-int-var model (if (int? duration)
-                                               [duration]
-                                               duration)))
-                 (if (name? end)
-                   (lookup-var end)
-                   (apply anon-int-var model (if (int? end)
-                                               [end]
-                                               end))))]
-       (.ensureBoundConsistency task)
-       task)
+      [[:var ?var-name _ [:task ?start ?duration ?end]] _]
+      (let [name? (every-pred string? keyword?)
+            task (.taskVar
+                  *model
+                  (if (name? ?start)
+                    (lookup-var ?start)
+                    (apply anon-int-var *model (if (int? ?start)
+                                                 [?start]
+                                                 ?start)))
+                  (if (name? ?duration)
+                    (lookup-var ?duration)
+                    (apply anon-int-var *model (if (int? ?duration)
+                                                 [?duration]
+                                                 ?duration)))
+                  (if (name? ?end)
+                    (lookup-var ?end)
+                    (apply anon-int-var *model (if (int? ?end)
+                                                 [?end]
+                                                 ?end))))]
+        (.ensureBoundConsistency task)
+        task)
 
-     [[:var var-name _ [:tuples feasible? ints-lists]] _]
-     :guard [feasible? #{:allowed :forbidden}, ints-lists [sequential? (p every? (p every? int?))]]
-     (Tuples. (->> ints-lists (map int-array) into-array) ({:allowed true :forbidden false} feasible?))
-     )))
+      [[:var ?var-name _
+        [:tuples (m/pred #{:allowed :forbidden} ?feasible?) (m/pred sequential? (p every? (p every? int?)) ?ints-lists)]] _]
+      (Tuples. (->> ?ints-lists (map int-array) into-array) ({:allowed true :forbidden false} ?feasible?)))))
 
 (defn- compile-var-statement [[vars-index vars model] statement]
   (let [var-name (second statement)

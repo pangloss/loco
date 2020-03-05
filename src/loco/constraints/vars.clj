@@ -1,8 +1,7 @@
 (ns loco.constraints.vars
   (:require
    [loco.constraints.utils :refer :all]
-   [clojure.core.match :refer [match]]
-   [loco.match :refer [match+]]
+   [meander.epsilon :as m :refer [match]]
    )
   (:import org.chocosolver.solver.variables.IntVar))
 
@@ -30,18 +29,14 @@
   e.g. [:var :_var-name :public [:int 0 2]]
   e.g. [:var [:_var-name 1] :public [:int 0 2]]"
   [var]
-  (match+ var
-          [_  [var-name & _] & _] :guard [var-name hidden-name?]
-          (make-hidden var)
-
-          [_  var-name & _] :guard [var-name hidden-name?]
-          (make-hidden var)
-
-          :else var))
+  (match var
+    [_  [(m/pred hidden-name? ?var-name) & _] & _]   (make-hidden var)
+    [_  (m/pred hidden-name? ?var-name) & _]         (make-hidden var)
+    _  var))
 
 ;; -------------------- Tuples --------------------
 
-(defloco $tuples
+(defn $tuples
   "tuples act like a mask to be used with the table constraint.
   tuples can define the explicit arbitrary values a collection of
   variables can assume.
@@ -81,10 +76,10 @@
                            (mapv vec ints-lists)]]
    ))
 
-(defloco $tuples-forbidden [var-name ints-lists] ($tuples var-name ints-lists :forbidden))
-(defloco $tuples-allowed   [var-name ints-lists] ($tuples var-name ints-lists :allowed))
-(reset-meta! (var $tuples-forbidden) (meta (var $tuples)))
-(reset-meta! (var $tuples-allowed)   (meta (var $tuples)))
+(defn $tuples-forbidden [var-name ints-lists] ($tuples var-name ints-lists :forbidden))
+(defn $tuples-allowed   [var-name ints-lists] ($tuples var-name ints-lists :allowed))
+(alter-meta! (var $tuples-forbidden) merge (dissoc (meta (var $tuples)) :name))
+(alter-meta! (var $tuples-allowed)   merge (dissoc (meta (var $tuples)) :name))
 
 ;; -------------------- Sets --------------------
 
@@ -105,7 +100,7 @@
   [lb ub]
   (every? (set ub) (set lb)))
 
-(defloco $set
+(defn $set
   "Creates a set variable taking its domain in [lb, ub], For
    instance [#{0,3}, #{-2,0,2,3}] means the variable must include both
    0 and 3 and can additionnaly include -2, and 2
@@ -139,17 +134,17 @@
     [:var var-name :public [:set (into (sorted-set) ints)]]
     hidden-conversion)))
 
-(defloco $set- [& more]
+(defn $set- [& more]
   (->
    (apply $set more)
    make-hidden))
 
-(reset-meta! (var $set-) (meta (var $set)))
+(alter-meta! (var $set-) merge (dissoc (meta (var $set)) :name))
 
 ;; -------------------- Constants --------------------
 
 ;;TODO: deprecate $const ... (;_;)
-(defloco $const
+(defn $const
   "Declares that a variable must be a specific value (integer)"
   [var-name value]
   {:pre [(integer? value)
@@ -158,15 +153,15 @@
       [:var var-name :public [:const value]]
       hidden-conversion))
 
-(defloco $const- [& more] (-> (apply $const more) make-hidden))
-(reset-meta! (var $const-) (meta (var $const)))
+(defn $const- [& more] (-> (apply $const more) make-hidden))
+(alter-meta! (var $const-) merge (dissoc (meta (var $const)) :name))
 
 ;; -------------------- Booleans --------------------
 
 ;;TODO: implement const bool?  	boolVar(String name, boolean value)
 ;;TODO: boolVarArray, boolVarArray, boolVarMatrix, boolVarMatrix,
 
-(defloco $bool
+(defn $bool
   "Declares that a variable must be a boolean (true/false or [0 1])
   some constraints have optimizations for booleans/boolean-lists (e.g. Model.sum|and|or)"
   {:choco "boolVar(String name)"}
@@ -176,10 +171,10 @@
         [:var var-name :public [:bool 0 1]]
         hidden-conversion))
 
-(defloco $bool- [& more] (-> (apply $bool more) make-hidden))
-(reset-meta! (var $bool-) (meta (var $bool)))
+(defn $bool- [& more] (-> (apply $bool more) make-hidden))
+(alter-meta! (var $bool-) merge (dissoc (meta (var $bool)) :name))
 
-(defloco $bools
+(defn $bools
   "Declares a list of booleans with given var-names.
   this is not a equivalent to a BoolVar[]"
   [& var-names]
@@ -195,7 +190,7 @@
 ;;intVarArray, intVarArray, intVarMatrix, intVarMatrix, intVarMatrix,
 ;;intVarMatrix, intVarMatrix, intVarMatrix
 
-(defloco $int
+(defn $int
   "Declares that a variable must be in a certain domain.
    Possible arglist examples:
    (in :x)   => (in :x IntVar/MIN_INT_BOUND IntVar/MAX_INT_BOUND)
@@ -226,10 +221,10 @@
   ([var-name lb ub]
    {:pre [(valid-variable-name? var-name) (int? lb) (int? ub)]}
    (->>
-    (match (sort [lb ub])
-           [0 1] ($bool var-name)
-           :else ^:var ^:int ^{:domain {:int true :ub (int ub) :lb (int lb)}}
-           [:var var-name :public [:int lb ub]])
+    (match (vec (sort [(int lb) (int ub)]))
+      [0 1] ($bool var-name)
+      _ ^:var ^:int ^{:domain {:int true :ub ub :lb lb}}
+      [:var var-name :public [:int lb ub]])
     hidden-conversion))
 
   ([var-name values]
@@ -247,29 +242,22 @@
                                  :lb (int values)}}
           [:var var-name :public [:int values values]]
           (match (vec (dedupe (sort (flatten [values]))))
-                 [0 1] ($bool var-name)
-                 domain-list
-                 ^:var ^:int ^{:domain {:int true
-                                        :ub (int (peek domain-list))
-                                        :lb (int (first domain-list))
-                                        :enumeration domain-list}}
-                 [:var var-name :public [:int domain-list]]))
+            [0 1] ($bool var-name)
+            ?domain-list
+            ^:var ^:int ^{:domain {:int true
+                                   :ub (int (peek ?domain-list))
+                                   :lb (int (first ?domain-list))
+                                   :enumeration ?domain-list}}
+            [:var var-name :public [:int ?domain-list]]))
         hidden-conversion)))
 
-(defloco $int- [& more] (-> (apply $int more) make-hidden))
-
-(defloco $in [& more] (apply $int more))
-(defloco $in- [& more] (apply $int- more))
-
-(reset-meta! (var $in) (meta (var $int)))
-(reset-meta! (var $in-) (meta (var $int)))
-(reset-meta! (var $int-) (meta (var $int)))
+(defn $int- [& more] (-> (apply $int more) make-hidden))
 
 ;; -------------------- Tasks -------------------
 ;;TODO: taskVarArray,taskVarMatrix,
 
 ;;TODO: really need to make this more robust
-(defloco $task
+(defn $task
   "Container representing a task: It ensures that: start + duration = end"
   {:choco "Task(IntVar s, IntVar d, IntVar e)"}
   ([task-name _start start _duration duration _end end]
@@ -283,8 +271,8 @@
     [:var var-name :public [:task start duration end]]
     hidden-conversion)))
 
-(defloco $task- [& more] (-> (apply $task more) make-hidden))
-(reset-meta! (var $task-) (meta (var $task)))
+(defn $task- [& more] (-> (apply $task more) make-hidden))
+(alter-meta! (var $task-) merge (dissoc (meta (var $task)) :name))
 
 ;;-------------------- meta --------------------
 (defn- upgrade-proto [statement {:keys [int lb ub] :as domain}]
@@ -293,7 +281,7 @@
       (conj [:int lb ub])
       (vary-meta assoc :domain domain)))
 
-(defloco $proto
+(defn $proto
   "this is not meant to be used like $bool or $int, more for internal usage. var-name must be a string"
   [var-name partial]
   {:pre [(string? var-name)]}

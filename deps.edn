@@ -1,58 +1,42 @@
 {
- ;;:paths ["src" "test"]
+ :paths ["src"]
  :deps {
-        ;;testing (dono how to make this dev only
-
-        ;;git
-        ;;FIXME: convert boxxxie/loco to use deps, hopefully it will fix the current deps issue that it has...
-        ;; also refer to ~/.clojure/deps.end
-        ;;boxxxie/loco     {:git/url "https://github.com/boxxxie/loco.git"     :sha "6364ab0fa8b8184eb626f92729af5e4854851ddd"}
-        noprompt/meander {:git/url "https://github.com/noprompt/meander.git" :sha "642809df04b0977cf69d8e26616c47d69b382e4d"}
-
-        ;; org.clojure/clojure {:mvn/version "1.10.0"}
-        ;; org.clojure/core.match         {:mvn/version "0.3.0-alpha5"}
-        ;; ;;org.choco-solver/choco-solver  {:mvn/version "3.3.3"} ;; <-for loco
-        ;; org.clojure/math.combinatorics {:mvn/version "0.1.4"}
-        ;; instaparse                     {:mvn/version "1.4.10"}
-        ;; ubergraph                      {:mvn/version "0.5.2"}
-        ;; superstring                    {:mvn/version "3.0.0"}
-
-        ;; ;;akvo is an updated version of raynes.
-        ;; ;;raynes is abandonded, original creator is MIA
-        ;; akvo/fs                        {:mvn/version "20180618-165206.5f3fb50b"}
-
-        ;; org.clojure/data.csv           {:mvn/version "0.1.4"}
-        ;; com.rpl/specter                {:mvn/version "1.1.2"}
-        ;; ;;distributions                  {:mvn/version "0.1.3-SNAPSHOT"}
-        ;; incanter                       {:mvn/version "1.9.3"}
-
-        ;; ;;xml
-        ;; org.clojure/data.xml           {:mvn/version "0.2.0-alpha5"}
-        ;; tolitius/xml-in                {:mvn/version "0.1.0"}
-
-        ;; ;;pprint
-        ;; fipp                           {:mvn/version "0.6.14"}
+        camel-snake-kebab              {:mvn/version "0.4.1"}
+        expound                        {:mvn/version "0.8.4"}
+        fipp                           {:mvn/version "0.6.22"}  ;; pprint
+        kezban                         {:mvn/version "0.1.87"} ;; general util lib (core additions)
+        meander/epsilon                {:mvn/version "0.0.402"} ;; pattern matching
+        org.choco-solver/choco-solver  {:mvn/version "4.10.2"}
+        org.clojure/clojure            {:mvn/version "1.10.1"}
+        prismatic/plumbing             {:mvn/version "0.5.5"} ;; ns plumbing.core
+        vvvvalvalval/supdate           {:mvn/version "0.2.3"}
+        org.clojure/math.combinatorics {:mvn/version "0.1.6"}
         }
-
- ;; -------------------- Docs for aliases --------------------
- ;; ;; Aliases
- ;; ;;   resolve-deps aliases (-R) affect dependency resolution, options:
- ;; ;;     :extra-deps - specifies extra deps to add to :deps
- ;; ;;     :override-deps - specifies a coordinate to use instead of that in :deps
- ;; ;;     :default-deps - specifies a coordinate to use for a lib if one isn't found
- ;; ;;   make-classpath aliases (-C) affect the classpath generation, options:
- ;; ;;     :extra-paths - vector of additional paths to add to the classpath
- ;; ;;     :classpath-overrides - map of lib to path that overrides the result of resolving deps
-
- ;; :aliases {
- ;;           :1.7 {:override-deps {org.clojure/clojure {:mvn/version "1.7.0"}}}
- ;;           :1.8 {:override-deps {org.clojure/clojure {:mvn/version "1.8.0"}}}
- ;;           :1.9 {:override-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
- ;;           :cache {:extra-deps {org.clojure/core.cache {:mvn/version "0.7.1"}}}
- ;;           :async {:extra-deps {org.clojure/core.async {:mvn/version "0.4.474"}}}
- ;;           :bench {:classpath-overrides {criterium/criterium "./criterium/src"}}}
-
- ;; :aliases {
- ;;           :dev {:extra-deps {circleci/circleci.test {:mvn/version "0.4.1"}}}
- ;;           }
+ :aliases {
+           :dev {
+                 :jvm-opts [
+                            "-Xms1G"
+                            "-Xmx4G"
+                            ]
+                 }
+           :test {
+                  :extra-paths ["test"]
+                  :extra-deps {lambdaisland/kaocha {:mvn/version "0.0-590"}}
+                  }
+           :kaocha {
+                    :extra-paths ["test"]
+                    :main-opts   ["-m" "kaocha.runner"]
+                    }
+           :outdated {
+                      ;;https://github.com/Olical/depot
+                      ;; check for deps updates
+                      ;; clojure -Aoutdated -a outdated
+                      :extra-deps {olical/depot {:mvn/version "1.8.4"}}
+                      :main-opts  ["-m" "depot.outdated.main" "-a" "outdated"]
+                      }
+           }
  }
+;; use this for ibex
+;; :jvm-opts [
+;;            "-Djava.library.path=/home/pauli/ibex/ibex/lib/lib"
+;;            ]

@@ -1,85 +1,142 @@
 (ns loco.constraints)
 
-(def imports
-  [
-   "constraints/vars"
-   "constraints/views/minus"
-   "constraints/views/offset"
-   "constraints/views/scale"
-   "constraints/views/abs"
-   "constraints/views/affine"
-   "constraints/arithm"
-   "constraints/all_equal"
-   "constraints/arithmetic/sum"
+;; from mikera.cljutils.namespace
+(defmacro import-fn
+  "Given a function in another namespace, defines a function with the same name in the
+   current namespace.  Argument lists, doc-strings, and original line-numbers are preserved."
+  ([sym] `(import-fn nil ~sym))
+  ([alias sym]
+   (when (namespace sym)
+     (println "loading" (namespace sym))
+     (require (symbol (namespace sym))))
+   (let [vr (resolve sym)
+         m (meta vr)
+         _ (println (or alias (:name m)))
+         nspace (:name m)
+         n (or alias (:name m))
+         arglists (:arglists m)
+         doc (:doc m)
+         protocol (:protocol m)]
+     (when-not vr
+       (throw (IllegalArgumentException. (str "Don't recognize " sym))))
+     (when (:macro m)
+       (throw (IllegalArgumentException. (str "Calling import-fn on a macro: " sym))))
+     `(do
+        (def ~(with-meta n {:protocol protocol}) (deref ~vr))
+        (alter-meta! (var ~n) assoc
+                     :doc ~doc
+                     :arglists ~(list 'quote arglists)
+                     :file ~(:file m)
+                     :line ~(:line m))
+        ~vr))))
 
-   "constraints/times"
+(import-fn loco.constraints.vars/$bool)
+(import-fn loco.constraints.vars/$bool-)
+(import-fn loco.constraints.vars/$bools)
 
-   "constraints/arithmetic/subtraction"
+(import-fn loco.constraints.vars/$const)
 
-   "constraints/mod"
-   "constraints/abs"
-   "constraints/arithmetic/div"
+(import-fn loco.constraints.vars/$const-)
 
-   "constraints/not_all_equal"
+$const-
 
-   "constraints/all_different"
-   "constraints/all_different_except_0"
-   "constraints/among"
-   "constraints/at_least_n_values"
-   "constraints/at_most_n_values"
-   "constraints/bin_packing"
-   "constraints/bits_int_channeling"
-   "constraints/bools_int_channeling"
-   "constraints/cardinality"
-   "constraints/circuit"
-   "constraints/clauses_int_channeling"
-   "constraints/count"
-   "constraints/cumulative"
-   "constraints/diff_n"
+(import-fn loco.constraints.vars/$int)
+(import-fn loco.constraints.vars/$int-)
+(import-fn $in  loco.constraints.vars/$int)
+(import-fn $in- loco.constraints.vars/$int-)
+(import-fn loco.constraints.vars/$proto)
+(import-fn loco.constraints.vars/$set)
+(import-fn loco.constraints.vars/$set-)
+(import-fn loco.constraints.vars/$task)
+(import-fn loco.constraints.vars/$task-)
+(import-fn loco.constraints.vars/$tuples)
+(import-fn loco.constraints.vars/$tuples-allowed)
+(import-fn loco.constraints.vars/$tuples-forbidden)
 
-   "constraints/distance"
-   "constraints/element"
-   "constraints/int_value_precede"
-   "constraints/int_value_precede_chain"
-   "constraints/inverse_channeling"
-   "constraints/knapsack"
-   "constraints/lex_chain_less"
-   "constraints/lex_chain_less_equal"
-   "constraints/lex_less"
-   "constraints/lex_less_equal"
-   "constraints/max"
-   "constraints/member"
-   "constraints/min"
-   "constraints/n_values"
-   "constraints/not_member"
-   ;;"constraints/nth" ;;TODO: implement
-   "constraints/path"
-   "constraints/scalar"
-   "constraints/sort"
-   "constraints/square"
-   "constraints/sub_circuit"
-   "constraints/sub_path"
-   "constraints/table"
-   "constraints/tree"
+(import-fn loco.constraints.abs/$abs)
+(import-fn loco.constraints.all-different/$distinct)
+(import-fn loco.constraints.all-different-except-0/$distinct-except-0)
+(import-fn loco.constraints.all-equal/$=)
+(import-fn loco.constraints.among/$among)
+(import-fn loco.constraints.arithmetic.div/$div)
+(import-fn loco.constraints.arithmetic.subtraction/$-)
+(import-fn loco.constraints.at-least-n-values/$at-least-n-values)
+(import-fn loco.constraints.at-most-n-values/$at-most-n-values)
+(import-fn loco.constraints.automata.regular/$regular)
+(import-fn loco.constraints.bin-packing/$bin-packing)
+(import-fn loco.constraints.bits-int-channeling/$bits-int-channeling)
+(import-fn loco.constraints.bools-int-channeling/$bools-int-channeling)
+(import-fn loco.constraints.cardinality/$cardinality)
+(import-fn loco.constraints.circuit/$circuit)
+(import-fn loco.constraints.clauses-int-channeling/$clauses-int-channeling)
+(import-fn loco.constraints.count/$count)
+(import-fn loco.constraints.cumulative/$cumulative)
+(import-fn loco.constraints.diff-n/$diff-n)
+(import-fn loco.constraints.distance/$distance)
+(import-fn loco.constraints.element/$element)
+(import-fn loco.constraints.int-value-precede/$int-value-precede)
+(import-fn loco.constraints.int-value-precede-chain/$int-value-precede-chain)
+(import-fn loco.constraints.inverse-channeling/$inverse-channeling)
+(import-fn loco.constraints.knapsack/$knapsack)
+(import-fn loco.constraints.lex-chain-less/$lex-chain-less)
+(import-fn loco.constraints.lex-chain-less-equal/$lex-chain-less-equal)
+(import-fn loco.constraints.lex-less/$lex-less)
+(import-fn loco.constraints.lex-less-equal/$lex-less-equal)
+(import-fn loco.constraints.max/$max)
+(import-fn loco.constraints.member/$member)
+(import-fn loco.constraints.min/$min)
+(import-fn loco.constraints.n-values/$n-values)
+(import-fn loco.constraints.not-member/$not-member)
+(import-fn loco.constraints.nth/$nth)
+(import-fn loco.constraints.path/$path)
+(import-fn loco.constraints.scalar/$scalar)
 
-   "constraints/set/intersection"
-   "constraints/set/union"
-   "constraints/set/nb_empty"
-   "constraints/set/not_empty"
-   "constraints/set/offset"
-   "constraints/set/partition"
-   "constraints/set/subset_eq"
-   "constraints/set/sum_elements"
-   "constraints/set/symetric"
-   "constraints/set/all_disjoint"
-   "constraints/set/disjoint"
-   "constraints/set/set_bools_channeling"
-   "constraints/set/sets_ints_channeling"
-   "constraints/set/inverse"
+(import-fn loco.constraints.set.all-disjoint/$all-disjoint)
+(import-fn loco.constraints.set.disjoint/$disjoint)
+(import-fn loco.constraints.set.intersection/$intersection)
+(import-fn loco.constraints.set.inverse/$inverse)
+(import-fn loco.constraints.set.nb-empty/$count-empty)
+(import-fn loco.constraints.set.offset/$offset)
+(import-fn loco.constraints.set.partition/$partition)
+(import-fn loco.constraints.set.set-bools-channeling/$set-bools-channeling)
+(import-fn loco.constraints.set.sets-ints-channeling/$sets-ints-channeling)
+(import-fn loco.constraints.set.subset-eq/$subset-equal)
+(import-fn loco.constraints.set.sum-elements/$sum-elements)
+(import-fn loco.constraints.set.symetric/$symetric)
+(import-fn loco.constraints.set.union/$union)
 
-   "constraints/logic/logic"
-   "constraints/logic/not"
-   "constraints/automata/regular"
-   ])
+(import-fn loco.constraints.sort/$sort)
+(import-fn loco.constraints.square/$square)
+(import-fn loco.constraints.sub-circuit/$sub-circuit)
+(import-fn loco.constraints.sub-path/$sub-path)
+(import-fn loco.constraints.table/$table)
+(import-fn loco.constraints.tree/$tree)
 
-(apply load imports)
+(import-fn loco.constraints.views.abs/$abs-view)
+(import-fn loco.constraints.views.affine/$affine)
+(import-fn loco.constraints.views.offset/$offset-view)
+(import-fn loco.constraints.views.scale/$scale)
+(import-fn loco.constraints.views.minus/$minus-view)
+(import-fn loco.constraints.views.minus/$neg)
+
+(import-fn loco.constraints.arithm/$arithm)
+(import-fn loco.constraints.arithm/$<)
+(import-fn loco.constraints.arithm/$>)
+(import-fn loco.constraints.arithm/$<=)
+(import-fn loco.constraints.arithm/$>=)
+
+(import-fn loco.constraints.times/$times)
+(import-fn loco.constraints.times/$*)
+
+(import-fn loco.constraints.arithmetic.sum/$+)
+(import-fn loco.constraints.arithmetic.sum/$sum)
+
+(import-fn loco.constraints.set.nb-empty/$count-empty)
+(import-fn loco.constraints.set.not-empty/$not-empty)
+
+(import-fn loco.constraints.not-all-equal/$not-all-equal)
+(import-fn loco.constraints.not-all-equal/$not=)
+(import-fn loco.constraints.not-all-equal/$!=)
+
+(import-fn loco.constraints.mod/$mod)
+(import-fn loco.constraints.mod/$%)

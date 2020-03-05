@@ -3,7 +3,7 @@
    [loco.constraints.utils :refer :all]
    [loco.constraints.vars :refer [$bool-]]))
 
-(defloco $and
+(defn $and
   "An \"and\" statement (i.e. \"P^Q^...\"); this statement is true if
   and only if every subconstraint is true."
   {:choco ["and(BoolVar... bools)"
@@ -12,7 +12,7 @@
   {:pre [(sequential? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:and (vec constraints-or-bools)]])
 
-(defloco $or
+(defn $or
   "An \"or\" statement (i.e. \"PvQv...\"); this statement is true if and
   only if at least one subconstraint is true."
   {:choco ["or(BoolVar... bools)"
@@ -21,11 +21,11 @@
   {:pre [(sequential? constraints-or-bools) (not (empty? constraints-or-bools))]}
   [:constraint [:or (vec constraints-or-bools)]])
 
-(defloco $when
+(defn $when
   [if-this then-this]
   [:constraint [:when [if-this then-this]]])
 
-(defloco $if
+(defn $if
   "An \"if\" statement (i.e. \"implies\", \"P=>Q\"); this statement is true if and only if P is false or Q is true.
 In other words, if P is true, Q must be true (otherwise the whole
   statement is false).  An optional \"else\" field can be specified,
@@ -33,7 +33,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   [if-this then-this else-this]
   [:constraint [:if-else [if-this then-this else-this]]])
 
-(defloco $iff
+(defn $iff
   "Posts an equivalence constraint stating that cstr1 is satisfied <=>
   cstr2 is satisfied, BEWARE : it is automatically posted (it cannot
   be reified)"
@@ -41,7 +41,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   [:constraint [:iff [if-this then-this]]])
 
 ;;TODO: fix up reify to be more like constraint/var format (more meta)
-(defloco $reify
+(defn $reify
   "Given a constraint C, will generate a bool-var V such that (V = 1) iff C."
   {:choco "reification(BoolVar var, Constraint cstr)"}
   [var-label, constraint]
@@ -55,7 +55,7 @@ In other words, if P is true, Q must be true (otherwise the whole
   [prefix] (gensym prefix))
 
 ;;this is really complicated... very skeptical of it's use, or even correctly working
-#_(defloco $cond
+#_(defn $cond
   "A convenience function for constructing a \"cond\"-like statement out of $if/$reify statements.
   The final \"else\" can be specified using the :else keyword.
 
@@ -110,4 +110,4 @@ In other words, if P is true, Q must be true (otherwise the whole
       [[] []])
      second)))
 
-(defloco $true []  (constraint 'true nil identity))
+(defn $true []  (constraint 'true nil identity))

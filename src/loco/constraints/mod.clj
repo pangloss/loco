@@ -1,11 +1,11 @@
 (ns loco.constraints.mod
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
    [loco.utils :refer [p c]]
-   [loco.constraints.utils :as utils]
-   [clojure.core.match :refer [match]]
-   [loco.match :refer [match+]]
+   [loco.constraints.utils :refer :all :as utils]
+   [meander.epsilon :as m :refer [match]]
+
    [clojure.walk :as walk]))
 
 (def ^:private constraint-name 'mod)
@@ -15,16 +15,12 @@
          :args (s/spec
                 (s/tuple int-var? #{'=} int-var? #{'%} int-var?))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [eq-var _ operand1 _ operand2]}
-           (.mod model operand1 operand2 eq-var)
+(compile-function
+ (match *conformed
+   {:args [?eq-var _ ?operand1 _ ?operand2]}
+   (.mod *model ?operand1 ?operand2 ?eq-var)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $mod
+(defn $mod
   "Creates a modulo constraint.
 
   eq = operand1 % operand2
@@ -48,8 +44,8 @@
 
 (defn- name-fn [partial]
   (match partial
-         [partial-name body]
-         (apply str (interpose (name partial-name) body))))
+    [?partial-name ?body]
+    (apply str (interpose (name ?partial-name) ?body))))
 
 (defn- constraint-fn [var-name [op [operand1 operand2]]]
   ($mod var-name = operand1 '% operand2))
@@ -64,7 +60,7 @@
       (update :lb int)
       (update :ub int)))
 
-(defloco $%
+(defn $%
   "partial of $mod
 
   e.g.:

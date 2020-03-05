@@ -1,13 +1,13 @@
 ;;TODO: look into additions/edits to loco3 div (there were some problems with it that were fixed, tests should be brought over
 
 (ns loco.constraints.arithmetic.div
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
    [loco.utils :refer [p c]]
-   [loco.constraints.utils :as utils]
-   [clojure.core.match :refer [match]]
-   [loco.match :refer [match+]]
+   [loco.constraints.utils :refer :all :as utils]
+   [meander.epsilon :as m :refer [match]]
+
    [clojure.walk :as walk]))
 
 (def ^:private constraint-name 'div)
@@ -17,14 +17,10 @@
          :args (s/spec
                 (s/tuple int-var? #{'=} int-var? #{'/} int-var?))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [eq _= dividend _ divisor]}
-           (.div model dividend divisor eq)
-
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+(compile-function
+ (match *conformed
+        {:args [?eq _= ?dividend _ ?divisor]}
+        (.div *model ?dividend ?divisor ?eq)))
 
 ;; ;; -------------------- partial --------------------
 
@@ -64,7 +60,7 @@
     return))
 
 ;;TODO: create $div with no rounding, as rounding is sometimes undesirable
-(defloco $div
+(defn $div
   "Creates an euclidean division constraint.
 
   Ensures eq = dividend / divisor

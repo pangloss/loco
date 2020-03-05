@@ -1,6 +1,6 @@
 (ns loco.constraints.circuit
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -37,34 +37,30 @@
                               (s/tuple #{'offset} nat-int?)
                               (s/tuple #{'conf} allowed-conf-values))))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:no-conf [vars [ _ offset]]]}
-           (.circuit model (into-array IntVar vars) offset)
+(compile-function
+ (match *conformed
+   {:args [:no-conf [?vars [_ ?offset]]]}
+   (.circuit *model (into-array IntVar ?vars) ?offset)
 
-           {:args [:conf [vars [ _ offset] [_ conf]]]}
-           (.circuit model
-                     (into-array IntVar vars)
-                     offset
-                     (conf-map conf))
+   {:args [:conf [?vars [_ ?offset] [_ ?conf]]]}
+   (.circuit *model
+             (into-array IntVar ?vars)
+             ?offset
+             (conf-map ?conf))
 
-           {:args [:conf [vars [ _ offset] [_ conf]]]}
-           (.circuit model
-                     (into-array IntVar vars)
-                     offset
-                     ({
-                       'all   CircuitConf/ALL
-                       'first CircuitConf/FIRST
-                       'light CircuitConf/LIGHT
-                       'rd    CircuitConf/RD
-                       } conf))
-
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+   {:args [:conf [?vars [_ ?offset] [_ ?conf]]]}
+   (.circuit *model
+             (into-array IntVar ?vars)
+             ?offset
+             ({
+               'all   CircuitConf/ALL
+               'first CircuitConf/FIRST
+               'light CircuitConf/LIGHT
+               'rd    CircuitConf/RD
+               } ?conf))))
 
 ;;TODO: can implement a version that takes in something more looking like a graph, [[:a :b] [:a :c]]...
-(defloco $circuit
+(defn $circuit
   "Given a list of int-vars L, and an optional offset number (default
   0), the elements of L define a circuit, where (L[i] = j + offset)
   means that j is the successor of i.

@@ -1,6 +1,6 @@
 (ns loco.constraints.arithm
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -23,22 +23,18 @@
                                :arithm-op ::utils/arithmetic-symbol?
                                :operand2 ::utils/int-or-intvar?))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:compare {:eq-var eq-var :compare-op op, :operand var}]}
-           (.arithm model (coerce-int-var model eq-var) (name op) var)
+(compile-function
+ (match *conformed
+   {:args [:compare {:eq-var ?eq-var :compare-op ?op, :operand ?var}]}
+   (.arithm *model (coerce-int-var *model ?eq-var) (name ?op) ?var)
 
-           {:args [:arithm {:eq-var eq-var :compare-op op, :operand1 var
-                            :arithm-op op2 :operand2 var2}]}
-           (.arithm model
-                    (coerce-int-var model eq-var) (name op)
-                    (coerce-int-var model var) (name op2) var2)
+   {:args [:arithm {:eq-var ?eq-var :compare-op ?op, :operand1 ?var
+                    :arithm-op ?op2 :operand2 ?var2}]}
+   (.arithm *model
+            (coerce-int-var *model ?eq-var) (name ?op)
+            (coerce-int-var *model ?var) (name ?op2) ?var2)))
 
-           ::s/invalid
-           (utils/report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $arithm
+(defn $arithm
   "Creates an arithmetic constraint:
   eq op1 operand1 op2 operand2,
 
@@ -71,7 +67,7 @@
                  compiler))))
 
 ;;FIXME: not sure how to get this working :(
-;;maybe the defloco should be done sorta like a safer reset-meta! like in vars.clj
+;;maybe the defn should be done sorta like a safer reset -meta! like in vars.clj
 #_(s/fdef loco.constraints/$arithm
   :args (s/or
          :arity-3 (s/cat :a any? :compare ::utils/comparison-operator? :b any?)
@@ -84,22 +80,22 @@
   :ret vector?
   )
 
-(defloco $<
+(defn $<
   "Constrains that X < Y"
   [x y]
   ($arithm x < y))
 
-(defloco $>
+(defn $>
   "Constrains that X > Y"
   [x y]
   ($arithm x > y))
 
-(defloco $<=
+(defn $<=
   "Constrains that X <= Y"
   [x y]
   ($arithm x <= y))
 
-(defloco $>=
+(defn $>=
   "Constrains that X >= Y"
   [x y]
   ($arithm x >= y))

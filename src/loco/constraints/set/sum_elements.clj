@@ -1,10 +1,10 @@
 (ns loco.constraints.set.sum-elements
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -19,17 +19,13 @@
                                (s/tuple #{'weights} (s/coll-of int?))
                                (s/tuple #{'offset} nat-int?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [result-var [_ indices-set] [_ weights] [_ offset]]}
-           (.sumElements model indices-set (int-array weights) offset result-var)
-
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+(compile-function
+ (match *conformed
+   {:args [?result-var [_ ?indices-set] [_ ?weights] [_ ?offset]]}
+   (.sumElements *model ?indices-set (int-array ?weights) ?offset ?result-var)))
 
 ;;TODO: can do partial for sum-elements
-(defloco $sum-elements
+(defn $sum-elements
   "Creates a constraint summing weights given by a set of indices:
   sum{weights[i-offset] | i in indices} = sum Also ensures that
   elements in indices belong to [offset, offset+weights.length-1]

@@ -1,6 +1,6 @@
 (ns loco.constraints.distance
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.set :as set]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
@@ -33,30 +33,26 @@
                                  (set/difference allowed-op? #{'!=})
                                  ::utils/coerce-intvar?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-var (utils/coerce-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:int-var [_ var1 _ var2 _ op eq-var]]}
-           (.distance model
-                      (coerce-var var1)
-                      (coerce-var var2)
-                      (str op)
-                      (coerce-var eq-var))
+(compile-function
+ (let [coerce-var (utils/coerce-var *model)]
+   (match *conformed
+     {:args [:int-var [_ ?var1 _ ?var2 _ ?op ?eq-var]]}
+     (.distance *model
+                (coerce-var ?var1)
+                (coerce-var ?var2)
+                (str ?op)
+                (coerce-var ?eq-var))
 
-           {:args [:int [_ var1 _ var2 _ op eq-var]]}
-           (.distance model
-                      (coerce-var var1)
-                      (coerce-var var2)
-                      (str op)
-                      eq-var)
-
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+     {:args [:int [_ ?var1 _ ?var2 _ ?op ?eq-var]]}
+     (.distance *model
+                (coerce-var ?var1)
+                (coerce-var ?var2)
+                (str ?op)
+                ?eq-var))))
 
 ;;TODO: this looks like it would make a good partial, however the LH RH stuff is on the wrong sides
 ;;however a partial would always use the '= op, so the above doesn't matter
-(defloco $distance
+(defn $distance
   "Creates a distance constraint : |var1-var2| op {cste eq-var}
 where op can take its value among {=, >, <, !=}
 

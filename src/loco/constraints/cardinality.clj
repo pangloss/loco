@@ -3,7 +3,7 @@
    [loco.constraints.vars :refer [$int]]
    [clojure.spec.alpha :as s]
    [loco.constraints.utils :refer :all :as utils]
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk]
    [loco.utils :refer [p]]
    )
@@ -26,26 +26,22 @@
     (int? var) (.intVar model var)
     (instance? IntVar var) var))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-var (p utils/coerce-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [vars cardinality-map [_ closed?]]}
-           (.globalCardinality
-            model
-            (->> vars (map coerce-var) (into-array IntVar))
-            (->> cardinality-map keys int-array)
-            (->> cardinality-map vals (map (p to-intvar model)) (into-array IntVar))
-            closed?)
-
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+(compile-function
+ (let [coerce-var (p utils/coerce-var *model)]
+   (match *conformed
+     {:args [?vars ?cardinality-map [_ ?closed?]]}
+     (.globalCardinality
+      *model
+      (->> ?vars (map coerce-var) (into-array IntVar))
+      (->> ?cardinality-map keys int-array)
+      (->> ?cardinality-map vals (map (p to-intvar *model)) (into-array IntVar))
+      ?closed?))))
 
 ;;TODO: i forget if cardinality is a partial or has some sort of properties of a partial, but it had a domain function in the old model.clj code.
 ;; [var-name [:constraint ['cardinality [vars [values occurences] _]]] dep-domains]
 ;; (cardinality-domain var-name values occurences dep-domains)
 
-(defloco $cardinality
+(defn $cardinality
   "Takes a list of variables, and a frequency map (from numbers to
   frequencies), constrains that the frequency map is accurate. If
   the :closed flag is set to true, any keys that aren't in the

@@ -137,24 +137,26 @@
    93928.89 95164.98 96400.72 97732.21 98988.52 100316.52 101647.03 102965.19 104346.23 105715.42 107091.02 108521.24
    109917.03 111346.24 112807.78 114276.33])
 
-(->>
- (let [
-       precision 100.0
-       model (new Model)
-       income-vars (const-reals model years "net-income" (take 1 incomes))
-       _model (doall
-               (map (fn [income-var year]
-                      (ontario-tax-bracket-model model year income-var))
-                    income-vars years))
-       ]
-   (-> model (.setPrecision precision))
-   ;;(-> model (.setObjective Model/MAXIMIZE z))
-   [
-    "-------------------- model"
-    model
-    "-------------------- solutions"
-    ((juxt count identity) (time (solver/solutions model)))
-    ]
+;; This only barely works if Ibex can be initalized, if we don't have ibex we shouldn't run this... dono how to determin that yet, however ibex is really really slow.
+
+#_(->>
+   (let [
+         precision 100.0
+         model (new Model)
+         income-vars (const-reals model years "net-income" (take 1 incomes))
+         _model (doall
+                 (map (fn [income-var year]
+                        (ontario-tax-bracket-model model year income-var))
+                      income-vars years))
+         ]
+     (-> model (.setPrecision precision))
+     ;;(-> model (.setObjective Model/MAXIMIZE z))
+     [
+      "-------------------- model"
+      model
+      "-------------------- solutions"
+      ((juxt count identity) (time (solver/solutions model)))
+      ]
+     )
+   println
    )
- println
- )

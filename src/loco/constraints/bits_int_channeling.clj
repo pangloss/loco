@@ -1,11 +1,11 @@
 (ns loco.constraints.bits-int-channeling
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
-   [loco.constraints :refer [$bool]]
    [loco.constraints.utils :refer :all :as utils]
    [loco.utils :refer [p]]
+   [loco.constraints.vars :use [$bool]]
    )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar]))
@@ -20,19 +20,15 @@
                        (s/tuple #{'int-var} ::utils/coerce-intvar?)
                        ))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-int-var (p utils/coerce-int-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [[_ bits] [_ int-var]]}
-           (.bitsIntChanneling model
-                               (into-array BoolVar bits)
-                               (coerce-int-var int-var))
+(compile-function
+ (let [coerce-int-var (p utils/coerce-int-var *model)]
+   (match *conformed
+     {:args [[_ ?bits] [_ ?int-var]]}
+     (.bitsIntChanneling *model
+                         (into-array BoolVar ?bits)
+                         (coerce-int-var ?int-var)))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $bits-int-channeling
+(defn $bits-int-channeling
   "Creates an channeling constraint between an integer variable and a set of bit variables.
   Ensures that var = 20*BIT_1 + 21*BIT_2 + ... 2n-1*BIT_n.
 
@@ -43,8 +39,7 @@
   [bits int-var]
   {:pre [(sequential? bits)]}
   (-> (concat
-       ;;TODO: use $bools?
-       (mapv $bool bits)
+       (mapv $bool bits)        ;;TODO: use $bools?
        [(constraint constraint-name
                     [['bits (vec bits)]
                      ['int-var int-var]]

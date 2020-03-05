@@ -1,11 +1,11 @@
 (ns loco.constraints.all-equal
-  (:use loco.constraints)
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
    [loco.utils :refer [p]]
+   [loco.constraints.arithm :use [$arithm]]
    )
   (:import
    [org.chocosolver.solver.variables
@@ -22,20 +22,16 @@
                  :ints ::utils/coll-coerce-intvar?
                  :sets ::utils/coll-setvar?))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-int-var (p utils/coerce-int-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:ints vars]}
-           (.allEqual model (->> vars (map coerce-int-var) (into-array IntVar)))
+(compile-function
+ (let [coerce-int-var (p utils/coerce-int-var *model)]
+   (match *conformed
+     {:args [:ints ?vars]}
+     (.allEqual *model (->> ?vars (map coerce-int-var) (into-array IntVar)))
 
-           {:args [:sets vars]}
-           (.allEqual model (into-array SetVar vars))
+     {:args [:sets ?vars]}
+     (.allEqual *model (into-array SetVar ?vars)))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $=
+(defn $=
   "Constrains that all vars are equal to each other
 
   Creates a constraint stating that ints should be all equal.
@@ -44,10 +40,8 @@
            "allEqual(SetVar... sets)"]}
   [& more]
   (match (vec more)
-         [(single-arg-as-vec :guard vector?)]
-         (constraint constraint-name (vec single-arg-as-vec)
-                     compiler)
-         [a b] ($arithm a '= b)
-         :else (constraint constraint-name (vec more)
-                           compiler)
-         ))
+    [(m/pred vector? ?single-arg-as-vec)]
+    (constraint constraint-name (vec ?single-arg-as-vec)
+                compiler)
+    [?a ?b] ($arithm ?a '= ?b)
+    _ (constraint constraint-name (vec more) compiler)))

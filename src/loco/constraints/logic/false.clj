@@ -1,6 +1,6 @@
 (ns loco.constraints.logic.false
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -15,19 +15,15 @@
          :args (s/spec
                 #{nil})))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [eq _= dividend _ divisor]}
-           (.falseConstraint model)
+(compile-function
+ (match *conformed
+   {:args _}
+   (.falseConstraint *model)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $false
+(defn $false
   "Constraint that is always false"
   {:choco "false()"}
   []
   (constraint constraint-name nil compiler))
 
-;;(defloco $false [] (constraint 'false nil identity))
+;;(defn $false [] (constraint 'false nil identity))

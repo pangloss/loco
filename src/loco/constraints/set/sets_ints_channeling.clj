@@ -1,10 +1,10 @@
 (ns loco.constraints.set.sets-ints-channeling
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -18,20 +18,16 @@
                        (s/tuple #{'sets} (s/coll-of set-var?) #{'offset} nat-int?)
                        (s/tuple #{'ints} (s/coll-of int-var?) #{'offset} nat-int?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [[_ sets _ offset-set] [_ ints _ offset-ints]]}
-           (.setsIntsChanneling model
-                                (into-array SetVar sets)
-                                (into-array IntVar ints)
-                                offset-set
-                                offset-ints)
+(compile-function
+ (match *conformed
+   {:args [[_ ?sets _ ?offset-set] [_ ?ints _ ?offset-ints]]}
+   (.setsIntsChanneling *model
+                        (into-array SetVar ?sets)
+                        (into-array IntVar ?ints)
+                        ?offset-set
+                        ?offset-ints)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $sets-ints-channeling
+(defn $sets-ints-channeling
   "Creates a constraint channeling set variables and integer variables :
   x in sets[y] <=> ints[x] = y
 

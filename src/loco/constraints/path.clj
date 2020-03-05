@@ -1,10 +1,10 @@
 (ns loco.constraints.path
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -19,16 +19,12 @@
                                (s/tuple #{'end}    int-var?)
                                (s/tuple #{'offset} nat-int?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [vars [_ start] [_ end] [_ offset]]}
-           (.path model (into-array IntVar vars) start end offset)
+(compile-function
+ (match *conformed
+   {:args [?vars [_ ?start] [_ ?end] [_ ?offset]]}
+   (.path *model (into-array IntVar ?vars) ?start ?end ?offset)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $path
+(defn $path
   "Creates a path constraint which ensures that
   the elements of vars define a covering path from start to end
   where vars[i] = j means that j is the successor of i.

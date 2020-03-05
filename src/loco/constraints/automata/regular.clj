@@ -1,6 +1,6 @@
 (ns loco.constraints.automata.regular
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -18,19 +18,15 @@
                       (s/tuple ::utils/coll-coerce-intvar?
                                (s/tuple #{'automation} #(instance? FiniteAutomaton %))))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-int-var (p utils/coerce-int-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [vars [_ automation]]}
-           (.regular model
-                     (->> vars (map coerce-int-var) (into-array IntVar))
-                     automation)
+(compile-function
+ (let [coerce-int-var (p utils/coerce-int-var *model)]
+   (match *conformed
+     {:args [?vars [_ ?automation]]}
+     (.regular *model
+               (->> ?vars (map coerce-int-var) (into-array IntVar))
+               ?automation))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $regular
+(defn $regular
   "Takes a Choco automaton object constructed by the loco.automata
   namespace, and constrains that a list of variables represents an
   input string accepted by the automaton."

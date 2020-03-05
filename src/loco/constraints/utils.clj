@@ -2,8 +2,7 @@
   (:use loco.utils)
   (:refer-clojure :exclude [compile var? set?])
   (:require
-   [clojure.core.match :refer [match]]
-   [loco.match :refer [match+]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    )
@@ -96,14 +95,13 @@
     :else (str obj) ;; mainly for numebrs
     ))
 
-(defn- default-name-fn [partial]
-  (let [return (match partial
-                      [partial-name body]
-                      (->> body
-                           (map stringize)
-                           (interpose (name partial-name))
-                           (apply str)))]
-    return))
+(defn- default-name-fn [partial-exp]
+  (match partial-exp
+    [?partial-name ?body]
+    (->> ?body
+         (map stringize)
+         (interpose (name ?partial-name))
+         (apply str))))
 
 (defn partial-constraint
   "A partial constraint is one that lacks 1 variable (the equivalence
@@ -291,35 +289,12 @@
                (s/explain-data spec-name)
                convert-vars-to-strings))))
 
-;;FIXME: defloco doesn't work well with fdef (spec), so i think this
-;;should be turned into a function that just does the intern, no defn
-;;stuff.
-(defmacro defloco
-  "used for defining global loco vars (typically $name)"
-  [name & more]
-  {:pre [(symbol? name)]}
-  (let [cur-ns (ns-name *ns*)]
-    `(do
-       #_(defn ~name ~@more)
-       (in-ns 'loco.constraints) ;;need to do this shit because
-                                 ;;sometimes the ns loco.constraints
-                                 ;;isn't made, and we refer to it in
-                                 ;;the intern! :(
-       (when (resolve '~name)
-         (ns-unmap 'loco.constraints '~name))
-
-       (in-ns '~cur-ns)
-       (when (resolve '~name)
-         (ns-unmap '~cur-ns '~name))
-
-       ;; TODO: remove defonce code
-       ;; from defonce
-       ;; this doesn't seem to be solving the issue at hand
-       (let [defn# (defn ~name ~@more)
-             v# (intern 'loco.constraints '~name defn#)]
-         ;;(println "defn:" '~name)
-         (reset-meta! v# (meta #'~name))
-         )
-       )
-    )
-  )
+(defmacro compile-function [& body]
+  `(defn- ~'compiler [model# vars-index# statement#]
+     (let [var-subed-statement# (->> statement# (walk/prewalk-replace vars-index#))
+           conformed# (->> var-subed-statement# (s/conform ::compile-spec))
+           ~(symbol "*conformed") conformed#
+           ~(symbol "*model")     model#]
+       (case conformed#
+         ::s/invalid (report-spec-error ~(symbol "constraint-name") ::compile-spec var-subed-statement#)
+         ~@body))))

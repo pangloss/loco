@@ -1,6 +1,6 @@
 (ns loco.constraints.diff-n
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -22,27 +22,23 @@
                                                     #{'h} ::utils/coerce-intvar?)))
                        (s/tuple #{'add-cumulative-reasoning} boolean?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-var (p utils/coerce-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [[_ rects] [_ add-cumulative-reasoning?]]}
-           (let [xs (map (c coerce-var #(nth % 1)) rects)
-                 ys (map (c coerce-var #(nth % 3)) rects)
-                 widths (map (c coerce-var #(nth % 5)) rects)
-                 heights (map (c coerce-var #(nth % 7)) rects)
-                 ]
-             (.diffN model
-                     (into-array IntVar xs)
-                     (into-array IntVar ys)
-                     (into-array IntVar widths)
-                     (into-array IntVar heights)
-                     add-cumulative-reasoning?))
+(compile-function
+ (let [coerce-var (p utils/coerce-var *model)]
+   (match *conformed
+     {:args [[_ ?rects] [_ ?add-cumulative-reasoning?]]}
+     (let [xs      (map (c coerce-var #(nth % 1)) ?rects)
+           ys      (map (c coerce-var #(nth % 3)) ?rects)
+           widths  (map (c coerce-var #(nth % 5)) ?rects)
+           heights (map (c coerce-var #(nth % 7)) ?rects)
+           ]
+       (.diffN *model
+               (into-array IntVar xs)
+               (into-array IntVar ys)
+               (into-array IntVar widths)
+               (into-array IntVar heights)
+               ?add-cumulative-reasoning?)))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $diff-n
+(defn $diff-n
   "Creates a diffN constraint.
   Constrains each rectangle[i],
   given by their origins X[i],Y[i] and sizes width[i], height[i],

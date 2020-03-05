@@ -1,6 +1,6 @@
 (ns loco.constraints.views.affine
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.set :as set]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
@@ -14,31 +14,27 @@
 (s/def ::compile-spec
   (s/tuple #{:view} string? (s/tuple #{view-name} ::utils/coerce-intvar? (s/tuple int? int?)) ::utils/int-domain))
 
-(defn- compiler-fn [model vars-index statement]
-  (let [constraint-name view-name
-        var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           [:view var-name [_ dependency-var [coeff offset]] _domain]
-           (.intAffineView model coeff (coerce-int-var model dependency-var) offset)
-
-           ::s/invalid
-           (report-spec-error view-name ::compile-spec var-subed-statement))))
+(let [constraint-name view-name]
+  (compile-function
+   (match *conformed
+     [:view ?var-name [_ ?dependency-var [?coeff ?offset]] _domain]
+     (.intAffineView *model ?coeff (coerce-int-var *model ?dependency-var) ?offset))))
 
 (defn- view-fn [name statement]
   (match statement
-         [view-name dep mods] (with-meta [:view name statement]
-                                (meta statement))))
+         [_view-name _dep _mods] (with-meta [:view name statement]
+                                   (meta statement))))
 
 ;;OMG wtf am i doing?
 (defn- name-fn [statement]
   (match statement
-         [view-name (dep :guard int?) [-1 0]]         (str "-(" dep ")")
-         [view-name (dep :guard int?) [-1 offset]]    (str "-(" dep ")+" offset)
-         [view-name (dep :guard int?) [coeff offset]] (str (+ (* coeff dep) offset))
-         [view-name dep [-1 offset]]                  (str "-(" (str+ dep) ")" "+" offset)
-         [view-name dep [1 offset]]                   (str (str+ dep) "+" offset)
-         [view-name dep [0 offset]]                   (str offset)
-         [view-name dep [coeff offset]]               (str coeff (str+ dep) "+" offset)))
+         [_view-name (m/pred int? ?dep) [-1 0]]           (str "-(" ?dep ")")
+         [_view-name (m/pred int? ?dep) [-1 ?offset]]     (str "-(" ?dep ")+" ?offset)
+         [_view-name (m/pred int? ?dep) [?coeff ?offset]] (str (+ (* ?coeff ?dep) ?offset))
+         [_view-name ?dep [-1 ?offset]]                    (str "-(" (str+ ?dep) ")" "+" ?offset)
+         [_view-name ?dep [1 ?offset]]                     (str (str+ ?dep) "+" ?offset)
+         [_view-name ?dep [0 ?offset]]                     (str ?offset)
+         [_view-name ?dep [?coeff ?offset]]                 (str ?coeff (str+ ?dep) "+" ?offset)))
 
 (defn- domain-fn [& partial]
   (let [[statement possible-domain] partial
@@ -49,7 +45,7 @@
         (conj [:int lb ub])
         (vary-meta assoc :domain {:int true :lb lb :ub ub}))))
 
-(defloco $affine
+(defn $affine
   "Creates an affine view over x such that: a.x + b.
 
 Parameters:
@@ -67,4 +63,4 @@ Parameters:
          name-fn
          view-fn
          domain-fn
-         compiler-fn)))
+         compiler)))

@@ -1,6 +1,6 @@
 (ns loco.constraints.int-value-precede
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -18,20 +18,16 @@
                        int?
                        int?))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-var (utils/coerce-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [variables s t]}
-           (.intValuePrecedeChain
-            model
-            (->> variables (map coerce-var) (into-array IntVar))
-            s t)
+(compile-function
+ (let [coerce-var (utils/coerce-var *model)]
+   (match *conformed
+     {:args [?variables ?s ?t]}
+     (.intValuePrecedeChain
+      *model
+      (->> ?variables (map coerce-var) (into-array IntVar))
+      ?s ?t))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $int-value-precede
+(defn $int-value-precede
   "CHOCO:
 intValuePrecedeChain(IntVar[] X, int S, int T)
 Ensure that if there exists j such that X[j] = T, then, there must

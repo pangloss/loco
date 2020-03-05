@@ -4,7 +4,7 @@
             does not make use of loco's $scalar constraint (see sendmoremoney1.clj for a more
             concise implementation)."
       :solutions true}
-  loco.integer.sendmoremoney2
+  loco.integer.sendmoremoney2-test
   (:refer-clojure :exclude [send])
   (:require [clojure.test :refer :all]
             ;;[loco.core :refer :all]

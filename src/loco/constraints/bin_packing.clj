@@ -1,15 +1,12 @@
-;; FIXME: WIP
-
-(ns loco.constraints.bin-packing
-    (:require
-     [clojure.core.match :refer [match]]
-     [clojure.spec.alpha :as s]
-     [clojure.walk :as walk]
-     [loco.constraints.utils :refer :all :as utils]
-     [loco.utils :refer [p]]
-     )
-    (:import
-     [org.chocosolver.solver.variables IntVar]))
+(ns loco.constraints.bin-packing ;; FIXME: WIP
+  (:require
+   [meander.epsilon :as m :refer [match]]
+   [clojure.spec.alpha :as s]
+   [clojure.walk :as walk]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.utils :refer [p]])
+  (:import
+   [org.chocosolver.solver.variables IntVar]))
 
 (def ^:private constraint-name 'bin-packing)
 
@@ -23,20 +20,17 @@
                        (s/tuple #{'offset}    int?)
                        ))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-int-var (p utils/coerce-int-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [[_ item-bin] [_ item-size] [_ bin-load] [_ offset]]}
-           (.binPacking model
-                        (->> item-bin (map coerce-int-var) (into-array IntVar))
-                        (int-array item-size)
-                        (->> bin-load (map coerce-int-var) (into-array IntVar))
-                        offset)
-                      ::s/invalid
-                      (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+(compile-function
+ (let [coerce-int-var (p utils/coerce-int-var *model)]
+   (match *conformed
+     {:args [[_ ?item-bin] [_ ?item-size] [_ ?bin-load] [_ ?offset]]}
+     (.binPacking *model
+                  (->> ?item-bin (map coerce-int-var) (into-array IntVar))
+                  (int-array ?item-size)
+                  (->> ?bin-load (map coerce-int-var) (into-array IntVar))
+                  ?offset))))
 
-(defloco $bin-packing
+(defn $bin-packing
   "Creates a BinPacking constraint.
 
   Bin Packing formulation:

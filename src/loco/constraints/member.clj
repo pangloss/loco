@@ -1,11 +1,11 @@
 (ns loco.constraints.member
   (:refer-clojure :exclude [set])
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -19,34 +19,30 @@
                        :int-table (s/tuple
                                    int-var? #{'of} (s/coll-of int?))
                        :int-lb-ub (s/tuple
-                                     int-var?
-                                     (s/tuple #{'lb} int?)
-                                     (s/tuple #{'ub} int?))
+                                   int-var?
+                                   (s/tuple #{'lb} int?)
+                                   (s/tuple #{'ub} int?))
 
                        :int-set   (s/tuple
                                    int-or-intvar? #{'of} set-var?)
 
                        :set-sets  (s/tuple set-var? #{'of} (s/coll-of set-var?))))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:int-lb-ub [member [_ lb] [_ ub]]]}
-           (.member model member lb ub)
+(compile-function
+ (match *conformed
+   {:args [:int-lb-ub [?member [_ ?lb] [_ ?ub]]]}
+   (.member *model ?member ?lb ?ub)
 
-           {:args [:int-set [member _ set-var]]}
-           (.member model member set-var)
+   {:args [:int-set [?member _ ?set-var]]}
+   (.member *model ?member ?set-var)
 
-           {:args [:set-sets [member _ sets]]}
-           (.member model (into-array SetVar sets) member)
+   {:args [:set-sets [?member _ ?sets]]}
+   (.member *model (into-array SetVar ?sets) ?member)
 
-           {:args [:int-table [member _ table]]}
-           (.member model member (int-array table))
+   {:args [:int-table [?member _ ?table]]}
+   (.member *model ?member (int-array ?table))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $member
+(defn $member
   "-------------------- IntVar --------------------
   Creates a member constraint. Ensures var takes its values in [LB, UB]
   Creates a member constraint. Ensures var takes its values in table
@@ -62,16 +58,16 @@
            "member(SetVar[] sets, SetVar set)"]}
   ([member-of collection]
    (match [member-of collection]
-          [member (table :guard sequential?)]
-          (constraint constraint-name
-                      [member 'of  (vec table)]
-                      compiler)
+     [?member (m/pred sequential? ?table)]
+     (constraint constraint-name
+                 [?member 'of  (vec ?table)]
+                 compiler)
 
-          ;;TODO: opprotunity to generate vars (set)
-          [member (set :guard keyword?)]
-          (constraint constraint-name
-                      [ member 'of set]
-                      compiler)))
+     ;;TODO: opprotunity to generate vars (set)
+     [?member (m/pred keyword? ?set)]
+     (constraint constraint-name
+                 [?member 'of ?set]
+                 compiler)))
 
   ([var lb ub]
    {:pre [(int? lb) (int? ub) (< lb ub)]}

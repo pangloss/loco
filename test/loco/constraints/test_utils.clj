@@ -1,5 +1,4 @@
-;;TODO: move this into different (lower) namespace
-(ns loco.constraints.test-utils
+(ns loco.constraints.test-utils ;;TODO: move this into different (lower) namespace
   (:require
    [clojure.test :refer :all :as t]
    [loco.compiler :as compiler]
@@ -8,8 +7,7 @@
    [loco.utils :refer [p c]]
    ))
 
-;;deprecated
-(defn compiled-constraints-strings [input]
+(defn compiled-constraints-strings [input] ;;FIXME: deprecated
   (->> input
        model/compile
        compiler/compile
@@ -17,24 +15,21 @@
        .getCstrs
        (map str)))
 
-;;deprecated
-(defn compiled-vars-strings [input]
+(defn compiled-vars-strings [input] ;;FIXME: deprecated
   (->> input
        model/compile
        compiler/compile
        :vars
        (map str)))
 
-;;deprecated
-(defn multi-test [input]
+(defn multi-test [input] ;;FIXME: deprecated
   [input
    (model/compile input)
    (compiled-constraints-strings input)
    (compiled-vars-strings input)
    (solver/solutions input)])
 
-;;deprecated
-(defmacro choco-vars-string-assert
+(defmacro choco-vars-string-assert ;;FIXME: deprecated
   "used for testing compile chain model/compile -> compiler/compile
   tests properties of vars in built Model"
   ([expected actual-input] `(choco-vars-string-assert ~expected ~actual-input nil))

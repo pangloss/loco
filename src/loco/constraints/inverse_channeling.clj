@@ -1,10 +1,10 @@
 (ns loco.constraints.inverse-channeling
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -18,19 +18,15 @@
                        (s/tuple (s/coll-of int-var?) #{'offset} nat-int?)
                        (s/tuple (s/coll-of int-var?) #{'offset} nat-int?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [[vars1 _ offset1] [vars2 _ offset2]]}
-           (.inverseChanneling model
-                               (into-array IntVar vars1)
-                               (into-array IntVar vars2)
-                               offset1 offset2)
+(compile-function
+ (match *conformed
+   {:args [[?vars1 _ ?offset1] [?vars2 _ ?offset2]]}
+   (.inverseChanneling *model
+                       (into-array IntVar ?vars1)
+                       (into-array IntVar ?vars2)
+                       ?offset1 ?offset2)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $inverse-channeling
+(defn $inverse-channeling
   "Creates an inverse channeling between vars1 and vars2:
   vars1[i-offset2] = j <=> vars2[j-offset1] = i Performs AC if domains are enumerated.
   If not, then it works on bounds without guaranteeing BC

@@ -1,6 +1,6 @@
 (ns loco.utils
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    ;;[fipp.edn :refer [pprint]]
    [clojure.pprint :refer [pprint, print-table]]
    ))
@@ -9,19 +9,19 @@
 (def c comp)
 
 (defn debug-print [prefix list]
-  (match
-   [prefix list]
-   [(aprefix :guard #(or (symbol? %) (keyword? %) (string? %))) alist]
-   (do
-     (doseq [item alist]
-       (println aprefix item (meta item)))
-     alist)
+  (let [nice-prefix? #(or (symbol? %) (keyword? %) (string? %))]
+    (match [prefix list]
+      [(m/pred nice-prefix? ?aprefix) ?alist]
+      (do
+        (doseq [item ?alist]
+          (println ?aprefix item (meta item)))
+        ?alist)
 
-   [alist (aprefix :guard #(or (symbol? %) (keyword? %) (string? %)))]
-   (do
-     (doseq [item alist]
-       (println aprefix item (meta item)))
-     alist)))
+      [?alist (m/pred nice-prefix? ?aprefix)]
+      (do
+        (doseq [item ?alist]
+          (println ?aprefix item (meta item)))
+        ?alist))))
 
 (defn remove-dupes [ast]
   ;; we use a vec to maintain order, and a set for fast lookup of dupes

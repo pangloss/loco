@@ -2,20 +2,20 @@
 (ns loco.constraints.nth
   (:require
    [loco.constraints.utils :refer :all]
-   [clojure.core.match :refer [match]]))
+   [meander.epsilon :as m :refer [match]]))
 
 (def ^:private partial-name 'nth)
 
 (defn- name-fn [body]
   (match body
-         [table
-          ['at index]
-          ['offset offset]]
-         (apply str (interpose "_" table) "_"
-                (when (pos? index)
-                  (str 'index "=" index))
-                (when (pos? offset)
-                  (str 'offset "=" offset)))))
+    [?table
+     [at ?index]
+     [offset ?offset]]
+    (apply str (interpose "_" ?table) "_"
+           (when (pos? ?index)
+             (str 'index "=" ?index))
+           (when (pos? ?offset)
+             (str 'offset "=" ?offset)))))
 
 ;;TODO: transformation fn
 ;; [var-name [:$nth [vars [:at index] [:offset offset]]]]
@@ -31,11 +31,12 @@
 ;; (into [:int] (element-domains vars index-lb index-ub offset))
 
 ;;should be given fully expanded vars [:var _ _ [:int _ _ ]]
+;;FIXME: finish element-domains for nth
 (defn- element-domains
   [body]
-  (match body [table
-               ['at index]
-               ['offset  offset]])
+  (match body [?table
+               [at ?index]
+               [offset  ?offset]] nil)
   #_(->>
    deps
    lb-ub-seq
@@ -46,7 +47,7 @@
           (comp last last (p sort-by second))))))
 
 ;;FIXME: $nth needs implementing
-(defloco $nth
+(defn $nth
   "partial for $element"
   {:choco "element(IntVar value, IntVar[] table, IntVar index, int offset)"
    :partial true}

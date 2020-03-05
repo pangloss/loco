@@ -1,7 +1,7 @@
 ;;FIXME: do some scalar tests
 (ns loco.constraints.scalar-test
   (:require
-   [loco.integer.sendmoremoney1 :as sendmoney]
+   [loco.integer.sendmoremoney1-test :as sendmoney]
    [clojure.test :refer :all]
    [loco.constraints :refer :all]
    [loco.constraints.test-utils :refer :all]

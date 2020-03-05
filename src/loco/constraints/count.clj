@@ -1,6 +1,6 @@
 (ns loco.constraints.count
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -20,22 +20,19 @@
                        ))))
 
 (defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-var (utils/coerce-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [vars [_ value] [_ limit]]}
-           (.count model
-                   (coerce-var value)
-                   (->> vars (map coerce-var) (into-array IntVar))
-                   (coerce-var limit))
-
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+  (compile-function
+   (let [coerce-var (utils/coerce-var *model)]
+     (match *conformed
+       {:args [?vars [_ ?value] [_ ?limit]]}
+       (.count *model
+               (coerce-var ?value)
+               (->> ?vars (map coerce-var) (into-array IntVar))
+               (coerce-var ?limit))))))
 
 ;;TODO: possible partial ($= :value ($count [1 2 3] :limit))
 ;; it's also possible to do ($= :limit ($count :value [1 2 3]))
 ;; so it's hard to know which one is the common case.
-(defloco $count
+(defn $count
   "Creates a count constraint. Let N be the number of variables of the
   vars collection assigned to value value;
   Enforce condition N = limit to hold. "

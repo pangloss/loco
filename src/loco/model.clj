@@ -1,7 +1,7 @@
 (ns loco.model
   (:refer-clojure :exclude [compile var? set?])
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.pprint :refer [pprint]]
    [clojure.walk :as walk]
    [loco.constraints.vars :refer [$proto]]
@@ -82,16 +82,16 @@
                                   constraint (if (not= children constraint)
                                                children constraint)
                                   return (match constraint
-                                                [nil] nil
-                                                (constraint :guard constraint?) (do
-                                                                                  (swap! acc into (concat [var] [constraint]))
-                                                                                  var-name)
-                                                [(num :guard int?)] num
-                                                [(view :guard view?)] (view-transform view acc)
-                                                (constraints :guard (p some (some-fn constraint?))) (do
-                                                                                                      (swap! acc into (concat [var] constraints))
-                                                                                                      var-name)
-                                                [unwrap] unwrap)]
+                                           [nil] nil
+                                           (m/pred constraint? ?constraint) (do
+                                                                              (swap! acc into (concat [var] [?constraint]))
+                                                                              var-name)
+                                           [(?num :guard int?)] ?num
+                                           [(m/pred view? ?view)] (view-transform ?view acc)
+                                           (m/pred (p some (some-fn constraint?)) ?constraints) (do
+                                                                                                  (swap! acc into (concat [var] ?constraints))
+                                                                                                  var-name)
+                                           [unwrap] unwrap)]
                               return)
                             :else statement))))
                   ]

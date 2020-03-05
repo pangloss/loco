@@ -1,10 +1,10 @@
 (ns loco.constraints.n-values
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -16,16 +16,12 @@
          :args       (s/spec
                       (s/tuple (s/coll-of int-var?) int-var?))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [vars n-values]}
-           (.nValues model (into-array IntVar vars) n-values)
+(compile-function
+ (match *conformed
+   {:args [?vars ?n-values]}
+   (.nValues *model (into-array IntVar ?vars) ?n-values)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $n-values
+(defn $n-values
   "Creates an nValue constraint. Let N be the number of distinct values
   assigned to the variables of the vars collection. Enforce condition
   N = nValues to hold."

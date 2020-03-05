@@ -1,7 +1,7 @@
 (ns loco.constraints.views.offset
   (:require
    [clojure.walk :as walk]
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.set :as set]
    [loco.constraints.utils :refer :all :as utils]
@@ -14,27 +14,23 @@
 (s/def ::compile-spec
   (s/tuple #{:view} string? (s/tuple #{view-name} ::utils/coerce-intvar? (s/tuple int?)) ::utils/int-domain))
 
-(defn- compiler-fn [model vars-index statement]
-  (let [constraint-name view-name
-        var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           [:view var-name [_ dependency-var [modifier]] _domain]
-           (.intOffsetView model (coerce-int-var model dependency-var) modifier)
-
-           ::s/invalid
-           (report-spec-error view-name ::compile-spec var-subed-statement))))
+(let [constraint-name view-name]
+  (compile-function
+   (match *conformed
+     [:view ?var-name [_ ?dependency-var [?modifier]] _domain]
+     (.intOffsetView *model (coerce-int-var *model ?dependency-var) ?modifier))))
 
 (defn- view-fn [name statement]
   (match statement
-         [view-name dep mods] (with-meta [:view name statement]
-                                (meta statement))))
+    [_view-name _dep _mods] (with-meta [:view name statement]
+                              (meta statement))))
 
 (defn- name-fn [statement]
   (match statement
-         [view-name (dep :guard int?) [(modifier :guard neg?)]] (str (str+ dep) modifier)
-         [view-name (dep :guard int?) [modifier]]               (str dep "+" modifier)
-         [view-name dep [(modifier :guard neg?)]]               (str (str+ dep) modifier)
-         [view-name dep [modifier]]                             (str (str+ dep) "+" modifier)))
+         [?view-name (m/pred int? ?dep) [(m/pred neg? ?modifier)]] (str (str+ ?dep) ?modifier)
+         [?view-name (m/pred int? ?dep) [?modifier]]               (str ?dep "+" ?modifier)
+         [?view-name ?dep [(m/pred neg? ?modifier)]]               (str (str+ ?dep) ?modifier)
+         [?view-name ?dep [?modifier]]                             (str (str+ ?dep) "+" ?modifier)))
 
 (defn- domain-fn [& partial]
   (let [[statement possible-domain] partial
@@ -45,7 +41,7 @@
         (conj [:int lb ub])
         (vary-meta assoc :domain {:int true :lb lb :ub ub}))))
 
-(defloco $offset-view
+(defn $offset-view
   "creates a offset view.
 
 Creates a view based on var, equal to var+cste."
@@ -58,4 +54,4 @@ Creates a view based on var, equal to var+cste."
          name-fn
          view-fn
          domain-fn
-         compiler-fn)))
+         compiler)))

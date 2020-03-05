@@ -14,7 +14,7 @@ http://www.choco-solver.org/apidocs/org/chocosolver/util/objects/graphs/Multival
 implementation requires int-var[][]
 
 #+BEGIN_SRC clojure
-(defloco $key-sort
+(defn $key-sort
     "Creates a keySort constraint which ensures that the variables of
   SORTEDvars correspond to the variables of vars according to a
   permutation stored in PERMvars (optional, can be null). The variables
@@ -40,7 +40,7 @@ http://www.choco-solver.org/apidocs/org/chocosolver/solver/constraints/nary/alld
 possibly need to use reify
 
 #+BEGIN_SRC clojure
-(defloco $distinct-under-condition
+(defn $distinct-under-condition
     "Creates an allDifferent constraint subject to the given
   condition. More precisely: IF singleCondition for all X,Y in vars,
   condition(X) => X != Y ELSE for all X,Y in vars, condition(X) AND

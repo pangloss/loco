@@ -1,6 +1,6 @@
-(ns loco.constraints.logic.not
+(ns loco.constraints.logic.not ;;FIXME: finish implementing
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -21,16 +21,11 @@
 ;; example:
 ;; [:and (constraints :guard (p every? constraint?))]
 ;; (.and model (realize-nested-constraints constraints))
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [eq _= dividend _ divisor]}
-           (.not model constraint)
+(compile-function
+ (match *conformed
+   {:args ?constraint} (.not *model ?constraint)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $not
+(defn $not
   "Given a constraint C, returns \"not C\" a.k.a. \"~C\", which is true iff C is false."
   {:choco "not(Constraint cstr)"}
   [constraint]

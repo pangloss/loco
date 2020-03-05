@@ -1,13 +1,13 @@
 ;; FIXME: WIP
 
 (ns loco.constraints.max
-  (:use loco.constraints.utils)
+
   (:require
    [loco.utils :refer [p c]]
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -39,29 +39,25 @@
                                      (s/tuple #{'not-empty?} boolean?))
                        ))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:ints [max [_ vars]]]}
-           (.max model max (into-array IntVar vars))
+(compile-function
+ (match *conformed
+   {:args [:ints [?max [_ ?vars]]]}
+   (.max *model ?max (into-array IntVar ?vars))
 
-           {:args [:bools [max [_ vars]]]}
-           (.max model max (into-array BoolVar vars))
+   {:args [:bools [?max [_ ?vars]]]}
+   (.max *model ?max (into-array BoolVar ?vars))
 
-           {:args [:set [max [_ set] [_ not-empty?]]]}
-           (.max model set max not-empty?) ;;fugly API! bad choco!
+   {:args [:set [?max [_ ?set] [_ ?not-empty?]]]}
+   (.max *model ?set ?max ?not-empty?) ;;fugly API! bad choco!
 
-           {:args [:set-indices [max [_ weights] [_ indices] [_ offset] [_ not-empty?]]]}
-           (.max model indices (int-array weights) offset max not-empty?)
-
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+   {:args [:set-indices [?max [_ ?weights] [_ ?indices] [_ ?offset] [_ ?not-empty?]]]}
+   (.max *model ?indices (int-array ?weights) ?offset ?max ?not-empty?)))
 
 (defn- name-fn [partial]
   (match partial
-         [partial-name body]
-         (->> (interpose "_" (map name body))
-              (apply str (name partial-name) "_"))))
+         [?partial-name ?body]
+         (->> (interpose "_" (map name ?body))
+              (apply str (name ?partial-name) "_"))))
 
 (declare $max)
 
@@ -70,16 +66,16 @@
 
 (defn- domain-fn [partial]
   (match partial
-         [partial-name body]
+         [?partial-name ?body]
          (->
           (reduce
            (fn [{:keys [lb ub] :as acc} domain]
              (match domain
                     ;;TODO: handle enumerated domains
-                    {:int true :lb d-lb :ub d-ub} {:lb (max lb d-lb)
-                                                   :ub (max ub d-ub)}))
+                    {:int true :lb ?d-lb :ub ?d-ub} {:lb (max lb ?d-lb)
+                                                   :ub (max ub ?d-ub)}))
            ;;{:lb 0 :ub 0}
-           body)
+           ?body)
           (assoc :int true)
           (update :lb int)
           (update :ub int))))
@@ -97,7 +93,7 @@
 ;;TODO: replace defun with match+ or conform add bool documentation
 ;;TODO: fix arglists
 
-(defloco $max
+(defn $max
   "The maximum of several arguments.
   The arguments can be a mixture of int-vars and numbers
   Creates a constraint over the maximum element in a set: max{i | i in set} = maxElementValue
@@ -114,33 +110,32 @@
                [set-indices weights<int[]> offset<int> max<int-var> not-empty?]
                [& int-vars])}
   [& more]
-  (match
-   (vec more)
-   [(max-list :guard sequential?)] (max-partial max-list)
+  (match (vec more)
+   [(m/pred sequential? ?max-list)] (max-partial ?max-list)
 
-   [max (vars :guard sequential?)]
+   [?max (m/pred sequential? ?vars)]
    (constraint constraint-name
-               [max
-                ['of (vec vars)]] compiler)
+               [?max
+                ['of (vec ?vars)]] compiler)
 
-   [set-var max (not-empty? :guard boolean?)]
+   [?set-var ?max (m/pred boolean? ?not-empty?)]
    (constraint constraint-name
-               [max
-                ['of set-var]
-                ['not-empty? not-empty?]]
+               [?max
+                ['of ?set-var]
+                ['not-empty? ?not-empty?]]
                compiler)
 
-   [set-indices,
-    (weights :guard [sequential? (p every? int?)])
-    (offset :guard integer?)
-    max,
-    (not-empty? :guard boolean?)]
+   [?set-indices,
+    (m/pred (every-pred sequential? (p every? int?)) ?weights)
+    (m/pred integer? ?offset)
+    ?max,
+    (m/pred boolean? ?not-empty?)]
    (constraint constraint-name
-               [max
-                ['of          (vec weights)]
-                ['indices    set-indices]
-                ['offset      offset]
-                ['not-empty? not-empty?]]
+               [?max
+                ['of         (vec ?weights)]
+                ['indices    ?set-indices]
+                ['offset     ?offset]
+                ['not-empty? ?not-empty?]]
                compiler)
 
-   [& int-vars] (max-partial int-vars)))
+   [& ?int-vars] (max-partial ?int-vars)))

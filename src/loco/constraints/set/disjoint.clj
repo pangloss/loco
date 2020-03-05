@@ -1,10 +1,10 @@
 (ns loco.constraints.set.disjoint
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -16,16 +16,11 @@
          :args       (s/spec
                       (s/tuple set-var? set-var?))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [set1 set2]}
-           (.disjoint model set1 set2)
+(compile-function
+ (match *conformed
+   {:args [?set1 ?set2]} (.disjoint *model ?set1 ?set2)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $disjoint
+(defn $disjoint
   "Creates a constraint stating that the intersection of set1 and set2 should be empty Note that they can be both empty"
   {:choco "disjoint(SetVar set1, SetVar set2)"}
   ([[set1 set2 :as set-pair]]

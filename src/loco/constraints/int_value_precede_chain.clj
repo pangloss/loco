@@ -1,6 +1,6 @@
 (ns loco.constraints.int-value-precede-chain
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -17,20 +17,16 @@
                        ::utils/coll-coerce-intvar?
                        (s/coll-of int?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-var (utils/coerce-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [variables values]}
-           (.intValuePrecedeChain
-            model
-            (->> variables (map coerce-var) (into-array IntVar))
-            (int-array values))
+(compile-function
+ (let [coerce-var (utils/coerce-var *model)]
+   (match *conformed
+     {:args [?variables ?values]}
+     (.intValuePrecedeChain
+      *model
+      (->> ?variables (map coerce-var) (into-array IntVar))
+      (int-array ?values)))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $int-value-precede-chain
+(defn $int-value-precede-chain
   "CHOCO:
 intValuePrecedeChain(IntVar[] X, int[] V)
 Ensure that, for each pair of V[k] and V[l] of values in V, such that

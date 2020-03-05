@@ -1,10 +1,10 @@
 (ns loco.constraints.tree
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -19,16 +19,12 @@
                        (s/tuple #{'nb-trees} int-var?)
                        (s/tuple #{'offset} nat-int?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [succs [_ nb-trees] [_ offset]]}
-           (.tree model (into-array IntVar succs) nb-trees offset)
+(compile-function
+ (match *conformed
+   {:args [?succs [_ ?nb-trees] [_ ?offset]]}
+   (.tree *model (into-array IntVar ?succs) ?nb-trees ?offset)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $tree
+(defn $tree
   "Creates a tree constraint.
   Partition succs variables into nbTrees (anti) arborescences
   succs[i] = j means that j is the successor of i.

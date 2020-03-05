@@ -1,6 +1,6 @@
 (ns loco.constraints.among
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -20,21 +20,16 @@
                        :nb-var (s/tuple #{'nb-var} ::utils/coerce-intvar?)
                        :values (s/tuple #{'values} (s/coll-of int?))))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-int-var (p utils/coerce-int-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args {:ints vars :nb-var [_ nb-var] :values [_ values]} }
-           (.among model
-                   (coerce-int-var nb-var)
-                   (->> vars (into-array IntVar))
-                   (int-array values))
+(compile-function
+ (let [coerce-int-var (p utils/coerce-int-var *model)]
+   (match *conformed
+     {:args {:ints ?vars :nb-var [_ ?nb-var] :values [_ ?values]} }
+     (.among *model
+             (coerce-int-var ?nb-var)
+             (->> ?vars (into-array IntVar))
+             (int-array ?values)))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-
-(defloco $among
+(defn $among
   "Creates an among constraint.
   nb-var is the number of variables of the collection vars that take their value in values."
   {:choco "among(IntVar nbVar, IntVar[] vars, int[] values)"

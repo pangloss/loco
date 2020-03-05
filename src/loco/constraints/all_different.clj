@@ -1,10 +1,8 @@
 (ns loco.constraints.all-different
-  (:use loco.constraints.utils)
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar]))
@@ -23,24 +21,20 @@
                          :ints ::utils/coll-coerce-intvar?
                          :consistency (s/tuple #{'consistency} #{'default 'bc 'ac})))))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-int-var (partial utils/coerce-int-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [:ints vars]}
-           (.allDifferent model (into-array IntVar (map coerce-int-var vars)) "DEFAULT")
+(compile-function
+ (let [coerce-int-var (partial utils/coerce-int-var *model)]
+   (match *conformed
+     {:args [:ints ?vars]}
+     (.allDifferent *model (into-array IntVar (map coerce-int-var ?vars)) "DEFAULT")
 
-           {:args [:sets vars]}
-           (.allDifferent model (into-array SetVar vars))
+     {:args [:sets ?vars]}
+     (.allDifferent *model (into-array SetVar ?vars))
 
-           {:args [:with-consistency {:ints vars :consistency [_ consistency]}]}
-           (.allDifferent model (into-array IntVar (map coerce-int-var vars))
-                          ({'default "DEFAULT" 'bc "BC" 'ac "AC"} consistency))
+     {:args [:with-consistency {:ints ?vars :consistency [_ ?consistency]}]}
+     (.allDifferent *model (into-array IntVar (map coerce-int-var ?vars))
+                    ({'default "DEFAULT" 'bc "BC" 'ac "AC"} ?consistency)))))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $distinct
+(defn $distinct
   "-------------------- Ints --------------------
   Creates an allDifferent constraint.
   Ensures that all variables from vars take a different value.
@@ -68,24 +62,23 @@
                [ints-list #{:default :bc :ac}])}
   [& vars]
   (let [vars (vec vars)]
-    (match+ vars
-            [int-vars, {:consistency consistency}]
-            ($distinct (vec (distinct int-vars)) consistency)
+    (match vars
+      [?int-vars, {:consistency ?consistency}]
+      ($distinct (vec (distinct ?int-vars)) ?consistency)
 
-            [int-vars, consistency]
-            :guard [int-vars sequential?, consistency #{:default :bc :ac}]
-            (constraint constraint-name
-                        [(vec (distinct int-vars))
-                         ['consistency ({:default 'default :bc 'bc :ac 'ac} consistency)]]
-                        compiler)
+      [(m/pred sequential? ?int-vars) (m/pred #{:default :bc :ac} ?consistency)]
+      (constraint constraint-name
+                  [(vec (distinct ?int-vars))
+                   ['consistency ({:default 'default :bc 'bc :ac 'ac} ?consistency)]]
+                  compiler)
 
-            [var-list :guard sequential?]
-            (constraint constraint-name
-                        (vec (distinct var-list))
-                        compiler)
+      [(m/pred sequential? ?var-list)]
+      (constraint constraint-name
+                  (vec (distinct ?var-list))
+                  compiler)
 
-            [& var-list]
-            (constraint constraint-name (vec (distinct var-list)) compiler))))
+      [& ?var-list]
+      (constraint constraint-name (vec (distinct ?var-list)) compiler))))
 
 (def $all-different $distinct)
-(reset-meta! (var $all-different) (meta (var $distinct)))
+(alter-meta! (var $all-different) merge (dissoc (meta (var $distinct)) :name))

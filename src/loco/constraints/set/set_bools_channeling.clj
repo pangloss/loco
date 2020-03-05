@@ -1,10 +1,10 @@
 (ns loco.constraints.set.set-bools-channeling
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -18,16 +18,12 @@
                                (s/tuple #{'channel} (s/coll-of bool-var?))
                                (s/tuple #{'offset} nat-int?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [set-var [_ bools] [_ offset]]}
-           (.setBoolsChanneling model (into-array BoolVar bools) set-var offset)
+(compile-function
+ (match *conformed
+   {:args [?set-var [_ ?bools] [_ ?offset]]}
+   (.setBoolsChanneling *model (into-array BoolVar ?bools) ?set-var ?offset)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $set-bools-channeling
+(defn $set-bools-channeling
   "Creates a constraint channeling a set variable with boolean variables :
   i in set <=> bools[i] = TRUE.
 

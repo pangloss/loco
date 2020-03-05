@@ -2,7 +2,7 @@
 
 (ns loco.constraints.at-most-n-values
   (:require
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
    [loco.constraints.utils :refer :all :as utils]
@@ -21,19 +21,16 @@
                        (s/tuple #{'n-values} ::utils/coerce-intvar?)
                        (s/tuple #{'strong} boolean?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))
-        coerce-int-var (p utils/coerce-int-var model)]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [vars [_ n-values] [_ strong]] }
-           (.atMostNValues model
-                           (->> vars (map coerce-int-var) (into-array IntVar))
-                           (coerce-int-var n-values)
-                           strong)
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
+(compile-function
+ (let [coerce-int-var (p utils/coerce-int-var *model)]
+   (match *conformed
+     {:args [?vars [_ ?n-values] [_ ?strong]] }
+     (.atMostNValues *model
+                     (->> ?vars (map coerce-int-var) (into-array IntVar))
+                     (coerce-int-var ?n-values)
+                     ?strong))))
 
-(defloco $at-most-n-values
+(defn $at-most-n-values
   "Creates an atMostNValue constraint.
   Let N be the number of distinct values assigned to the variables of the vars collection.
   Enforce condition N <= nValues to hold."

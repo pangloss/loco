@@ -1,10 +1,10 @@
 (ns loco.constraints.set.intersection
-  (:use loco.constraints.utils)
+
   (:require
    [clojure.spec.alpha :as s]
-   [loco.constraints.utils :as utils]
-   [loco.match :refer [match+]]
-   [clojure.core.match :refer [match]]
+   [loco.constraints.utils :refer :all :as utils]
+
+   [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
    [org.chocosolver.solver.variables SetVar IntVar BoolVar Task]))
@@ -19,16 +19,12 @@
                        (s/tuple #{'of} (s/coll-of set-var?))
                        (s/tuple #{'bound-consistent} boolean?)))))
 
-(defn- compiler [model vars-index statement]
-  (let [var-subed-statement (->> statement (walk/prewalk-replace vars-index))]
-    (match (->> var-subed-statement (s/conform ::compile-spec))
-           {:args [intersection-set [_ sets] [_ bounds-consistent?]]}
-           (.intersection model (into-array SetVar sets) intersection-set bounds-consistent?)
+(compile-function
+ (match *conformed
+   {:args [?intersection-set [_ ?sets] [_ ?bounds-consistent?]]}
+   (.intersection *model (into-array SetVar ?sets) ?intersection-set ?bounds-consistent?)))
 
-           ::s/invalid
-           (report-spec-error constraint-name ::compile-spec var-subed-statement))))
-
-(defloco $intersection
+(defn $intersection
   "Creates a constraint which ensures that the intersection of sets is equal to intersectionSet
   Creates a constraint which ensures that the intersection of sets is equal to intersectionSet"
   {:choco ["intersection(SetVar[] sets, SetVar intersectionSet)"

@@ -1,7 +1,7 @@
 (ns loco.solver
   (:require
    [camel-snake-kebab.core :refer [->kebab-case]]
-   [clojure.core.match :refer [match]]
+   [meander.epsilon :as m :refer [match]]
    [loco.model :as model]
    [loco.compiler :as compiler]
    [loco.utils :refer [c p]])
@@ -67,13 +67,13 @@
 
 (defn- set-model-objective! [model vars-index named-params]
   (match named-params
-         {:maximize var-name} (do
-                                (.setObjective model Model/MAXIMIZE (var-name vars-index))
-                                {:maximize var-name})
-         {:minimize var-name} (do
-                                (.setObjective model Model/MINIMIZE (var-name vars-index))
-                                {:minimize var-name})
-         {} nil))
+    {:maximize ?var-name} (do
+                            (.setObjective model Model/MAXIMIZE (?var-name vars-index))
+                            {:maximize ?var-name})
+    {:minimize ?var-name} (do
+                            (.setObjective model Model/MINIMIZE (?var-name vars-index))
+                            {:minimize ?var-name})
+    {} nil))
 
 (defn- extract-solution
   "the user is allowed to make var-names vectors or other objects, these
@@ -88,17 +88,17 @@
        (reduce
         (fn [acc [var-name var]]
           (assoc! acc
-                 (var-key-name-fn var-name)
-                 (cond
-                   (instance? Task var)
-                   {
-                    :start    (->> var .getStart (.getIntVal solution))
-                    :duration (->> var .getDuration (.getIntVal solution))
-                    :end      (->> var .getEnd (.getIntVal solution))
-                    }
-                   (instance? IntVar var) (.getIntVal solution var)
-                   (instance? SetVar var) (set (.getSetVal solution var)))
-                 ))
+                  (var-key-name-fn var-name)
+                  (cond
+                    (instance? Task var)
+                    {
+                     :start    (->> var .getStart (.getIntVal solution))
+                     :duration (->> var .getDuration (.getIntVal solution))
+                     :end      (->> var .getEnd (.getIntVal solution))
+                     }
+                    (instance? IntVar var) (.getIntVal solution var)
+                    (instance? SetVar var) (set (.getSetVal solution var)))
+                  ))
         (transient {}))
        persistent!))
 
@@ -128,43 +128,43 @@
   }"
   [problem & args]
   (if (instance? Model problem)
-      ;; we were given a choco model instead of something nicely wrapped
-      ;; we will still attempt to solve the model but we don't do anything fancy
+    ;; we were given a choco model instead of something nicely wrapped
+    ;; we will still attempt to solve the model but we don't do anything fancy
+    (->
+     problem
+     (.getSolver)
+     (.streamSolutions nil) ;;lawl, doesn't work without args
+     (.iterator)
+     iterator-seq)
+
+    ;;we have are given a nice loco object, do nice things and return a seq of clojure stuff
+    (let [args-map (apply hash-map args)
+          {:keys [constraints
+                  model
+                  public-vars-index
+                  vars-index
+                  var-name-mapping]
+           } (get-compiled-model problem)
+          solver (.getSolver model)
+          var-key-name-fn (if (empty? var-name-mapping)
+                            identity
+                            (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
+          solution-extractor (p extract-solution public-vars-index var-key-name-fn)
+          search-monitors (set-search-monitor-settings! solver args-map)
+          model-objective (set-model-objective! model vars-index args-map)
+          ]
+
+
       (->
-       problem
-       (.getSolver)
+       solver
        (.streamSolutions nil) ;;lawl, doesn't work without args
        (.iterator)
-       iterator-seq)
-
-      ;;we have are given a nice loco object, do nice things and return a seq of clojure stuff
-      (let [args-map (apply hash-map args)
-            {:keys [constraints
-                    model
-                    public-vars-index
-                    vars-index
-                    var-name-mapping]
-             } (get-compiled-model problem)
-            solver (.getSolver model)
-            var-key-name-fn (if (empty? var-name-mapping)
-                              identity
-                              (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
-            solution-extractor (p extract-solution public-vars-index var-key-name-fn)
-            search-monitors (set-search-monitor-settings! solver args-map)
-            model-objective (set-model-objective! model vars-index args-map)
-            ]
-
-
-        (->
-         solver
-         (.streamSolutions nil) ;;lawl, doesn't work without args
-         (.iterator)
-         iterator-seq
-         (->> (map solution-extractor))
-         (with-meta {:solver solver
-                     :search-monitors search-monitors
-                     :model model
-                     :model-objective model-objective})))))
+       iterator-seq
+       (->> (map solution-extractor))
+       (with-meta {:solver solver
+                   :search-monitors search-monitors
+                   :model model
+                   :model-objective model-objective})))))
 
 (def solution (c first (p solutions)))
 (alter-meta! (var solution) merge (select-keys (meta (var solutions)) [:doc :arglists]))
@@ -212,37 +212,37 @@
 #_(declare portfolio-seq)
 
 #_(defn parallel-solutions [problem]
-  (let [;;args-map (apply hash-map args)
-        {:keys [constraints
-                model
-                public-vars-index
-                vars-index
-                var-name-mapping]
-         } (problem->Model problem)
-        var-key-name-fn (if (empty? var-name-mapping)
-                          identity
-                          (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
-        solution-extractor (p extract-solution public-vars-index var-key-name-fn)
-        ;; search-monitors (set-search-monitor-settings! solver args-map)
-        ;; [optimization-type optimized-var-name] (->
-        ;;                                         args-map
-        ;;                                         (select-keys [:minimize :maximize])
-        ;;                                         vec
-        ;;                                         first)
-        ;; optimization-var (optimized-var-name vars-index)
-        ;; optimization-type-TF ({:maximize true :minimize false} optimization-type)
+    (let [;;args-map (apply hash-map args)
+          {:keys [constraints
+                  model
+                  public-vars-index
+                  vars-index
+                  var-name-mapping]
+           } (problem->Model problem)
+          var-key-name-fn (if (empty? var-name-mapping)
+                            identity
+                            (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
+          solution-extractor (p extract-solution public-vars-index var-key-name-fn)
+          ;; search-monitors (set-search-monitor-settings! solver args-map)
+          ;; [optimization-type optimized-var-name] (->
+          ;;                                         args-map
+          ;;                                         (select-keys [:minimize :maximize])
+          ;;                                         vec
+          ;;                                         first)
+          ;; optimization-var (optimized-var-name vars-index)
+          ;; optimization-type-TF ({:maximize true :minimize false} optimization-type)
 
-        ;;taken from pmap
-        n (+ 2 (.. Runtime getRuntime availableProcessors))
-        models (repeatedly n #(->> problem problem->Model))
-        portfolio (parallel-portfolio models)
-        ]
-    (portfolio-seq portfolio models)))
+          ;;taken from pmap
+          n (+ 2 (.. Runtime getRuntime availableProcessors))
+          models (repeatedly n #(->> problem problem->Model))
+          portfolio (parallel-portfolio models)
+          ]
+      (portfolio-seq portfolio models)))
 
 
 ;;TODO: needs better understanding in order to figure out if this will work or not
 #_(defn- parallel-portfolio
-  " A Portfolio helper.
+    " A Portfolio helper.
 
   The ParallelPortfolio resolution of a problem is made of four steps:
 
@@ -273,19 +273,19 @@
   Since there is no condition on the similarity of the models, once
   the resolution ends, the model which finds the (best) solution is
   internally stored. "
-  [models]
-  ;; ParallelPortfolio pares = new ParallelPortfolio();
-  ;; int n = 4; // number of models to use
-  ;; for (int i = 0; i < n; i++) {
-  ;;          pares.addModel(modeller());
-  ;;          }
-  ;; pares.solve();
-  ;; IOutputFactory.printSolutions(pares.getBestModel());
+    [models]
+    ;; ParallelPortfolio pares = new ParallelPortfolio();
+    ;; int n = 4; // number of models to use
+    ;; for (int i = 0; i < n; i++) {
+    ;;          pares.addModel(modeller());
+    ;;          }
+    ;; pares.solve();
+    ;; IOutputFactory.printSolutions(pares.getBestModel());
 
-  (let [portfolio (ParallelPortfolio.)]
-    (doseq [model models]
-      (.addModel portfolio (:model model)))
-    portfolio))
+    (let [portfolio (ParallelPortfolio.)]
+      (doseq [model models]
+        (.addModel portfolio (:model model)))
+      portfolio))
 
 (defn- extract-model
   "the user is allowed to make var-names vectors or other objects, these
