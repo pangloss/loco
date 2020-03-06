@@ -43,12 +43,12 @@
 (def implemented-search-monitor-methods
   (->>
    #{
-     :limitBacktrack, ;; void <- limitBacktrack(long limit)
-     :limitFail, ;; void <- limitFail(long limit)
-     :limitNode, ;; void <- limitNode(long limit)
-     :limitSearch, ;; void <- limitSearch(Criterion aStopCriterion)
-     :limitSolution, ;; void <- limitSolution(long limit)
-     :limitTime, ;; void <- limitTime(long limit) | (String duration)
+     :limitBacktrack,                 ;; void <- limitBacktrack(long limit)
+     :limitFail,                      ;; void <- limitFail(long limit)
+     :limitNode,                      ;; void <- limitNode(long limit)
+     :limitSearch,                    ;; void <- limitSearch(Criterion aStopCriterion)
+     :limitSolution,                  ;; void <- limitSolution(long limit)
+     :limitTime,                      ;; void <- limitTime(long limit) | (String duration)
      :setNoGoodRecordingFromRestarts, ;; void <- setNoGoodRecordingFromRestarts()
      :setNoGoodRecordingFromSolutions ;; void <- setNoGoodRecordingFromSolutions(IntVar... vars)
      }
@@ -67,13 +67,13 @@
 
 (defn- set-model-objective! [model vars-index named-params]
   (match named-params
-    {:maximize ?var-name} (do
-                            (.setObjective model Model/MAXIMIZE (?var-name vars-index))
-                            {:maximize ?var-name})
-    {:minimize ?var-name} (do
-                            (.setObjective model Model/MINIMIZE (?var-name vars-index))
-                            {:minimize ?var-name})
-    {} nil))
+    {:maximize (m/some ?var-name)} (do
+                                     (.setObjective model Model/MAXIMIZE (?var-name vars-index))
+                                     {:maximize ?var-name})
+    {:minimize (m/some ?var-name)} (do
+                                     (.setObjective model Model/MINIMIZE (?var-name vars-index))
+                                     {:minimize ?var-name})
+    _ nil))
 
 (defn- extract-solution
   "the user is allowed to make var-names vectors or other objects, these
@@ -110,20 +110,20 @@
   - :feasible <bool> - optimizes time by guaranteeing that the problem is feasible before trying to maximize/minimize a variable.
 
   available Search Monitor features:
-  :limit-backtrack <int>
-  :limit-fail <int>
-  :limit-node <int>
-  :limit-search <int>
-  :limit-solution <int>
-  :limit-time <int> | <string>
-  :set-no-good-recording-from-restarts <nil>
+  :limit-backtrack                      <int>
+  :limit-fail                           <int>
+  :limit-node                           <int>
+  :limit-search                         <int>
+  :limit-solution                       <int>
+  :limit-time                           <int> | <string>
+  :set-no-good-recording-from-restarts  <nil>
   :set-no-good-recording-from-solutions <[IntVar...]>
 
   Note: returned solution maps have the metadata:
   {
-   :solver <Solver>
+   :solver          <Solver>
    :search-monitors <Map>
-   :model <Model>
+   :model           <Model>
    :model-objective <Map>
   }"
   [problem & args]
@@ -137,7 +137,7 @@
      (.iterator)
      iterator-seq)
 
-    ;;we have are given a nice loco object, do nice things and return a seq of clojure stuff
+    ;;we are given a nice loco object, do nice things and return a seq of clojure stuff
     (let [args-map (apply hash-map args)
           {:keys [constraints
                   model
@@ -167,7 +167,7 @@
                    :model-objective model-objective})))))
 
 (def solution (c first (p solutions)))
-(alter-meta! (var solution) merge (select-keys (meta (var solutions)) [:doc :arglists]))
+(alter-meta! #'solution merge (dissoc (meta #'solutions) :name))
 
 (defn optimal-solutions
   "Like solutions, however requires that :maximize or :minimize is

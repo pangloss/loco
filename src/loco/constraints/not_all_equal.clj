@@ -22,17 +22,8 @@
 (defn $not-all-equal
   "Constrains that all vars are not equal to each other (different from distinct)"
   {:choco "notAllEqual(IntVar... vars)"}
-  [vars]
-  {:pre [(sequential? vars)]}
-  (constraint constraint-name (vec vars) compiler))
-
-(defn $not=
-  [& more]
-  (let [morev (vec more)]
-    (match [morev]
-           [[?x ?y]] ($arithm ?x '!= ?y) ;;FIXME: import function
-           _         ($not-all-equal morev))))
-
-(defn $!= [& more] (apply $not= more))
-(alter-meta! (var $!=) merge (dissoc (meta (var $not-all-equal)) :name))
-(alter-meta! (var $not=) merge (dissoc (meta (var $not-all-equal)) :name))
+  ([& more]
+   (let [morev (vec more)]
+     (match [morev]
+       [[?x ?y]]                ($arithm ?x '!= ?y)
+       [(m/pred vector? ?vars)] (constraint constraint-name ?vars compiler)))))

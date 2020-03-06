@@ -7,7 +7,7 @@
   ([sym] `(import-fn nil ~sym))
   ([alias sym]
    (when (namespace sym)
-     (println "loading" (namespace sym))
+     ;;(println "loading" (namespace sym))
      (require (symbol (namespace sym))))
    (let [vr (resolve sym)
          m (meta vr)
@@ -33,13 +33,8 @@
 (import-fn loco.constraints.vars/$bool)
 (import-fn loco.constraints.vars/$bool-)
 (import-fn loco.constraints.vars/$bools)
-
 (import-fn loco.constraints.vars/$const)
-
 (import-fn loco.constraints.vars/$const-)
-
-$const-
-
 (import-fn loco.constraints.vars/$int)
 (import-fn loco.constraints.vars/$int-)
 (import-fn $in  loco.constraints.vars/$int)
@@ -55,7 +50,9 @@ $const-
 
 (import-fn loco.constraints.abs/$abs)
 (import-fn loco.constraints.all-different/$distinct)
+(import-fn $all-different loco.constraints.all-different/$distinct)
 (import-fn loco.constraints.all-different-except-0/$distinct-except-0)
+(import-fn $all-different-except-0 loco.constraints.all-different-except-0/$distinct-except-0)
 (import-fn loco.constraints.all-equal/$=)
 (import-fn loco.constraints.among/$among)
 (import-fn loco.constraints.arithmetic.div/$div)
@@ -74,6 +71,7 @@ $const-
 (import-fn loco.constraints.diff-n/$diff-n)
 (import-fn loco.constraints.distance/$distance)
 (import-fn loco.constraints.element/$element)
+(import-fn $elem loco.constraints.element/$element)
 (import-fn loco.constraints.int-value-precede/$int-value-precede)
 (import-fn loco.constraints.int-value-precede-chain/$int-value-precede-chain)
 (import-fn loco.constraints.inverse-channeling/$inverse-channeling)
@@ -117,7 +115,7 @@ $const-
 (import-fn loco.constraints.views.offset/$offset-view)
 (import-fn loco.constraints.views.scale/$scale)
 (import-fn loco.constraints.views.minus/$minus-view)
-(import-fn loco.constraints.views.minus/$neg)
+(import-fn $neg loco.constraints.views.minus/$minus-view)
 
 (import-fn loco.constraints.arithm/$arithm)
 (import-fn loco.constraints.arithm/$<)
@@ -135,8 +133,9 @@ $const-
 (import-fn loco.constraints.set.not-empty/$not-empty)
 
 (import-fn loco.constraints.not-all-equal/$not-all-equal)
-(import-fn loco.constraints.not-all-equal/$not=)
-(import-fn loco.constraints.not-all-equal/$!=)
+(import-fn $not= loco.constraints.not-all-equal/$not-all-equal)
+(import-fn $!=   loco.constraints.not-all-equal/$not-all-equal)
+
 
 (import-fn loco.constraints.mod/$mod)
 (import-fn loco.constraints.mod/$%)

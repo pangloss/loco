@@ -56,6 +56,3 @@
          view-fn
          domain-fn
          compiler)))
-
-(defn $neg [& more] (apply $minus-view more))
-(alter-meta! (var $neg) merge (dissoc (meta (var $minus-view)) :name))

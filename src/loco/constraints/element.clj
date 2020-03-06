@@ -75,6 +75,3 @@
                   ['at index]
                   ['offset  offset]]
                  compiler))))
-
-(def $elem $element)
-(alter-meta! (var $elem) merge (dissoc (meta (var $element)) :name))

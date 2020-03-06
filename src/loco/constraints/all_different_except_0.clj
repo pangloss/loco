@@ -1,9 +1,7 @@
 (ns loco.constraints.all-different-except-0
-
   (:require
    [clojure.spec.alpha :as s]
    [loco.constraints.utils :refer :all :as utils]
-
    [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
@@ -37,6 +35,3 @@
     [& ?var-list] (constraint constraint-name
                               (vec ?var-list)
                               compiler)))
-
-(def $all-different-except-0 $distinct-except-0)
-(alter-meta! (var $all-different-except-0) merge (dissoc (meta (var $distinct-except-0)) :name))

@@ -61,9 +61,9 @@
                 solutions]} expected
         ]
     (assert (every? #{:identity :model :compiled :solutions} (keys expected)))
-    `(let [model-fn# (memoize ~model/compile)
+    `(let [model-fn#   (memoize ~model/compile)
            compile-fn# (memoize ~compiler/compile)
-           solutions-fn# ~solver/solutions
+           solutions-fn#        ~solver/solutions
            compiled-strings# (juxt
                               (c (p mapv str) :vars)
                               (c (p mapv str) (memfn getCstrs) :model))

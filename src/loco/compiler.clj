@@ -30,6 +30,7 @@
 
 ;;TODO: use prewalk-replace?
 (defn compile-constraint-statement [vars-index *model statement]
+  (println 'compile-constraint-statement statement)
   (let [
         lookup-var (partial lookup-var vars-index)
         lookup-var-unchecked (partial lookup-var-unchecked vars-index)
@@ -66,14 +67,14 @@
         [:and (m/pred (p every? (c (p instance? BoolVar) lookup-var-unchecked)) ?bools)]
         (.and *model (->> ?bools (map lookup-var) (into-array BoolVar)))
 
-        [:and (m/pred constraint? ?constraints)]
+        [:and (m/pred ast-constraint? ?constraints)]
         (.and *model (realize-nested-constraints ?constraints))
 
         ;; handle boolean lists
         [:or (m/pred (p every? (c (p instance? BoolVar) lookup-var-unchecked)) ?bools)]
         (.or *model (->> ?bools (map lookup-var) (into-array BoolVar)))
 
-        [:or (m/pred (p every? constraint?) ?constraints)]
+        [:or (m/pred (p every? ast-constraint?) ?constraints)]
         (.or *model (realize-nested-constraints ?constraints))
 
         [:when [(m/pred (c (p instance? BoolVar) lookup-var-unchecked) ?bool) ?then-constraint]]
@@ -150,60 +151,64 @@
   "these should be replaced by compile functions that are assigned where the vars are created"
   {:deprecated true}
   [vars-index vars *model statement]
-  (let [lookup-var (partial lookup-var vars-index)]
-    (match [statement (meta statement)]
+  (println [statement (meta statement)])
+  (match [statement (meta statement)]
 
-      [[:var ?var-name _ _] {:neg ?dep-name}]
-      (.intMinusView *model (lookup-var ?dep-name))
+    [[:var ?var-name _ _] {:neg (m/some ?dep-name)}]
+    (.intMinusView *model (lookup-var vars-index ?dep-name))
 
-      [[:var ?var-name _ [:bool _ _]] _]
-      (.boolVar *model (name ?var-name))
+    [[:var ?var-name _ [:bool _ _]] _]
+    (.boolVar *model (name ?var-name))
 
-      [[:var ?var-name _ [:int (m/pred integer? ?lb) (m/pred integer? ?ub)]] _]
-      (.intVar *model (name ?var-name) ?lb ?ub)
+    [[:var ?var-name _ [:int (m/pred integer? ?lb) (m/pred integer? ?ub)]] _]
+    (.intVar *model (name ?var-name) ?lb ?ub)
 
-      [[:var ?var-name _ [:int (m/pred integer? ?lb) (m/pred integer? ?ub) :bounded]] _]
-      (.intVar *model (name ?var-name) ?lb ?ub true)
+    [[:var ?var-name _ [:int (m/pred integer? ?lb) (m/pred integer? ?ub) :bounded]] _]
+    (.intVar *model (name ?var-name) ?lb ?ub true)
 
-      [[:var ?var-name _ [:int (m/pred vector? (p every? integer?) ?enumeration)]] _]
-      (.intVar *model (name ?var-name) (int-array ?enumeration))
+    [[:var ?var-name _ [:int (m/pred #(and (vector? %) (every? integer? %)) ?enumeration)]] _]
+    (.intVar *model (name ?var-name) (int-array ?enumeration))
 
-      [[:var ?var-name _ [:const (m/pred integer? ?value)]] _]
-      (.intVar *model (name ?var-name) ?value)
+    [[:var ?var-name _ [:const (m/pred integer? ?value)]] _]
+    (.intVar *model (name ?var-name) ?value)
 
-      [[:var ?var-name _ [:set (m/pred set? ?constants)]] _]
-      (.setVar *model (name ?var-name) (into-array Integer/TYPE ?constants))
+    [[:var ?var-name _ [:set (m/pred set? ?constants)]] _]
+    (.setVar *model (name ?var-name) (into-array Integer/TYPE ?constants))
 
-      [[:var ?var-name _ [:set (m/pred set? (p every? integer?) ?lb) (m/pred set? (p every? integer?) ?ub)]] _]
-      (.setVar *model (name ?var-name)
-               (into-array Integer/TYPE ?lb)
-               (into-array Integer/TYPE ?ub))
+    [[:var ?var-name _ [:set
+                        (m/pred #(and (set? %) (every? integer? %)) ?lb)
+                        (m/pred #(and (set? %) (every? integer? %)) ?ub)]] _]
+    (.setVar *model (name ?var-name)
+             (into-array Integer/TYPE ?lb)
+             (into-array Integer/TYPE ?ub))
 
-      [[:var ?var-name _ [:task ?start ?duration ?end]] _]
-      (let [name? (every-pred string? keyword?)
-            task (.taskVar
-                  *model
-                  (if (name? ?start)
-                    (lookup-var ?start)
-                    (apply anon-int-var *model (if (int? ?start)
-                                                 [?start]
-                                                 ?start)))
-                  (if (name? ?duration)
-                    (lookup-var ?duration)
-                    (apply anon-int-var *model (if (int? ?duration)
-                                                 [?duration]
-                                                 ?duration)))
-                  (if (name? ?end)
-                    (lookup-var ?end)
-                    (apply anon-int-var *model (if (int? ?end)
-                                                 [?end]
-                                                 ?end))))]
-        (.ensureBoundConsistency task)
-        task)
+    [[:var ?var-name _ [:task ?start ?duration ?end]] _]
+    (let [name? (every-pred string? keyword?)
+          task (.taskVar
+                *model
+                (if (name? ?start)
+                  (lookup-var vars-index ?start)
+                  (apply anon-int-var *model (if (int? ?start)
+                                               [?start]
+                                               ?start)))
+                (if (name? ?duration)
+                  (lookup-var vars-index ?duration)
+                  (apply anon-int-var *model (if (int? ?duration)
+                                               [?duration]
+                                               ?duration)))
+                (if (name? ?end)
+                  (lookup-var vars-index ?end)
+                  (apply anon-int-var *model (if (int? ?end)
+                                               [?end]
+                                               ?end))))]
+      (.ensureBoundConsistency task)
+      task)
 
-      [[:var ?var-name _
-        [:tuples (m/pred #{:allowed :forbidden} ?feasible?) (m/pred sequential? (p every? (p every? int?)) ?ints-lists)]] _]
-      (Tuples. (->> ?ints-lists (map int-array) into-array) ({:allowed true :forbidden false} ?feasible?)))))
+    [[:var ?var-name _
+      [:tuples
+       (m/pred {:allowed :forbidden} ?feasible?)
+       (m/pred #(and (sequential? %)) (every? (p every? int?) %) ?ints-lists)]] _]
+    (Tuples. (->> ?ints-lists (map int-array) into-array) ({:allowed true :forbidden false} ?feasible?))))
 
 (defn- compile-var-statement [[vars-index vars model] statement]
   (let [var-name (second statement)
@@ -233,8 +238,9 @@
 (defn compile
   ([ast] (compile (Model.) ast))
   ([model ast]
+   (pprint ['ast ast])
    (let [
-         uncompiled-constraints (->> ast (filter constraint?))
+         uncompiled-constraints (->> ast (filter ast-constraint?))
          uncompiled-reifies     (->> ast (filter reify?))
          [vars-index vars _]    (compile-vars model ast)
          public-var-names       (->> ast (filter public-var?) (map second))

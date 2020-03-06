@@ -14,7 +14,7 @@
      ($distinct-except-0 0 :x :y :z)
      ]
     {:model
-     '[[:var :x :public [:int 0 1]]
+     '[[:var :x :public [:bool 0 1]]
        [:var :y :public [:int [1 4]]]
        [:var :z :public [:int 1 2]]
        [all-different-except-0 [0 :x :y :z]]],
@@ -27,5 +27,4 @@
        {:x 0, :y 1, :z 2}
        {:x 0, :y 4, :z 1}}}
     ))
-
   )

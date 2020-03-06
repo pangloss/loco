@@ -22,8 +22,8 @@
 
 (defn public-var? [form]
   (match form
-         [:var _ :public & _] true
-         :else false))
+    [:var _ :public & _] true
+    _ false))
 
 ;; (defn hidden-var? [form]
 ;;   (match form
@@ -49,19 +49,20 @@
 
 (defn reify? [form]
   (match form
-         [:reify _ _] true
-         :else false))
+    [:reify _ _] true
+    _ false))
+
 ;; -------------------- loco.utils
 
 ;;FIXME: the names are conflicting with clojure.core
 
-(defn var? [statement]                 (->> statement meta :var))
-(defn set? [statement]                 (->> statement meta :set))
-(defn task? [statement]                (->> statement meta :task))
-(defn tuples? [statement]              (->> statement meta :tuples))
-(defn constraint? [statement]          (->> statement meta :constraint))
-(defn partial-constraint? [statement]  (->> statement meta :partial-constraint))
-(defn view? [statement]                (->> statement meta :view))
+(defn var? [statement]                (->> statement meta :var))
+(defn set? [statement]                (->> statement meta :set))
+(defn task? [statement]               (->> statement meta :task))
+(defn tuples? [statement]             (->> statement meta :tuples))
+(defn ast-constraint? [statement]     (->> statement meta :constraint))
+(defn partial-constraint? [statement] (->> statement meta :partial-constraint))
+(defn view? [statement]               (->> statement meta :view))
 
 (defn constraint
   ([name input compiler]
@@ -292,9 +293,10 @@
 (defmacro compile-function [& body]
   `(defn- ~'compiler [model# vars-index# statement#]
      (let [var-subed-statement# (->> statement# (walk/prewalk-replace vars-index#))
-           conformed# (->> var-subed-statement# (s/conform ::compile-spec))
-           ~(symbol "*conformed") conformed#
-           ~(symbol "*model")     model#]
+           spec# ~(keyword (str (ns-name *ns*)) "compile-spec")
+           conformed# (->> var-subed-statement# (s/conform spec#))
+           ~'*conformed conformed#
+           ~'*model     model#]
        (case conformed#
-         ::s/invalid (report-spec-error ~(symbol "constraint-name") ::compile-spec var-subed-statement#)
+         ::s/invalid (report-spec-error ~'constraint-name spec# var-subed-statement#)
          ~@body))))

@@ -86,11 +86,11 @@
                                            (m/pred constraint? ?constraint) (do
                                                                               (swap! acc into (concat [var] [?constraint]))
                                                                               var-name)
-                                           [(?num :guard int?)] ?num
+                                           [(m/pred int? ?num)] ?num
                                            [(m/pred view? ?view)] (view-transform ?view acc)
-                                           (m/pred (p some (some-fn constraint?)) ?constraints) (do
-                                                                                                  (swap! acc into (concat [var] ?constraints))
-                                                                                                  var-name)
+                                           (m/pred #(some constraint? %) ?constraints) (do
+                                                                                         (swap! acc into (concat [var] ?constraints))
+                                                                                         var-name)
                                            [unwrap] unwrap)]
                               return)
                             :else statement))))

@@ -59,36 +59,3 @@
                compiler))
   ([eq _op operand]
    ($abs eq operand)))
-
-;; macroexpanded
-#_(do
-    (in-ns 'loco.constraints)
-    (when (resolve '$abs) (ns-unmap 'loco.constraints '$abs))
-    (in-ns 'loco.constraints.abs)
-    (when (resolve '$abs) (ns-unmap 'loco.constraints.abs '$abs))
-    (let [defn__13978__auto__ (defn $abs
-                                "Creates an absolute value constraint:\n  ($abs eq operand) or ($abs eq = operand)\n  eq = |operand|\n\n  eq      = IntVar\n  operand = IntVar"
-                                {:choco
-                                 "absolute(IntVar var1, IntVar var2)",
-                                 :partial true}
-                                ([operand]
-                                 (partial-constraint
-                                  partial-name
-                                  [operand]
-                                  :name-fn
-                                  name-fn
-                                  :constraint-fn
-                                  constraint-fn
-                                  :domain-fn
-                                  domain-fn))
-                                ([eq operand]
-                                 (constraint
-                                  constraint-name
-                                  [eq '= operand]
-                                  compiler))
-                                ([eq _op operand] ($abs eq operand)))
-          v__13979__auto__ (intern
-                            'loco.constraints
-                            '$abs
-                            defn__13978__auto__)]
-      (alter-meta! v__13979__auto__ (dissoc (meta #'$abs))) :name))

@@ -79,6 +79,3 @@
 
       [& ?var-list]
       (constraint constraint-name (vec (distinct ?var-list)) compiler))))
-
-(def $all-different $distinct)
-(alter-meta! (var $all-different) merge (dissoc (meta (var $distinct)) :name))
