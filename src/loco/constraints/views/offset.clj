@@ -21,9 +21,8 @@
      (.intOffsetView *model (coerce-int-var *model ?dependency-var) ?modifier))))
 
 (defn- view-fn [name statement]
-  (match statement
-    [_view-name _dep _mods] (with-meta [:view name statement]
-                              (meta statement))))
+  (with-meta [:view name statement]
+    (meta statement)))
 
 (defn- name-fn [statement]
   (match statement

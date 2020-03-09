@@ -22,14 +22,14 @@
 
 (defn- view-fn [name statement]
   (match statement
-         [view-name dep mods] (with-meta [:view name statement]
-                                (meta statement))))
+    [?view-name ?dep ?mods] (with-meta [:view name statement]
+                              (meta statement))))
 
 (defn- name-fn [statement]
   (match statement
-         [?view-name (m/pred int? ?dep) [-1]]        (str "-(" ?dep ")")
-         [?view-name (m/pred int? ?dep) [?modifier]] (str ?dep "*" ?modifier)
-         [?view-name ?dep [?modifier]]               (str (str+ ?dep) "*" ?modifier)))
+    [?view-name (m/pred int? ?dep) [-1]]        (str "-(" ?dep ")")
+    [?view-name (m/pred int? ?dep) [?modifier]] (str ?dep "*" ?modifier)
+    [?view-name ?dep [?modifier]]               (str (str+ ?dep) "*" ?modifier)))
 
 (defn- domain-fn [& partial]
   (let [[statement possible-domain] partial

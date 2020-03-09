@@ -28,21 +28,20 @@
 
 #_(deftest nth-test
   (testing
-      (is
-       (loco?
-        [($in :a 100 200)
-         ($in :index 0 5)
-         ($= 4 ($nth [:a 2 3 4 5] :index))]
-        {
-         :identity []
-         :model []
-         :compiled []
-         :solutions
-         #{{:int-var 4, :b1 0, :b2 0, :b3 1, :b4 0}
-           {:int-var 8, :b1 0, :b2 0, :b3 0, :b4 1}
-           {:int-var 0, :b1 0, :b2 0, :b3 0, :b4 0}
-           {:int-var 2, :b1 0, :b2 1, :b3 0, :b4 0}}}
-        )))
+      (test-loco
+       [($in :a 100 200)
+        ($in :index 0 5)
+        ($= 4 ($nth [:a 2 3 4 5] :index))]
+       {
+        :identity []
+        :model []
+        :compiled []
+        :solutions
+        #{{:int-var 4, :b1 0, :b2 0, :b3 1, :b4 0}
+          {:int-var 8, :b1 0, :b2 0, :b3 0, :b4 1}
+          {:int-var 0, :b1 0, :b2 0, :b3 0, :b4 0}
+          {:int-var 2, :b1 0, :b2 1, :b3 0, :b4 0}}}
+       ))
 
   #_(compiled-assert
    [[:var :a :public [:int 100 200]]

@@ -36,7 +36,7 @@
   "Creates a count constraint. Let N be the number of variables of the
   vars collection assigned to value value;
   Enforce condition N = limit to hold. "
-  {:choco ["count(int    value, IntVar[] vars, IntVar limit) "
+  {:choco ["count(int    value, IntVar[] vars, IntVar limit)"
            "count(IntVar value, IntVar[] vars, IntVar limit)"]}
   [value vars limit]
   {:pre [(sequential? vars)]}

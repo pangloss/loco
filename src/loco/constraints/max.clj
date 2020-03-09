@@ -1,12 +1,8 @@
-;; FIXME: WIP
-
 (ns loco.constraints.max
-
   (:require
-   [loco.utils :refer [p c]]
+   [loco.utils :refer [p c debug-print]]
    [clojure.spec.alpha :as s]
    [loco.constraints.utils :refer :all :as utils]
-
    [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
   (:import
@@ -36,8 +32,7 @@
                                      (s/tuple #{'of}         (s/coll-of int?))
                                      (s/tuple #{'indices}    set-var?)
                                      (s/tuple #{'offset}     nat-int?)
-                                     (s/tuple #{'not-empty?} boolean?))
-                       ))))
+                                     (s/tuple #{'not-empty?} boolean?))))))
 
 (compile-function
  (match *conformed
@@ -55,30 +50,31 @@
 
 (defn- name-fn [partial]
   (match partial
-         [?partial-name ?body]
-         (->> (interpose "_" (map name ?body))
-              (apply str (name ?partial-name) "_"))))
+    [?partial-name ?body]
+    (->> (interpose "_" (map name ?body))
+         (apply str (name ?partial-name) "_"))))
 
 (declare $max)
 
 (defn- constraint-fn [var-name [op args]]
   ($max var-name args))
 
-(defn- domain-fn [partial]
-  (match partial
-         [?partial-name ?body]
-         (->
-          (reduce
-           (fn [{:keys [lb ub] :as acc} domain]
-             (match domain
-                    ;;TODO: handle enumerated domains
-                    {:int true :lb ?d-lb :ub ?d-ub} {:lb (max lb ?d-lb)
-                                                   :ub (max ub ?d-ub)}))
-           ;;{:lb 0 :ub 0}
-           ?body)
-          (assoc :int true)
-          (update :lb int)
-          (update :ub int))))
+(defn- domain-fn [[partial-name body]]
+  (->
+   (->>
+    body
+    (map domainize)
+    (reduce
+     (fn [{:keys [lb ub] :as acc} domain]
+       (match domain
+         ;;TODO: handle enumerated domains
+         {:lb ?d-lb :ub ?d-ub} {:lb (max lb ?d-lb)
+                                :ub (max ub ?d-ub)}))
+     ;;{:lb 0 :ub 0}
+     ))
+   (assoc :int true)
+   (update :lb int)
+   (update :ub int)))
 
 (defn- max-partial
   "handles syntax like ($= :v ($max :a :b :c))"
@@ -111,31 +107,31 @@
                [& int-vars])}
   [& more]
   (match (vec more)
-   [(m/pred sequential? ?max-list)] (max-partial ?max-list)
+    [(m/pred sequential? ?max-list)] (max-partial ?max-list)
 
-   [?max (m/pred sequential? ?vars)]
-   (constraint constraint-name
-               [?max
-                ['of (vec ?vars)]] compiler)
+    [?max (m/pred sequential? ?vars)]
+    (constraint constraint-name
+                [?max
+                 ['of (vec ?vars)]] compiler)
 
-   [?set-var ?max (m/pred boolean? ?not-empty?)]
-   (constraint constraint-name
-               [?max
-                ['of ?set-var]
-                ['not-empty? ?not-empty?]]
-               compiler)
+    [?set-var ?max (m/pred boolean? ?not-empty?)]
+    (constraint constraint-name
+                [?max
+                 ['of ?set-var]
+                 ['not-empty? ?not-empty?]]
+                compiler)
 
-   [?set-indices,
-    (m/pred (every-pred sequential? (p every? int?)) ?weights)
-    (m/pred integer? ?offset)
-    ?max,
-    (m/pred boolean? ?not-empty?)]
-   (constraint constraint-name
-               [?max
-                ['of         (vec ?weights)]
-                ['indices    ?set-indices]
-                ['offset     ?offset]
-                ['not-empty? ?not-empty?]]
-               compiler)
+    [?set-indices,
+     (m/pred (every-pred sequential? (p every? int?)) ?weights)
+     (m/pred integer? ?offset)
+     ?max,
+     (m/pred boolean? ?not-empty?)]
+    (constraint constraint-name
+                [?max
+                 ['of         (vec ?weights)]
+                 ['indices    ?set-indices]
+                 ['offset     ?offset]
+                 ['not-empty? ?not-empty?]]
+                compiler)
 
-   [& ?int-vars] (max-partial ?int-vars)))
+    [& ?int-vars] (max-partial ?int-vars)))

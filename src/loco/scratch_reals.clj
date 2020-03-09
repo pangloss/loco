@@ -60,7 +60,7 @@
     )
   )
 
-(let [
+#_(let [
       precision 1.0e-4
       ;;precision 1.0
       {normal :model} (cyclo-hexan-problem-model precision)

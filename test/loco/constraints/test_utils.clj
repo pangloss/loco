@@ -46,44 +46,33 @@
        ))
      ~msg)))
 
-(defmethod t/assert-expr 'loco? [msg form]
-  (let [expr (nth form 1)
-        {:keys [identity
-                model
-                compiled
-                solutions] :as expected} (first (drop 2 form))
-        expected (if (every? nil? [identity model compiled solutions])
-                   {:identity [] :model [] :compiled [] :solutions []}
-                   expected)
-        {:keys [identity
-                model
-                compiled
-                solutions]} expected
-        ]
-    (assert (every? #{:identity :model :compiled :solutions} (keys expected)))
-    `(let [model-fn#   (memoize ~model/compile)
-           compile-fn# (memoize ~compiler/compile)
-           solutions-fn#        ~solver/solutions
+(defmacro test-loco [input expected]
+  (let [{:keys [identity model compiled solutions]} expected]
+    `(let [
+           input#     ~input
+           expected#  ~expected
+           identity#  ~identity
+           model#     ~model
+           compiled#  ~compiled
+           solutions# ~solutions
+           model-fn#     (memoize ~model/compile)
+           compile-fn#   (memoize ~compiler/compile)
+           solutions-fn# ~solver/solutions
            compiled-strings# (juxt
-                              (c (p mapv str) :vars)
-                              (c (p mapv str) (memfn getCstrs) :model))
-           actual#
-           (->
-            {}
-            (cond-> ,,
-                ~identity  (assoc ,, :identity ~expr)
-                ~model     (assoc ,, :model (model-fn# ~expr))
-                ~compiled  (assoc ,, :compiled (->>
-                                                ~expr
-                                                model-fn#
-                                                compile-fn#
-                                                compiled-strings#))
-                ~solutions (assoc ,, :solutions (->>
-                                                 ~expr
-                                                 model-fn#
-                                                 compile-fn#
-                                                 solutions-fn#
-                                                 set))))]
-       ;; yay! code reuse!
-       (is (= ~expected actual#)))))
-
+                              (comp (partial mapv str) :vars)
+                              (comp (partial mapv str) (memfn ~'getCstrs) :model))
+           ]
+       (assert (every? #{:identity :model :compiled :solutions} (keys expected#)))
+       (when identity# (is (= identity#
+                              input#)
+                           "identity"))
+       (when model# (is (= model#
+                           (model-fn# input#))
+                        "model"))
+       (when compiled# (is (= compiled#
+                              (->> input# model-fn# compile-fn# compiled-strings#))
+                           "compiled"))
+       (when solutions# (is (= solutions#
+                               (->> input# model-fn# compile-fn# solutions-fn# set))
+                            "solutions"))       
+       )))

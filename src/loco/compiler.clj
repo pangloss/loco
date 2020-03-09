@@ -30,7 +30,7 @@
 
 ;;TODO: use prewalk-replace?
 (defn compile-constraint-statement [vars-index *model statement]
-  (println 'compile-constraint-statement statement)
+  ;;(println 'compile-constraint-statement statement)
   (let [
         lookup-var (partial lookup-var vars-index)
         lookup-var-unchecked (partial lookup-var-unchecked vars-index)
@@ -151,7 +151,7 @@
   "these should be replaced by compile functions that are assigned where the vars are created"
   {:deprecated true}
   [vars-index vars *model statement]
-  (println [statement (meta statement)])
+  ;;(println [statement (meta statement)])
   (match [statement (meta statement)]
 
     [[:var ?var-name _ _] {:neg (m/some ?dep-name)}]
@@ -238,7 +238,7 @@
 (defn compile
   ([ast] (compile (Model.) ast))
   ([model ast]
-   (pprint ['ast ast])
+   ;;(pprint ['ast ast])
    (let [
          uncompiled-constraints (->> ast (filter ast-constraint?))
          uncompiled-reifies     (->> ast (filter reify?))
@@ -250,7 +250,9 @@
                       (compile-constraints model vars-index uncompiled-constraints)
                       ;;the conditional constraints return void, and are posted automatically
                       ;;the (when %) prevents NULL.post()
-                      (map (juxt identity #(when % (.post %))))
+                      (map (juxt identity (fn [constraint]
+                                            (println 'constraint constraint)
+                                            (when constraint (.post constraint)))))
                       (map first)
                       doall)]
      ;;(println 'vars-map (map vector vars-index vars))

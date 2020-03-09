@@ -16,7 +16,7 @@
 (deftest scalar-test
   (testing "simple model"
     (is
-     (loco?
+     (test-loco
       simple-model
       {
        :identity '[[:var :x :public [:int 1 5]]
@@ -45,7 +45,7 @@
 
   (testing "send money"
     (is
-     (loco?
+     (test-loco
       sendmoney/model
       {
        :identity

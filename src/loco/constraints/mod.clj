@@ -1,11 +1,9 @@
 (ns loco.constraints.mod
-
   (:require
    [clojure.spec.alpha :as s]
    [loco.utils :refer [p c]]
    [loco.constraints.utils :refer :all :as utils]
    [meander.epsilon :as m :refer [match]]
-
    [clojure.walk :as walk]))
 
 (def ^:private constraint-name 'mod)
@@ -19,6 +17,23 @@
  (match *conformed
    {:args [?eq-var _ ?operand1 _ ?operand2]}
    (.mod *model ?operand1 ?operand2 ?eq-var)))
+
+(def ^:private partial-name '%)
+
+(declare $mod)
+
+(defn- constraint-fn [var-name [op [operand1 operand2]]]
+  ($mod var-name = operand1 '% operand2))
+
+;; TODO: delete this when $% tests are passing
+;; (defn modulo-domains [[lb1 ub1] [lb2 ub2]]
+;;   [0 ub2])
+
+(defn- domain-fn [[partial-name [_ {ub2 :ub}]]]
+  (-> {:lb 0 :ub ub2}
+      (assoc :int true)
+      (update :lb int)
+      (update :ub int)))
 
 (defn $mod
   "Creates a modulo constraint.
@@ -36,29 +51,13 @@
                [eq '= operand1 '% operand2]
                compiler))
   ([operand1 operand2]
-   (partial-constraint ['% [operand1 operand2]])))
+   (partial-constraint
+    partial-name
+    [operand1 operand2]
+    :constraint-fn constraint-fn
+    :domain-fn domain-fn)))
 
 ;; -------------------- partial --------------------
-
-(def ^:private partial-name '%)
-
-(defn- name-fn [partial]
-  (match partial
-    [?partial-name ?body]
-    (apply str (interpose (name ?partial-name) ?body))))
-
-(defn- constraint-fn [var-name [op [operand1 operand2]]]
-  ($mod var-name = operand1 '% operand2))
-
-;; TODO: delete this when $% tests are passing
-;; (defn modulo-domains [[lb1 ub1] [lb2 ub2]]
-;;   [0 ub2])
-
-(defn domain-fn [partial [_ {ub2 :ub}]]
-  (-> {:lb 0 :ub ub2}
-      (assoc :int true)
-      (update :lb int)
-      (update :ub int)))
 
 (defn $%
   "partial of $mod
@@ -70,7 +69,6 @@
   ([operand1 operand2]
    (partial-constraint
     partial-name
-    [operand1 operand2] ;; body
-    name-fn
-    constraint-fn
-    domain-fn)))
+    [operand1 operand2]
+    :constraint-fn constraint-fn
+    :domain-fn domain-fn)))

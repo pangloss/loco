@@ -91,7 +91,7 @@
                                            (m/pred #(some constraint? %) ?constraints) (do
                                                                                          (swap! acc into (concat [var] ?constraints))
                                                                                          var-name)
-                                           [unwrap] unwrap)]
+                                           [?unwrap] ?unwrap)]
                               return)
                             :else statement))))
                   ]

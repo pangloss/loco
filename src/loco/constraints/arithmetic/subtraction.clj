@@ -25,8 +25,8 @@
         [(m/pred int? ?only-arg) [] []]    [(- ?only-arg)]
         [?only-arg [] []]                  [($minus-view ?only-arg)]
         [(m/pred int? ?only-arg) [] ?nums] [(- ?only-arg (apply + ?nums))]
-        [?op1 [] ?nums] ($offset-view ?op1 [(- (apply + ?nums))])
-        [_ _ _]                            [($sum var-name '= (apply vector operand1 negative-vars))] ;;FIXME: import $sum
+        [?op1 [] ?nums]                    [($offset-view ?op1 (- (apply + ?nums)))]
+        [_ _ _]                            [($sum var-name '= (apply vector operand1 negative-vars))]
         ))))
 
 (defn- domain-fn [partial]

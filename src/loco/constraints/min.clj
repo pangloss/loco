@@ -63,21 +63,21 @@
 (defn- constraint-fn [var-name [op args]]
   ($min var-name args))
 
-(defn- domain-fn [partial]
-  (match partial
-    [?partial-name ?body]
-    (->
-     (reduce
-      (fn [{:keys [lb ub] :as acc} domain]
-        (match domain
-          ;;TODO: handle enumerated domains
-          {:int true :lb ?d-lb :ub ?d-ub} {:lb (min lb ?d-lb)
-                                           :ub (min ub ?d-ub)}))
-      ;;{:lb 0 :ub 0}
-      ?body)
-     (assoc :int true)
-     (update :lb int)
-     (update :ub int))))
+(defn- domain-fn [[partial-name body]]
+  (->
+   (->>
+    body
+    (reduce
+     (fn [{:keys [lb ub] :as acc} domain]
+       (match domain
+         ;;TODO: handle enumerated domains
+         {:lb ?d-lb :ub ?d-ub} {:lb (min lb ?d-lb)
+                                :ub (min ub ?d-ub)}))
+     ;;{:lb 0 :ub 0}
+     ))
+   (assoc :int true)
+   (update :lb int)
+   (update :ub int)))
 
 (defn- min-partial
   "handles syntax like ($= :v ($min :a :b :c))"

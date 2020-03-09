@@ -1,6 +1,6 @@
 (ns loco.constraints.vars
   (:require
-   [loco.constraints.utils :refer :all]
+   [loco.constraints.utils :refer :all :exclude [set?]]
    [meander.epsilon :as m :refer [match]]
    )
   (:import org.chocosolver.solver.variables.IntVar))
@@ -111,8 +111,8 @@
   ([var-name lb ub]
    ;;TODO: possible that lb should be subset of ub
    {:pre [(valid-variable-name? var-name)
-          (or (set? lb) (sequential? lb))
-          (or (set? ub) (sequential? ub))
+          (set? lb)
+          (set? ub)
           ;;all elements from lb must be in ub
           (upper-bound-contains-lower-bound? lb ub)
           (every? int? lb)

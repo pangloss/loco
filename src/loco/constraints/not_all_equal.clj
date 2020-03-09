@@ -1,7 +1,7 @@
 (ns loco.constraints.not-all-equal
   (:require
-   [loco.constraints.utils :refer :all]
-   [loco.constraints :refer [$arithm]]
+   [loco.constraints.utils :refer :all :as utils]
+   [loco.constraints.arithm :refer [$arithm]]
    [clojure.spec.alpha :as s]
    [meander.epsilon :as m :refer [match]]
    [clojure.walk :as walk])
@@ -13,11 +13,12 @@
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
          :args (s/spec
-                (s/coll-of int-var?))))
+                (s/coll-of int-or-intvar?))))
 
 (compile-function
- (match *conformed
-        {:args ?vars} (.notAllEqual *model (into-array IntVar ?vars))))
+ (let [coerce-int-var (partial utils/coerce-int-var *model)]
+   (match *conformed
+     {:args ?vars} (.notAllEqual *model (->> ?vars (map coerce-int-var) (into-array IntVar))))))
 
 (defn $not-all-equal
   "Constrains that all vars are not equal to each other (different from distinct)"
