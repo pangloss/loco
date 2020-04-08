@@ -4,7 +4,8 @@
    [loco.constraints.arithm :refer [$arithm]]
    [clojure.spec.alpha :as s]
    [meander.epsilon :as m :refer [match]]
-   [clojure.walk :as walk])
+   [loco.utils :refer [p]]
+   )
   (:import
    [org.chocosolver.solver.variables IntVar BoolVar SetVar]))
 
@@ -12,13 +13,14 @@
 
 (s/def ::compile-spec
   (s/cat :constraint #{constraint-name}
-         :args (s/spec
-                (s/coll-of int-or-intvar?))))
+         :args ::utils/coll-coerce-intvar?))
 
 (compile-function
- (let [coerce-int-var (partial utils/coerce-int-var *model)]
+ (let [coerce-int-var (p utils/coerce-int-var *model)]
    (match *conformed
-     {:args ?vars} (.notAllEqual *model (->> ?vars (map coerce-int-var) (into-array IntVar))))))
+     {:args ?vars} (do
+                     (.notAllEqual *model
+                                   (->> ?vars (map coerce-int-var) (into-array IntVar)))))))
 
 (defn $not-all-equal
   "Constrains that all vars are not equal to each other (different from distinct)"
