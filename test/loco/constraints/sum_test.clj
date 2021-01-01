@@ -37,25 +37,25 @@
 
   (testing "$sum constructors"
     (test-loco
-     [($in :x 0 5)
-      ($in :y 0 5)
-      ($sum 10 := [10 10])
-      ($sum 10 := [])
-      ($sum 10 := [:x])
-      ($sum 10 := [:x 4])
-      ($sum 10 := [:x :y])
-      ($sum 10 := [:x :y 5 4])
-      ]
-     {:model
-      '[[:var :x :public [:int 0 5]]
-        [:var :y :public [:int 0 5]]
-        [:view "x+4" [offset :x [4]] [:int 0 5]]
-        [arithm [10 = 20]]
-        [arithm [10 = :x]]
-        [arithm [10 = "x+4"]]
-        [sum [10 = [:x :y]]]
-        [sum [10 = [:x :y 9]]]]}
-     )
+      [($in :x 0 5)
+       ($in :y 0 5)
+       ($sum 10 := [10 10])
+       ($sum 10 := [])
+       ($sum 10 := [:x])
+       ($sum 10 := [:x 4])
+       ($sum 10 := [:x :y])
+       ($sum 10 := [:x :y 5 4])
+       ]
+      {:model
+       '[[:var :x :public [:int 0 5]]
+         [:var :y :public [:int 0 5]]
+         [:view "x+4" [offset-view :x [4]] [:int 4 9]]
+         [arithm [10 = 20]]
+         [arithm [10 = :x]]
+         [arithm [10 = "x+4"]]
+         [sum [10 = [:x :y]]]
+         [sum [10 = [:x :y 9]]]]}
+      )
 
     (test-loco
      [($in :x 0 5)
@@ -100,22 +100,22 @@
   
   (testing "$sum set"
     (test-loco
-     [($in :sum 0 10)
-      ($set :set [0 1 2] [0 1 2 3 4 5 6 7])
-      ($sum :sum :set)]
-     {:model
-      '[[:var :sum :public [:int 0 10]]
-        [:var :set :public [:set #{0 1 2} #{0 1 2 3 4 5 6 7}]]
-        [sum [:sum = :set]]],
-      :compiled
-      [["sum = {0..10}"
-        "set = [{0, 1, 2}, {0, 1, 2, 3, 4, 5, 6, 7}]"]
-       ["SETSUM ([PropSumOfElements(set, sum)])"]],
-      :solutions
-      #{{:sum 9, :set #{0 1 6 2}} {:sum 7, :set #{0 1 4 2}}
-        {:sum 8, :set #{0 1 2 5}} {:sum 10, :set #{0 7 1 2}}
-        {:sum 10, :set #{0 1 4 3 2}} {:sum 6, :set #{0 1 3 2}}
-        {:sum 3, :set #{0 1 2}}}}
-     )
+      [($in :sum 0 10)
+       ($set :set #{0 1 2} #{0 1 2 3 4 5 6 7})
+       ($sum :sum :set)]
+      {:model
+       '[[:var :sum :public [:int 0 10]]
+         [:var :set :public [:set #{0 1 2} #{0 1 2 3 4 5 6 7}]]
+         [sum [:sum = :set]]],
+       :compiled
+       [["sum = {0..10}"
+         "set = [{0, 1, 2}, {0, 1, 2, 3, 4, 5, 6, 7}]"]
+        ["SETSUM ([PropSumOfElements(set, sum)])"]],
+       :solutions
+       #{{:sum 9, :set #{0 1 6 2}} {:sum 7, :set #{0 1 4 2}}
+         {:sum 8, :set #{0 1 2 5}} {:sum 10, :set #{0 7 1 2}}
+         {:sum 10, :set #{0 1 4 3 2}} {:sum 6, :set #{0 1 3 2}}
+         {:sum 3, :set #{0 1 2}}}}
+      )
     ))
 

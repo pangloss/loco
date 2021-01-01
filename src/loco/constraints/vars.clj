@@ -2,7 +2,8 @@
   (:require
    [loco.constraints.utils :refer :all :exclude [set?]]
    [meander.epsilon :as m :refer [match]]
-   )
+
+   [clojure.set :as set])
   (:import org.chocosolver.solver.variables.IntVar))
 
 ;;TODO: implement real vars
@@ -95,11 +96,6 @@
 ;; default SetVar[][] setVarMatrix(String name, int dim1, int dim2, int[] lb, int[] ub)
 ;; Creates a matrix of dim1*dim2 set variables, taking their domain in [lb, ub]
 
-(defn- upper-bound-contains-lower-bound?
-  "when a set is instantiated, it will error if the upper bound does not contain the lower bound"
-  [lb ub]
-  (every? (set ub) (set lb)))
-
 (defn $set
   "Creates a set variable taking its domain in [lb, ub], For
    instance [#{0,3}, #{-2,0,2,3}] means the variable must include both
@@ -114,7 +110,7 @@
           (set? lb)
           (set? ub)
           ;;all elements from lb must be in ub
-          (upper-bound-contains-lower-bound? lb ub)
+          (set/subset? lb ub)
           (every? int? lb)
           (every? int? ub)]}
 
