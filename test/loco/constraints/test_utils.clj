@@ -60,7 +60,7 @@
                                 ~input)
                              ~(str/join " " (remove nil? [name "identity"]))))
         ~(when model `(is (= ~model
-                             (model-fn# ~input))
+                             (~model-fn ~input))
                           ~(str/join " " (remove nil? [name "model"]))))
         ~(when compiled `(let [compiled-strings# (juxt
                                                   (comp (partial mapv str) :vars)
