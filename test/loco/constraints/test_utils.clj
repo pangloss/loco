@@ -5,7 +5,7 @@
    [loco.model :as model]
    [loco.solver :as solver]
    [loco.utils :refer [p c]]
-   ))
+   [clojure.string :as str]))
 
 (defn compiled-constraints-strings [input] ;;FIXME: deprecated
   (->> input
@@ -46,33 +46,29 @@
        ))
      ~msg)))
 
-(defmacro test-loco [input expected]
-  (let [{:keys [identity model compiled solutions]} expected]
-    `(let [
-           input#     ~input
-           expected#  ~expected
-           identity#  ~identity
-           model#     ~model
-           compiled#  ~compiled
-           solutions# ~solutions
-           model-fn#     (memoize ~model/compile)
-           compile-fn#   (memoize ~compiler/compile)
-           solutions-fn# ~solver/solutions
-           compiled-strings# (juxt
-                              (comp (partial mapv str) :vars)
-                              (comp (partial mapv str) (memfn ~'getCstrs) :model))
-           ]
-       (assert (every? #{:identity :model :compiled :solutions} (keys expected#)))
-       (when identity# (is (= identity#
-                              input#)
-                           "identity"))
-       (when model# (is (= model#
-                           (model-fn# input#))
-                        "model"))
-       (when compiled# (is (= compiled#
-                              (->> input# model-fn# compile-fn# compiled-strings#))
-                           "compiled"))
-       (when solutions# (is (= solutions#
-                               (->> input# model-fn# compile-fn# solutions-fn# set))
-                            "solutions"))       
-       )))
+(defmacro test-loco
+  {:style/indent :defn}
+  ([input expected] `(test-loco nil ~input ~expected))
+  ([name input expected]
+   (let [{:keys [identity model compiled solutions]} expected
+         model-fn     (gensym "model-fn")
+         compile-fn   (gensym "compile-fn")]
+     (assert (every? #{:identity :model :compiled :solutions} (keys expected)))
+     `(let [~model-fn     model/compile
+            ~compile-fn   compiler/compile]
+        ~(when identity `(is (= ~identity
+                                ~input)
+                             ~(str/join " " (remove nil? [name "identity"]))))
+        ~(when model `(is (= ~model
+                             (model-fn# ~input))
+                          ~(str/join " " (remove nil? [name "model"]))))
+        ~(when compiled `(let [compiled-strings# (juxt
+                                                  (comp (partial mapv str) :vars)
+                                                  (comp (partial mapv str) (memfn ~'getCstrs) :model))]
+                           (is (= ~compiled
+                                  (->> ~input ~model-fn ~compile-fn compiled-strings#))
+                               ~(str/join " " (remove nil? [name "compiled"])))))
+        ~(when solutions `(is (= ~solutions
+                                 (->> ~input ~model-fn ~compile-fn solver/solutions set))
+                              ~(str/join " " (remove nil? [name "solutions"]))))
+        ))))
