@@ -206,9 +206,10 @@
 
     [[:var ?var-name _
       [:tuples
-       (m/pred {:allowed :forbidden} ?feasible?)
-       (m/pred #(and (sequential? %)) (every? (p every? int?) %) ?ints-lists)]] _]
-    (Tuples. (->> ?ints-lists (map int-array) into-array) ({:allowed true :forbidden false} ?feasible?))))
+       (m/pred #{:allowed :forbidden} ?feasible?)
+       (m/pred #(and (sequential? %) (every? (p every? int?) %)) ?ints-lists)]] _]
+    (Tuples. (->> ?ints-lists (map int-array) into-array) (= :allowed ?feasible?)))
+  )
 
 (defn- compile-var-statement [[vars-index vars model] statement]
   (let [var-name (second statement)
