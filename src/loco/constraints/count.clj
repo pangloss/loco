@@ -19,15 +19,14 @@
                        (s/tuple #{'limit} ::utils/coerce-intvar?)
                        ))))
 
-(defn- compiler [model vars-index statement]
-  (compile-function
-   (let [coerce-var (utils/coerce-var *model)]
-     (match *conformed
-       {:args [?vars [_ ?value] [_ ?limit]]}
-       (.count *model
-               (coerce-var ?value)
-               (->> ?vars (map coerce-var) (into-array IntVar))
-               (coerce-var ?limit))))))
+(compile-function
+ (let [coerce-var (utils/coerce-var *model)]
+   (match *conformed
+     {:args [?vars [_ ?value] [_ ?limit]]}
+     (.count *model
+             (coerce-var ?value)
+             (->> ?vars (map coerce-var) (into-array IntVar))
+             (coerce-var ?limit)))))
 
 ;;TODO: possible partial ($= :value ($count [1 2 3] :limit))
 ;; it's also possible to do ($= :limit ($count :value [1 2 3]))
