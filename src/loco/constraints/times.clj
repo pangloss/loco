@@ -4,6 +4,7 @@
    [clojure.math.combinatorics :as combo]
    [clojure.spec.alpha :as s]
    [clojure.walk :as walk]
+   [loco.constraints :refer [$=]]
    [loco.constraints.views.scale :refer [$scale]]
    [loco.constraints.utils :refer :all :as utils]
    [loco.utils :refer [c p split]]
@@ -22,6 +23,8 @@
  (match *conformed
    {:args [?eq-var _ ?operand1 _ ?operand2]} (.times *model ?operand1 ?operand2 ?eq-var)))
 
+(declare $*)
+
 (defn $times
   "Creates a multiplication constraint:
 
@@ -34,9 +37,11 @@
   {:choco "times(IntVar X, IntVar Y, IntVar Z)"}
   ([eq = operand1 * operand2] ($times eq operand1 operand2))
   ([eq operand1 operand2]
-   (constraint constraint-name
-               [eq '= operand1 '* operand2]
-               compiler)))
+   (if (some number? [eq operand1 operand2])
+     ($= eq ($* operand1 operand2))
+     (constraint constraint-name
+                 [eq '= operand1 '* operand2]
+                 compiler))))
 
 ;; -------------------- partial --------------------
 
