@@ -290,7 +290,9 @@
                (s/explain-data spec-name)
                convert-vars-to-strings))))
 
-(defmacro compile-function [n constraint-name [*conformed *model] & body]
+(defmacro compile-function
+  {:style/indent :defn}
+  [n constraint-name [*conformed *model] & body]
   `(defn- ~n [~*model vars-index# statement#]
      (let [var-subed-statement# (->> statement# (walk/prewalk-replace vars-index#))
            spec# ~(keyword (str (ns-name *ns*)) "compile-spec")

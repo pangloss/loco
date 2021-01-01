@@ -50,22 +50,22 @@
          (interpose "+")
          (apply str (name ?partial-name) "_" ))))
 
-(defn- domain-fn [partial]
-  (match partial
-    [_partial-name ?vars-coeffs]
-    (->
-     (reduce
-      (fn [{:keys [lb ub] :as acc} var-coeff]
-        (match var-coeff
-          ;;TODO: handle enumerated domains
-          [?coeff {:int true :lb ?cur-lb :ub ?cur-ub}]
-          {:lb (+ (* ?coeff ?cur-lb) lb)
-           :ub (+ (* ?coeff ?cur-ub) ub)}))
-      {:lb 0 :ub 0}
-      ?vars-coeffs)
-     (assoc :int true)
-     (update :lb int)
-     (update :ub int))))
+(defn- domain-fn [[_partial-name ?vars-coeffs]]
+  (->
+   (reduce
+    (fn [{:keys [lb ub] :as acc} [coeff {is-int :int cur-lb :lb cur-ub :ub}]]
+      (if is-int
+        (if (neg? coeff)
+          {:lb (+ (* coeff cur-ub) lb)
+           :ub (+ (* coeff cur-lb) ub)}
+          {:lb (+ (* coeff cur-lb) lb)
+           :ub (+ (* coeff cur-ub) ub)})
+        acc))
+    {:lb 0 :ub 0}
+    ?vars-coeffs)
+   (assoc :int true)
+   (update :lb int)
+   (update :ub int)))
 
 (defn- scalar-partial [body]
   (partial-constraint constraint-name body

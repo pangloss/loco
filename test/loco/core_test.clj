@@ -69,23 +69,32 @@
 
 (deftest arithmetic-test2
   (test-loco
-   [($in :x -5 5)
-    ($in :y -5 5)
-    ($in :z -5 5)
-    ($= ($+ :x :y) 5)
-    ($= ($- :x :z) 2)
-    ($= ($* :y :z) 2)]
-   {:solutions #{{:z 1, :y 2, :x 3}
-                 {:z 2, :y 1, :x 4}}}))
+    [($in :x -5 5)
+     ($in :y -5 5)
+     ($in :z -5 5)
+     ($= ($+ :x :y) 5)
+     ($= ($- :x :z) 2)
+     ($= ($* :y :z) 2)]
+    {:solutions #{{:z 1, :y 2, :x 3}
+                  {:z 2, :y 1, :x 4}}}))
 
 (deftest mod-scalar-test
   (test-loco
-   [($in :x 1 5)
-    ($in :y 1 5)
-    ($in :z 1 5)
-    ($= ($mod :x :y) 4)
-    ($= ($scalar [:x :y :z] '(1 1 -2)) 3)]
-   {:solutions #{{:x 4 :y 5 :z 3}}}))
+    [($in :x 1 5)
+     ($in :y 1 5)
+     ($in :z 1 5)
+     ($= ($mod :x :y) 4)
+     ($= ($scalar [:x :y :z] [1 1 -2]) 3)]
+    {:compiled [["x = {1..5}"
+                 "y = {1..5}"
+                 "z = {1..5}"
+                 "x%y = {0..5}"
+                 "scalar_1x+1y+-2z = {-8..8}"]
+                ["TABLE ([CSPLarge({x = {1..5}, , y = {1..5}, , x%y = {0..5}, })])"
+                 "ARITHM ([x%y = 4])"
+                 "TABLE ([CSPLarge({x = {1..5}, , y = {1..5}, , z = {1..5}, , scalar_1x+1y+-2z = {-8..8}, })])"
+                 "ARITHM ([scalar_1x+1y+-2z = 3])"]]
+     :solutions #{{:x 4 :y 5 :z 3}}}))
 
 (deftest eq-ineq-test
   (test-loco
