@@ -107,18 +107,18 @@
   ([var-name lb ub]
    ;;TODO: possible that lb should be subset of ub
    {:pre [(valid-variable-name? var-name)
-          (set? lb)
-          (set? ub)
           ;;all elements from lb must be in ub
-          (set/subset? lb ub)
+          (sequential? ub)
+          (sequential? lb)
           (every? int? lb)
           (every? int? ub)]}
-
-   ;;^{:domain {:lb (into (sorted-set) lb) :ub (into (sorted-set) ub)}}
-   (->
-    ^:var ^:set
-    [:var var-name :public [:set (into (sorted-set) lb) (into (sorted-set) ub)]]
-    hidden-conversion))
+   (let [lb (set lb) ub (set ub)]
+     (assert (set/subset? lb ub))
+     ;;^{:domain {:lb (into (sorted-set) lb) :ub (into (sorted-set) ub)}}
+     (->
+      ^:var ^:set
+      [:var var-name :public [:set (into (sorted-set) lb) (into (sorted-set) ub)]]
+      hidden-conversion)))
 
   ([var-name ints]
    {:pre [(or (set? ints) (sequential? ints))
