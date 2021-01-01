@@ -108,8 +108,8 @@
    ;;TODO: possible that lb should be subset of ub
    {:pre [(valid-variable-name? var-name)
           ;;all elements from lb must be in ub
-          (sequential? ub)
-          (sequential? lb)
+          ((some-fn set? sequential?) ub)
+          ((some-fn set? sequential?) lb)
           (every? int? lb)
           (every? int? ub)]}
    (let [lb (set lb) ub (set ub)]
