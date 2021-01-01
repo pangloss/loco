@@ -19,7 +19,7 @@
                                (s/tuple #{'end}    int-var?)
                                (s/tuple #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?vars [_ ?start] [_ ?end] [_ ?offset]]}
    (.path *model (into-array IntVar ?vars) ?start ?end ?offset)))

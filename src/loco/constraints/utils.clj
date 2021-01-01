@@ -284,19 +284,17 @@
                "\n"
                (->> statement (s/explain-str spec-name))
                "\n"
-               (s/describe spec-name)
-               )
+               (s/describe spec-name))
+               
           (->> statement
                (s/explain-data spec-name)
                convert-vars-to-strings))))
 
-(defmacro compile-function [& body]
-  `(defn- ~'compiler [model# vars-index# statement#]
+(defmacro compile-function [n constraint-name [*conformed *model] & body]
+  `(defn- ~n [~*model vars-index# statement#]
      (let [var-subed-statement# (->> statement# (walk/prewalk-replace vars-index#))
            spec# ~(keyword (str (ns-name *ns*)) "compile-spec")
-           conformed# (->> var-subed-statement# (s/conform spec#))
-           ~'*conformed conformed#
-           ~'*model     model#]
-       (case conformed#
-         ::s/invalid (report-spec-error ~'constraint-name spec# var-subed-statement#)
+           ~*conformed (->> var-subed-statement# (s/conform spec#))]
+       (case ~*conformed
+         ::s/invalid (report-spec-error ~constraint-name spec# var-subed-statement#)
          ~@body))))

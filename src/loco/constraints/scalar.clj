@@ -22,7 +22,7 @@
                        comparison-symbol?
                        (s/coll-of (s/tuple int? int-var?))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?result ?op ?vars-coeffs]}
    (let [coeffs (map first ?vars-coeffs)

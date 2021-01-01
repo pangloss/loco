@@ -26,7 +26,7 @@
     (int? var) (.intVar model var)
     (instance? IntVar var) var))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-var (p utils/coerce-var *model)]
    (match *conformed
      {:args [?vars ?cardinality-map [_ ?closed?]]}

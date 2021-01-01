@@ -28,7 +28,7 @@
 
                        :set-sets  (s/tuple set-var? #{'of} (s/coll-of set-var?))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [:int-lb-ub [?member [_ ?lb] [_ ?ub]]]}
    (.member *model ?member ?lb ?ub)

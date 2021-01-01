@@ -37,7 +37,7 @@
                               (s/tuple #{'offset} nat-int?)
                               (s/tuple #{'conf} allowed-conf-values))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [:no-conf [?vars [_ ?offset]]]}
    (.circuit *model (into-array IntVar ?vars) ?offset)

@@ -38,7 +38,7 @@
                                      (s/tuple #{'offset}     nat-int?)
                                      (s/tuple #{'not-empty?} boolean?))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [:ints [?min [_ ?vars]]]}
    (.min *model ?min (into-array IntVar ?vars))

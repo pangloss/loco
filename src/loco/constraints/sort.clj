@@ -18,7 +18,7 @@
                        (s/coll-of int-var?)
                        (s/coll-of int-var?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?vars ?sorted-vars]}
    (.sort *model

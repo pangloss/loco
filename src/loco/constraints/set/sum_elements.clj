@@ -19,7 +19,7 @@
                                (s/tuple #{'weights} (s/coll-of int?))
                                (s/tuple #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?result-var [_ ?indices-set] [_ ?weights] [_ ?offset]]}
    (.sumElements *model ?indices-set (int-array ?weights) ?offset ?result-var)))

@@ -16,7 +16,7 @@
          :args       (s/spec
                       (s/coll-of set-var?))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args ?sets} (.subsetEq *model (into-array SetVar ?sets))))
 

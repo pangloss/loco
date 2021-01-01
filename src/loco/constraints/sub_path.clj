@@ -20,7 +20,7 @@
                                (s/tuple #{'offset} nat-int?)
                                (s/tuple #{'size}   int-var?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?vars [_ ?start] [_ ?end] [_ ?offset] [_ ?size]]}
    (.subPath *model (into-array IntVar ?vars) ?start ?end ?offset ?size)))

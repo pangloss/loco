@@ -18,7 +18,7 @@
                       (s/tuple ::utils/coll-coerce-intvar?
                                (s/tuple #{'automation} #(instance? FiniteAutomaton %))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-int-var (p utils/coerce-int-var *model)]
    (match *conformed
      {:args [?vars [_ ?automation]]}

@@ -38,7 +38,7 @@
                        (s/tuple #{'filters}     (s/coll-of filters?))
                        ))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-var (utils/coerce-var *model)]
    (match *conformed
      {:args [?tasks [_ ?heights] [_ ?capacity] [_ ?incremental?] [_ ?filters]]}

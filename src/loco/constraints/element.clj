@@ -26,7 +26,7 @@
                               (s/tuple #{'at}     ::utils/coerce-intvar?)
                               (s/tuple #{'offset} nat-int?))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-var (coerce-var *model)]
    (match *conformed
      {:args [:ints [?value [_ [:ints ?vars]] [_ ?index] [_ ?offset]]]}

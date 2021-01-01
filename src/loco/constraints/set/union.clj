@@ -23,7 +23,7 @@
                               set-var?
                               (s/tuple #{'of} (s/coll-of set-var?)))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [(m/or :ints :sets) [?union-set [_ ?vars]]]}
    (.union *model (into-array ?vars) ?union-set)))

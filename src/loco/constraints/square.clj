@@ -15,7 +15,7 @@
          :args       (s/spec
                       (s/tuple int-var? int-var?))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?result ?dep]} (.square *model ?result ?dep)))
 

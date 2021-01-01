@@ -27,7 +27,7 @@
                                :op ::utils/comparison-operator?
                                :vars (s/spec (s/coll-of ::utils/coerce-intvar?)))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [:ints {:eq-var ?eq-var :op ?op, :vars ?vars}]}
    (.sum *model (into-array IntVar (map (utils/coerce-int-var *model) ?vars)) (name ?op) ?eq-var)

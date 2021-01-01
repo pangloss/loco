@@ -26,7 +26,7 @@
                        :int-set   (s/tuple
                                    int-or-intvar? #{'of} set-var?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [:int-lb-ub [?not-member [_ ?lb] [_ ?ub]]]}
    (.notMember *model ?not-member ?lb ?ub)

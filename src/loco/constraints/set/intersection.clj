@@ -19,7 +19,7 @@
                        (s/tuple #{'of} (s/coll-of set-var?))
                        (s/tuple #{'bound-consistent} boolean?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?intersection-set [_ ?sets] [_ ?bounds-consistent?]]}
    (.intersection *model (into-array SetVar ?sets) ?intersection-set ?bounds-consistent?)))

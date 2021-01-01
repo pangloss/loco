@@ -33,7 +33,7 @@
                                  (set/difference allowed-op? #{'!=})
                                  ::utils/coerce-intvar?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-var (utils/coerce-var *model)]
    (match *conformed
      {:args [:int-var [_ ?var1 _ ?var2 _ ?op ?eq-var]]}

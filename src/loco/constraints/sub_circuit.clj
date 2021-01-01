@@ -19,7 +19,7 @@
                        (s/tuple #{'sub-circuit-length} int-var?)
                        (s/tuple #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?vars [_ ?sub-circuit-length] [_ ?offset]]}
    (.subCircuit *model (into-array IntVar ?vars) ?offset ?sub-circuit-length)))

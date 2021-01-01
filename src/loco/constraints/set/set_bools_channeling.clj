@@ -18,7 +18,7 @@
                                (s/tuple #{'channel} (s/coll-of bool-var?))
                                (s/tuple #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?set-var [_ ?bools] [_ ?offset]]}
    (.setBoolsChanneling *model (into-array BoolVar ?bools) ?set-var ?offset)))

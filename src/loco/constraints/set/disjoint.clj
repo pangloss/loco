@@ -16,7 +16,7 @@
          :args       (s/spec
                       (s/tuple set-var? set-var?))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?set1 ?set2]} (.disjoint *model ?set1 ?set2)))
 

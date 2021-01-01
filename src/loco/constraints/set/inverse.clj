@@ -18,7 +18,7 @@
                        (s/tuple #{'inverse-sets} (s/coll-of set-var?) #{'offset} nat-int?)
                        (s/tuple #{'sets} (s/coll-of int-var?) #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [[_ ?inverse-sets _ ?offset-inverse-set] [_ ?sets _ ?offset-set]]}
    (.inverseSet *model

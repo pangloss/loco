@@ -34,7 +34,7 @@
                                      (s/tuple #{'offset}     nat-int?)
                                      (s/tuple #{'not-empty?} boolean?))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [:ints [?max [_ ?vars]]]}
    (.max *model ?max (into-array IntVar ?vars))

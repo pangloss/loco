@@ -22,7 +22,7 @@
                                                     #{'h} ::utils/coerce-intvar?)))
                        (s/tuple #{'add-cumulative-reasoning} boolean?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-var (p utils/coerce-var *model)]
    (match *conformed
      {:args [[_ ?rects] [_ ?add-cumulative-reasoning?]]}

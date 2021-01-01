@@ -17,7 +17,7 @@
                        ::utils/coll-coerce-intvar?
                        (s/coll-of int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-var (utils/coerce-var *model)]
    (match *conformed
      {:args [?variables ?values]}

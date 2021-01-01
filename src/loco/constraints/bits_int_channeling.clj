@@ -20,7 +20,7 @@
                        (s/tuple #{'int-var} ::utils/coerce-intvar?)
                        ))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-int-var (p utils/coerce-int-var *model)]
    (match *conformed
      {:args [[_ ?bits] [_ ?int-var]]}

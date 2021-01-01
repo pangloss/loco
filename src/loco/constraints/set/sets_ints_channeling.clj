@@ -18,7 +18,7 @@
                        (s/tuple #{'sets} (s/coll-of set-var?) #{'offset} nat-int?)
                        (s/tuple #{'ints} (s/coll-of int-var?) #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [[_ ?sets _ ?offset-set] [_ ?ints _ ?offset-ints]]}
    (.setsIntsChanneling *model

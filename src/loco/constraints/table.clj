@@ -35,7 +35,7 @@
                                           (s/tuple #{'algo} #{'AC2001 'AC3 'AC3rm
                                                               'AC3bit+rm 'FC}))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [:vars-tuples [?vars [_ ?tuples]]]}
    (.table *model (into-array IntVar ?vars) ?tuples)

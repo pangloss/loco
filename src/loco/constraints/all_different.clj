@@ -21,7 +21,7 @@
                          :ints ::utils/coll-coerce-intvar?
                          :consistency (s/tuple #{'consistency} #{'default 'bc 'ac})))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-int-var (partial utils/coerce-int-var *model)]
    (match *conformed
      {:args [:ints ?vars]}

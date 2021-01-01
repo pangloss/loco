@@ -15,7 +15,7 @@
   (s/tuple #{:view} string? (s/tuple #{view-name} ::utils/coerce-intvar? (s/tuple int?)) ::utils/int-domain))
 
 (let [constraint-name view-name]
-  (compile-function
+  (compile-function compiler constraint-name [*conformed *model]
    (match *conformed
      [:view ?var-name [_ ?dependency-var [?modifier]] _domain]
      (.intScaleView *model (coerce-int-var *model ?dependency-var) ?modifier))))

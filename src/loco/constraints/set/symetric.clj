@@ -16,7 +16,7 @@
                       (s/tuple (s/coll-of set-var?)
                                (s/tuple #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?sets [_ ?offset]]}
    (.symmetric *model (into-array SetVar ?sets) ?offset)))

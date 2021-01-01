@@ -17,7 +17,7 @@
                       (s/tuple set-var? set-var?
                                (s/tuple #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?set1 ?set2 ['offset ?offset]]}
    (.offSet *model ?set1 ?set2 ?offset)))

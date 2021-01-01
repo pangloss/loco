@@ -19,7 +19,7 @@
                        (s/tuple #{'nb-trees} int-var?)
                        (s/tuple #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?succs [_ ?nb-trees] [_ ?offset]]}
    (.tree *model (into-array IntVar ?succs) ?nb-trees ?offset)))

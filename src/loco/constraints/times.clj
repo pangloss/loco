@@ -19,7 +19,7 @@
          :args (s/spec
                 (s/tuple int-var? #{'=} int-var? #{'*} int-var?))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?eq-var _ ?operand1 _ ?operand2]} (.times *model ?operand1 ?operand2 ?eq-var)))
 

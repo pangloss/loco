@@ -16,7 +16,7 @@
          :args       (s/spec
                       (s/tuple (s/coll-of int-var?) #{'lex-of} (s/coll-of int-var?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?vars _ ?lex-less-or-equal-vars]}
    (.lexLess *model

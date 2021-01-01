@@ -21,7 +21,7 @@
 ;; example:
 ;; [:and (constraints :guard (p every? constraint?))]
 ;; (.and model (realize-nested-constraints constraints))
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args ?constraint} (.not *model ?constraint)))
 

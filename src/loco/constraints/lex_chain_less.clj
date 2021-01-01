@@ -15,7 +15,7 @@
          :args       (s/spec
                       (s/coll-of (s/coll-of int-var?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args ?vars-vectors}
    (.lexChainLessEq *model

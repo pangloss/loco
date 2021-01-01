@@ -21,7 +21,7 @@
                        (s/tuple #{'n-values} ::utils/coerce-intvar?)
                        (s/tuple #{'strong} boolean?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-int-var (p utils/coerce-int-var *model)]
    (match *conformed
      {:args [?vars [_ ?n-values] [_ ?strong]] }

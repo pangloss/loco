@@ -19,7 +19,7 @@
                        (s/tuple #{'weight-sum} int-var?)
                        (s/tuple #{'energy-sum} int-var?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [[_ ?weights] [_ ?energies] [_ ?occurrences] [_ ?weight-sum] [_ ?energy-sum]]}
    (.knapsack *model

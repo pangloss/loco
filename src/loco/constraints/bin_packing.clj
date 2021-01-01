@@ -20,7 +20,7 @@
                        (s/tuple #{'offset}    int?)
                        ))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-int-var (p utils/coerce-int-var *model)]
    (match *conformed
      {:args [[_ ?item-bin] [_ ?item-size] [_ ?bin-load] [_ ?offset]]}

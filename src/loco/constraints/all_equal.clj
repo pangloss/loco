@@ -22,7 +22,7 @@
                  :ints ::utils/coll-coerce-intvar?
                  :sets ::utils/coll-setvar?))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-int-var (p utils/coerce-int-var *model)]
    (match *conformed
      {:args [:ints ?vars]}

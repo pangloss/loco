@@ -14,7 +14,7 @@
   (s/cat :constraint #{constraint-name}
          :args       set-var?))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args ?set-var} (.notEmpty *model ?set-var)))
 

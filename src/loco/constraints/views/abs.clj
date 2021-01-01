@@ -15,7 +15,7 @@
   (s/tuple #{:view} string? (s/tuple #{view-name} ::utils/coerce-intvar? #{[]}) ::utils/int-domain))
 
 (let [constraint-name view-name]
-  (compile-function
+  (compile-function compiler constraint-name [*conformed *model]
    (match *conformed
      [:view _var-name [_ ?dependency-var _mods] _domain]
      (.intAbsView *model (coerce-int-var *model ?dependency-var)))))

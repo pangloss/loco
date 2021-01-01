@@ -18,7 +18,7 @@
                        (s/tuple (s/coll-of int-var?) #{'offset} nat-int?)
                        (s/tuple (s/coll-of int-var?) #{'offset} nat-int?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [[?vars1 _ ?offset1] [?vars2 _ ?offset2]]}
    (.inverseChanneling *model

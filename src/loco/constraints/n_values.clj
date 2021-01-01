@@ -16,7 +16,7 @@
          :args       (s/spec
                       (s/tuple (s/coll-of int-var?) int-var?))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?vars ?n-values]}
    (.nValues *model (into-array IntVar ?vars) ?n-values)))

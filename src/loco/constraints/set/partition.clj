@@ -17,7 +17,7 @@
                       (s/tuple (s/coll-of set-var?)
                                (s/tuple #{'universe} set-var?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?sets ['universe ?universe]]}
    (.partition *model (into-array SetVar ?sets) ?universe)))

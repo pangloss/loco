@@ -20,7 +20,7 @@
                        :nb-var (s/tuple #{'nb-var} ::utils/coerce-intvar?)
                        :values (s/tuple #{'values} (s/coll-of int?))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-int-var (p utils/coerce-int-var *model)]
    (match *conformed
      {:args {:ints ?vars :nb-var [_ ?nb-var] :values [_ ?values]} }

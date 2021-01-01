@@ -20,7 +20,7 @@
                        (s/tuple #{'l-vars} ::utils/coll-boolvar?)
                        ))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?int-var [_ ?e-vars] [_ ?l-vars]]}
    (.clausesIntChanneling *model

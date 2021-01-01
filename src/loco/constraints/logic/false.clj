@@ -15,7 +15,7 @@
          :args (s/spec
                 #{nil})))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args _}
    (.falseConstraint *model)))

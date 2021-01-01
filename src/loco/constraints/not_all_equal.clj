@@ -15,7 +15,7 @@
   (s/cat :constraint #{constraint-name}
          :args ::utils/coll-coerce-intvar?))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-int-var (p utils/coerce-int-var *model)]
    (match *conformed
      {:args ?vars} (do

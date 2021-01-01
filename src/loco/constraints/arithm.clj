@@ -23,7 +23,7 @@
                                :arithm-op ::utils/arithmetic-symbol?
                                :operand2 ::utils/int-or-intvar?))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [:compare {:eq-var ?eq-var :compare-op ?op, :operand ?var}]}
    (.arithm *model (coerce-int-var *model ?eq-var) (name ?op) ?var)

@@ -19,7 +19,7 @@
                        (s/tuple #{'limit} ::utils/coerce-intvar?)
                        ))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-var (utils/coerce-var *model)]
    (match *conformed
      {:args [?vars [_ ?value] [_ ?limit]]}

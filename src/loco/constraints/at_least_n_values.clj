@@ -19,7 +19,7 @@
                        :n-values (s/tuple #{'n-values} ::utils/coerce-intvar?)
                        :ac       (s/tuple #{'ac} boolean?)))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (let [coerce-int-var (p utils/coerce-int-var *model)]
    (match *conformed
      {:args {:ints ?vars :n-values [_ ?n-values] :ac [_ ?ac]} }

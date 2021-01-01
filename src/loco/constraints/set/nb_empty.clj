@@ -18,7 +18,7 @@
                        int-or-intvar?
                        (s/tuple #{'of} (s/coll-of set-var?))))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?num-empty ['of ?sets]]}
    (.nbEmpty *model (into-array SetVar ?sets) ?num-empty)))

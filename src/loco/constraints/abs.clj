@@ -15,7 +15,7 @@
          :args (s/spec
                 (s/tuple int-var? #{'=} int-var?))))
 
-(compile-function
+(compile-function compiler constraint-name [*conformed *model]
  (match *conformed
    {:args [?eq-var _ ?operand1]}
    (.absolute *model ?eq-var ?operand1)))
