@@ -1,6 +1,5 @@
 (ns loco.solver
   (:require
-   [camel-snake-kebab.core :refer [->kebab-case]]
    [meander.epsilon :as m :refer [match]]
    [loco.model :as model]
    [loco.compiler :as compiler]
@@ -40,30 +39,26 @@
       :else (->> problem model/compile compiler/compile)))
   )
 
-(def implemented-search-monitor-methods
-  (->>
-   #{
-     :limitBacktrack,                 ;; void <- limitBacktrack(long limit)
-     :limitFail,                      ;; void <- limitFail(long limit)
-     :limitNode,                      ;; void <- limitNode(long limit)
-     :limitSearch,                    ;; void <- limitSearch(Criterion aStopCriterion)
-     :limitSolution,                  ;; void <- limitSolution(long limit)
-     :limitTime,                      ;; void <- limitTime(long limit) | (String duration)
-     :setNoGoodRecordingFromRestarts, ;; void <- setNoGoodRecordingFromRestarts()
-     :setNoGoodRecordingFromSolutions ;; void <- setNoGoodRecordingFromSolutions(IntVar... vars)
-     }
-   (map (c (juxt ->kebab-case (c symbol name))))
-   (into (sorted-map))))
-
 (defn- set-search-monitor-settings! [solver named-params]
-  (->>
-   named-params
-   (keep (fn [[method-name args]]
-           (when-let [method (method-name implemented-search-monitor-methods)]
-             `(. ~solver ~method ~@args)
-             {method-name args})))
-   (into {})
-   doall))
+  (doseq [[method args] named-params]
+    (case method
+      (:limit-backtrack :limitBacktrack)                 ;; void <- limitBacktrack(long limit)
+      (.limitBacktrack solver args)
+      (:limit-fail :limitFail)                      ;; void <- limitFail(long limit)
+      (.limitFail solver args)
+      (:limit-node :limitNode)                      ;; void <- limitNode(long limit)
+      (.limitNode solver args)
+      (:limit-search :limitSearch)                    ;; void <- limitSearch(Criterion aStopCriterion)
+      (.limitSearch solver args)
+      (:limit-solution :limitSolution)                  ;; void <- limitSolution(long limit)
+      (.limitSolution solver args)
+      (:limit-time :limitTime)                      ;; void <- limitTime(long limit) | (String duration)
+      (.limitTime solver args)
+      :setNoGoodRecordingFromRestarts ;; void <- setNoGoodRecordingFromRestarts()
+      (.setNoGoodRecordingFromRestarts solver)
+      :setNoGoodRecordingFromSolutions ;; void <- setNoGoodRecordingFromSolutions(IntVar... vars)
+      (.setNoGoodRecordingFromSolutions solver)
+      nil)))
 
 (defn- set-model-objective! [model vars-index named-params]
   (match named-params
@@ -110,12 +105,12 @@
   - :feasible <bool> - optimizes time by guaranteeing that the problem is feasible before trying to maximize/minimize a variable.
 
   available Search Monitor features:
-  :limit-backtrack                      <int>
-  :limit-fail                           <int>
-  :limit-node                           <int>
-  :limit-search                         <int>
-  :limit-solution                       <int>
-  :limit-time                           <int> | <string>
+  :limitBacktrack                      <int>
+  :limitFail                           <int>
+  :limitNode                           <int>
+  :limitSearch                         <int>
+  :limitSolution                       <int>
+  :limitTime                           <int> | <string>
   :set-no-good-recording-from-restarts  <nil>
   :set-no-good-recording-from-solutions <[IntVar...]>
 

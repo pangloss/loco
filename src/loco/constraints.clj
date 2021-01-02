@@ -11,7 +11,6 @@
      (require (symbol (namespace sym))))
    (let [vr (resolve sym)
          m (meta vr)
-         _ (println (or alias (:name m)))
          nspace (:name m)
          n (or alias (:name m))
          arglists (:arglists m)

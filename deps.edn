@@ -1,17 +1,9 @@
 {
  :paths ["src"]
- :deps {
-        camel-snake-kebab              {:mvn/version "0.4.1"}
-        expound                        {:mvn/version "0.8.4"}
-        fipp                           {:mvn/version "0.6.22"}  ;; pprint
-        kezban                         {:mvn/version "0.1.87"} ;; general util lib (core additions)
-        meander/epsilon                {:mvn/version "0.0.402"} ;; pattern matching
+ :deps {meander/epsilon                {:mvn/version "0.0.402"} ;; pattern matching
         org.choco-solver/choco-solver  {:mvn/version "4.10.2"}
         org.clojure/clojure            {:mvn/version "1.10.1"}
-        prismatic/plumbing             {:mvn/version "0.5.5"} ;; ns plumbing.core
-        vvvvalvalval/supdate           {:mvn/version "0.2.3"}
-        org.clojure/math.combinatorics {:mvn/version "0.1.6"}
-        }
+        org.clojure/math.combinatorics {:mvn/version "0.1.6"}}
  :aliases {
            :dev {
                  :jvm-opts [

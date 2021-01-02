@@ -239,7 +239,6 @@
 (defn compile
   ([ast] (compile (Model.) ast))
   ([model ast]
-   ;;(pprint ['ast ast])
    (let [
          uncompiled-constraints (->> ast (filter ast-constraint?))
          uncompiled-reifies     (->> ast (filter reify?))
@@ -252,7 +251,6 @@
                       ;;the conditional constraints return void, and are posted automatically
                       ;;the (when %) prevents NULL.post()
                       (map (juxt identity (fn [constraint]
-                                            (println 'constraint constraint)
                                             (when constraint (.post constraint)))))
                       (map first)
                       doall)]
