@@ -140,7 +140,8 @@
      :domain-fn domain-fn
      :name-fn name-fn
      :partial-constraint true
-     } [op-name body]
+     }
+   [op-name body]
    ))
 
 (defn view [view-name dependency modifiers name-fn view-fn domain-fn compile-fn]
@@ -155,7 +156,8 @@
     :name-fn name-fn
     :view true
     :view-fn view-fn
-    } [view-name dependency modifiers]
+    }
+  [view-name dependency modifiers]
   )
 
 (def comparison-operator? #{'= '> '< '!=  '>= '<=

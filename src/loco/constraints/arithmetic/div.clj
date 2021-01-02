@@ -45,13 +45,16 @@
         return (->
                 (->>
                  (for  [n [lb1 ub1]
-                        d [lb2 ub2]
+                        d (if (and (zero? ub2) (zero? lb2))
+                            [0]
+                            [(if (zero? lb2) 1 lb2)
+                             (if (zero? ub2) -1 ub2)])
                         :when (not (zero? d))]
-                   ;;prevent div by zero by replacing zeros with 1s
+                   ;;prevent div by zero by narrowing the bounds
                    ;;TODO: have to handle div/0 better
-                   ;; if lb ub [-1 0] then we need to test -1
-                   ;; if lb ub [0 2] then we need to test 1
-                   ;; if lb ub [-1 5] then we need to test -1 and 1 as divisors (i think)
+                   ;; [X] if lb ub [-1 0] then we need to test -1
+                   ;; [X] if lb ub [0 2] then we need to test 1
+                   ;; [ ] if lb ub [-1 5] then we need to test -1 and 1 as divisors (i think)
                    (unchecked-divide-int n d))
                  sort
                  ((juxt first last))

@@ -17,11 +17,13 @@
                  :jvm-opts [
                             "-Xms1G"
                             "-Xmx4G"
+                            "-XX:-OmitStackTraceInFastThrow"
                             ]
                  }
            :test {
                   :extra-paths ["test"]
                   :extra-deps {lambdaisland/kaocha {:mvn/version "0.0-590"}}
+                  :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
                   }
            :kaocha {
                     :extra-paths ["test"]
