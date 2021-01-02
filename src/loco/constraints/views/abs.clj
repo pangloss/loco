@@ -21,9 +21,9 @@
      (.intAbsView *model (coerce-int-var *model ?dependency-var)))))
 
 (defn- view-fn [name statement]
-  (match statement
-    [view-name dep []] (with-meta [:view name statement]
-                         (meta statement))))
+  (let [[view-name dep []] statement]
+    (with-meta [:view name statement]
+      (meta statement))))
 
 (defn- name-fn [statement]
   (match statement
