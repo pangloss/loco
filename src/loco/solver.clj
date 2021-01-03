@@ -34,7 +34,7 @@
 (defn- get-compiled-model [problem]
   (let [{:keys [model? compiled?]} (meta problem)]
     (cond
-      model? (->> problem compiler/compile)
+      model? (compiler/compile problem)
       compiled? problem
       :else (->> problem model/compile compiler/compile)))
   )
@@ -99,7 +99,7 @@
 
 (defn solutions
   "Solves the problem using the specified constraints and returns a map from variable names to their values (or nil if there is no solution).
-  Keyword arguments:
+  Args map:
   - :maximize <var-name> - finds the solution maximizing the given variable.
   - :minimize <var-name> - finds the solution minimizing the given variable.
   - :feasible <bool> - optimizes time by guaranteeing that the problem is feasible before trying to maximize/minimize a variable.
@@ -121,47 +121,34 @@
    :model           <Model>
    :model-objective <Map>
   }"
-  [problem & args]
+  [problem args]
   (if (instance? Model problem)
     ;; we were given a choco model instead of something nicely wrapped
     ;; we will still attempt to solve the model but we don't do anything fancy
-    (->
-     problem
-     (.getSolver)
-     (.streamSolutions nil) ;;lawl, doesn't work without args
-     (.iterator)
-     iterator-seq)
+    (-> problem (.getSolver) (.streamSolutions nil) (.iterator) iterator-seq)
 
     ;;we are given a nice loco object, do nice things and return a seq of clojure stuff
-    (let [args-map (apply hash-map args)
-          {:keys [constraints
-                  model
-                  public-vars-index
-                  vars-index
-                  var-name-mapping]
-           } (get-compiled-model problem)
+    (let [{:keys [model public-vars-index vars-index var-name-mapping] :as compiled} (get-compiled-model problem)
           solver (.getSolver model)
           var-key-name-fn (if (empty? var-name-mapping)
                             identity
-                            (memoize (fn [var-name] (get var-name-mapping var-name var-name))))
-          solution-extractor (p extract-solution public-vars-index var-key-name-fn)
-          search-monitors (set-search-monitor-settings! solver args-map)
-          model-objective (set-model-objective! model vars-index args-map)
-          ]
+                            (fn [var-name] (get var-name-mapping var-name var-name)))]
+      (set-search-monitor-settings! solver args)
+      (set-model-objective! model vars-index args)
+      (when (:before-solve args) ((:before-solve args) solver compiled))
 
+      (-> solver
+          (.streamSolutions nil)
+          (.iterator)
+          iterator-seq
+          (->> (map (partial extract-solution public-vars-index var-key-name-fn)))
+          (with-meta {:solver solver
+                      :compiled compiled})))))
 
-      (->
-       solver
-       (.streamSolutions nil) ;;lawl, doesn't work without args
-       (.iterator)
-       iterator-seq
-       (->> (map solution-extractor))
-       (with-meta {:solver solver
-                   :search-monitors search-monitors
-                   :model model
-                   :model-objective model-objective})))))
+(defn solution [problem args]
+  (let [results (solutions problem args)]
+    (with-meta (first results) (meta results))))
 
-(def solution (c first (p solutions)))
 (alter-meta! #'solution merge (dissoc (meta #'solutions) :name))
 
 (defn optimal-solutions
